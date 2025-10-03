@@ -32,9 +32,3 @@ A full-stack web application that connects **landlords** and **tenants**, allowi
 
 ---
 
-## ⚙️ Installation & Setup  
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/your-username/house-rent-app.git
-cd house-rent-app
