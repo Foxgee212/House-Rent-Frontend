@@ -1,16 +1,40 @@
-# React + Vite
+# 🏠 House Renting App  
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![GitHub license](https://img.shields.io/github/license/your-username/house-rent-app)](LICENSE)  
+[![Node.js](https://img.shields.io/badge/Node.js-18-green?logo=node.js)](https://nodejs.org/)  
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)  
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)](https://www.mongodb.com/atlas)  
+[![Deployed on Render](https://img.shields.io/badge/Backend-Render-purple?logo=render)](https://render.com/)  
+[![Deployed on Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://vercel.com/)  
 
-Currently, two official plugins are available:
+A full-stack web application that connects **landlords** and **tenants**, allowing landlords to list rental properties and tenants to search, filter, and book houses online.  
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🚀 Features
+- 👤 **Authentication & Authorization** – JWT-based login for Landlords & Tenants  
+- 🏘 **Landlord Dashboard** – Add, edit, and manage house listings with images  
+- 🔍 **Tenant Search** – Filter houses by **location, price, and availability**  
+- 📸 **Image Upload** – Landlords can upload property images  
+- 💾 **Database Integration** – MongoDB stores user accounts & house listings  
+- 🎨 **Responsive Frontend** – Mobile-friendly UI built with React + TailwindCSS  
+- ⚡ **REST API** – Backend built with Node.js & Express  
+- 🔐 **Secure Routes** – Only landlords can add houses; tenants can view/book  
 
-The React Compiler is not enabled on this template. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Frontend:** React, React Router, Context API / Redux, TailwindCSS  
+**Backend:** Node.js, Express.js, Multer, JWT, Bcrypt.js  
+**Database:** MongoDB (Atlas or local)  
+**Deployment:** Vercel (Frontend), Render (Backend), MongoDB Atlas (DB)  
+
+---
+
+## ⚙️ Installation & Setup  
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/your-username/house-rent-app.git
+cd house-rent-app
