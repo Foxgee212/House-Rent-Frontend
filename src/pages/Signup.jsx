@@ -13,6 +13,7 @@ export default function Signup() {
     role: "tenant",
   });
   const [error, setError] = useState("");
+  const [ loading, setLoading ] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,6 +22,13 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
+
+    if(!/\S+@\S+\.\S+/.test(form.email)) {
+      setError("Please enter a valid email");
+      setLoading(false);
+      return;
+    }
 
     try {
       // ✅ Call backend register
@@ -34,6 +42,7 @@ export default function Signup() {
     } catch (err) {
       setError(err.response?.data?.msg || "Signup failed");
     }
+    finally { setLoading(false);
   };
 
   return (
@@ -88,9 +97,10 @@ export default function Signup() {
 
           <button
             type="submit"
-            className="bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
+            className={`bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 ${loading && "opacity-50 cursor-not-allowed"}`}
+            disabled={loading}
           >
-            Signup
+            {loading ? "Signing up..." : "Signup"}
           </button>
         </form>
 
@@ -103,4 +113,4 @@ export default function Signup() {
       </div>
     </div>
   );
-}
+}};
