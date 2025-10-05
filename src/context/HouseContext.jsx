@@ -13,7 +13,7 @@ export function HouseProvider({ children }) {
   const fetchHouses = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_URL);
+      const res = await axios.get(`${API_URL}/houses`);
       setHouses(res.data.houses || []);
       localStorage.setItem("houses", JSON.stringify(res.data.houses || []));
       setError(null);
@@ -30,7 +30,7 @@ export function HouseProvider({ children }) {
   // ✅ Add a new house (Landlord only)
   const addHouse = async (formData, token) => {
     try {
-      const res = await axios.post(API_URL, formData, {
+      const res = await axios.post(`${API_URL}/houses`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -48,7 +48,7 @@ export function HouseProvider({ children }) {
   // ✅ Delete a house by ID
   const deleteHouse = async (id, token) => {
     try {
-      await axios.delete(`${API_URL}/${id}`, {
+      await axios.delete(`${API_URL}/houses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setHouses((prev) => prev.filter((h) => h._id !== id));
