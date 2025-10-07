@@ -3,8 +3,9 @@ import HouseCard from "../components/HouseCard";
 import { useHouses } from "../context/HouseContext";
 
 export default function Home() {
-  const { houses = [], loading } = useHouses(); // fallback to empty array
+  const { houses, loading } = useHouses();
   const [search, setSearch] = useState("");
+
 
   // 🔍 Filter houses by location safely
   const filtered = houses.filter((h) =>

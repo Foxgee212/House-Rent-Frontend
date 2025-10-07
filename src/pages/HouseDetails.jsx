@@ -1,14 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import API from "../api/axios"; // ✅ your axios instance
 import { useHouses } from "../context/HouseContext";
+
+
 
 export default function HouseDetail() {
   const { id } = useParams();
-  const { houses } = useHouses(); // get all houses from context
+  const { houses } = useHouses();
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     // 1️⃣ Try to find house in context first
     const foundHouse = houses.find((h) => h._id === id);
@@ -17,14 +17,14 @@ export default function HouseDetail() {
       setLoading(false);
       return;
     }
-
-    // 2️⃣ Fallback: fetch from backend if not in context
+    // 2️⃣ Fallback: fetch single house from backend
     const fetchHouse = async () => {
       try {
-        const res = await API.get(`/houses/${id}`);
-        setHouse(res.data.house); // assuming backend returns { success: true, house: {...} }
+        const response = await fetch(`/api/houses/${id}`);
+        const data = await response.json();
+        setHouse(data);
       } catch (error) {
-        console.error("Error fetching house:", error.response?.data || error.message);
+        console.error("Error fetching house:", error);
       } finally {
         setLoading(false);
       }

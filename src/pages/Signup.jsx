@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import API from "../api/axios"; // ✅ axios instance
+
+
 
 export default function Signup() {
-  const { login } = useAuth();
+
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -14,6 +15,8 @@ export default function Signup() {
   });
   const [error, setError] = useState("");
   const [ loading, setLoading ] = useState(false);
+  const { name, email, password, role } = form;
+  const { signup } = useAuth();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,28 +26,26 @@ export default function Signup() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    if(!/\S+@\S+\.\S+/.test(form.email)) {
-      setError("Please enter a valid email");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // ✅ Call backend register
-      const res = await API.post("/auth/register", form);
-
-      // backend should return { token, user: { name, email, role } }
-      login(res.data.user, res.data.token);
-
-      // redirect based on role
-      navigate(res.data.user.role === "landlord" ? "/dashboard" : "/listings");
+      await signup(name, email, password, role);
+      switch (role) {
+        case "landlord":
+          navigate("/dashboard");
+          break;
+        case "tenant":
+        default:
+          navigate("/");
+      }
+      alert("Signup successful!");
     } catch (err) {
-      setError(err.response?.data?.msg || "Signup failed");
+      setError(err.message || "Signup failed");
+    } finally {
+      setLoading(false);
     }
-    finally { setLoading(false);
-  };
+  
 
+  }
+  
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 shrink">
       <div className="bg-white shadow-md rounded-lg p-8 w-96">
@@ -113,4 +114,5 @@ export default function Signup() {
       </div>
     </div>
   );
-}};
+
+  };

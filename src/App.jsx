@@ -16,7 +16,7 @@ function App() {
   <>
   <Navbar/>
 
-    <Routes>
+    <Routes >
       <Route path="/" element={<Home />}/>
       <Route path="/listings" element={<Listings />}/>
       <Route path="/listings/:id" element={<HouseDetail />}/>
@@ -25,9 +25,8 @@ function App() {
       <Route 
         path="/dashboard" 
         element={
-          <PrivateRoute roles={["landlord"]}>
+          
             <DashBoard />
-          </PrivateRoute>
         }
         />
     </Routes>

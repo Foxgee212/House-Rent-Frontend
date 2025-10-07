@@ -1,23 +1,23 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useHouses } from "../context/HouseContext";
+import API from "../api/axios"; // ✅ axios instance
+import { useAuth } from "../context/AuthContext";
 
 export default function DashBoard() {
-  const { houses, addHouse, deleteHouse } = useHouses();
+  const { user } = useAuth();
+  if (user?.role !== "landlord") {
+    return <div className="p-8 max-w-5xl mx-auto">Access Denied. Landlords only.</div>;
+  }
+
   const [form, setForm] = useState({ title: "", location: "", price: "", description: "" });
   const [image, setImage] = useState(null);
   const [zoomedId, setZoomedId] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [landlordHouses, setLandlordHouses] = useState([]);
 
-  const { user, token } = useAuth();
   const navigate = useNavigate();
 
-  // Protect route
-  if (!user || user.role !== "landlord") {
-    navigate("/login");
-    return null;
-  }
+  
 
   // Form change
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,38 +26,9 @@ export default function DashBoard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!image) return alert("Please select an image");
-
-    try {
-      setUploading(true);
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => formData.append(key, value));
-      formData.append("image", image);
-
-      await addHouse(formData, token);
-      setForm({ title: "", location: "", price: "", description: "" });
-      setImage(null);
-      alert("House added successfully!");
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed!");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Delete house
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-    try {
-      await deleteHouse(id, token);
-    } catch (err) {
-      console.error(err);
-      alert("Delete failed!");
-    }
-  };
-
-  // Filter only landlord's houses
-  const landlordHouses = houses.filter((h) => h.landlord._id === user.id);
+    
+  }
+    
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -92,7 +63,7 @@ export default function DashBoard() {
                 <p className="text-gray-500">{h.location}</p>
                 <p className="text-blue-600 font-bold mt-2">₦{h.price.toLocaleString()}</p>
                 <p className="mt-2 text-sm">{h.description}</p>
-                <button onClick={() => handleDelete(h._id)} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
+                <button  className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
               </div>
 
               {/* Zoom overlay */}

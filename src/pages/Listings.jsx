@@ -4,10 +4,13 @@ import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
 
 export default function Listings() {
-  const { houses = [], loading } = useHouses(); // fallback to empty array
+
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+
+  const { houses } = useHouses();
 
   // 🔍 Filter houses
   const filtered = houses.filter((house) => {
