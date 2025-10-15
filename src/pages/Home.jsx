@@ -1,46 +1,106 @@
-import { useState } from "react";
-import HouseCard from "../components/HouseCard";
+import React, { useState, useEffect } from "react"
+import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
+import HouseCard from "../components/HouseCard";
+import Spinner from "../components/Spinner";
+import { useAuth } from "../context/AuthContext";
+import { Search, MapPin, Home } from "lucide-react";
 
-export default function Home() {
-  const { houses, loading } = useHouses();
+export default function HomePage() {
+  const { houses, fetchHouses, loading } = useHouses();
+  const { user } = useAuth();
+
   const [search, setSearch] = useState("");
+  const [filtered, setFiltered] = useState([]);
 
+  useEffect(() => {
+    fetchHouses();
+  }, []);
 
-  // 🔍 Filter houses by location safely
-  const filtered = houses.filter((h) =>
-    h.location?.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    if (!Array.isArray(houses)) return;
+    if (!search.trim()) {
+      setFiltered(houses);
+      return;
+    }
 
-  if (loading) {
-    return <p className="text-center text-gray-600 mt-10">Loading houses...</p>;
-  }
+    const filteredHouses = houses.filter((house) =>
+      house.location?.toLowerCase().includes(search.toLowerCase())
+    );
+    setFiltered(filteredHouses);
+  }, [search, houses]);
+
+  if (loading) return <Spinner />;
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="bg-blue-50 py-16 text-center">
-        <h1 className="text-4xl font-bold text-gray-800">Find Your Next Home</h1>
-        <p className="mt-4 text-gray-600">Search Houses for rent near you</p>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Enter location..."
-          className="mt-6 p-3 w-80 border rounded-lg"
-        />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      {/* 🌇 Hero Section */}
+      <section className="relative bg-gradient-to-r from-blue-600 to-blue-500 py-24 text-center text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1560185127-6ed189bf02b9?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center"></div>
+
+        <div className="relative z-10">
+          <h1 className="text-4xl sm:text-5xl font-extrabold flex justify-center items-center gap-2 drop-shadow-lg">
+            <Home size={44} className="text-white drop-shadow-md" />
+            Find Your Dream Home
+          </h1>
+          <p className="mt-4 text-blue-100 text-lg max-w-xl mx-auto leading-relaxed">
+            Explore affordable and luxurious houses available for rent near you
+          </p>
+
+          {/* 🔍 Search Bar */}
+          <div className="mt-10 flex justify-center px-4">
+            <div className="relative w-full max-w-md backdrop-blur-md bg-white/20 rounded-2xl shadow-lg border border-white/30">
+              <Search
+                className="absolute left-4 top-3 text-white/70"
+                size={22}
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by location..."
+                className="w-full py-3 pl-12 pr-4 rounded-2xl bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/40"
+              />
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Houses Section */}
-      <section className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {/* 🏘️ Houses Section */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="flex items-center justify-center mb-10">
+          <MapPin size={24} className="text-blue-600 mr-2" />
+          <h2 className="text-3xl font-semibold text-gray-800 dark:text-gray-200">
+            Available Houses
+          </h2>
+        </div>
+
         {filtered.length === 0 ? (
-          <p className="col-span-full text-center text-gray-600">
-            No houses found for "{search || "all locations"}"
+          <p className="text-center text-gray-600 dark:text-gray-300 mt-10">
+            No houses found for “{search || "all locations"}”
           </p>
         ) : (
-          filtered.map((h) => <HouseCard key={h._id} house={h} />)
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filtered.map((house) => (
+              <div
+                key={house._id}
+                className="transition-transform duration-300 hover:scale-[1.02]"
+              >
+              <Link to={`/listings/${house._id}`}>
+                <HouseCard house={house} />
+              </Link>
+              </div>
+            ))}
+          </div>
         )}
       </section>
+
+      {/* 🌟 Footer */}
+      <footer className="bg-blue-600 text-white text-center py-6 mt-10">
+        <p className="text-sm opacity-90">
+          © {new Date().getFullYear()} RentHouse — Find comfort where you belong.
+        </p>
+      </footer>
     </div>
   );
 }

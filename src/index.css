@@ -1,1 +1,15 @@
 @import "tailwindcss";
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
+
+.loader {
+  border-radius: 50%;
+  border-width: 4px;
+  border-style: solid;
+  border-color: #3b82f6 transparent transparent transparent;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import API from "../api/axios";
+import { toast } from "react-hot-toast";
 
 const HouseContext = createContext();
 
@@ -8,18 +9,21 @@ export function HouseProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL 
-  // ✅ Fetch all houses from backend
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // Fetch houses
   const fetchHouses = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await axios.get(`${API_URL}/houses`);
-      setHouses(res.data.houses || []);
-      localStorage.setItem("houses", JSON.stringify(res.data.houses || []));
+      const res = await API.get(`${API_URL}/houses`);
+      const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
+      setHouses(fetched);
+      localStorage.setItem("houses", JSON.stringify(fetched));
       setError(null);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch houses");
-      console.warn("Using local storage fallback");
+      toast.error(err.response?.data?.error || "Failed to fetch houses");
+
       const stored = localStorage.getItem("houses");
       if (stored) setHouses(JSON.parse(stored));
     } finally {
@@ -27,16 +31,11 @@ export function HouseProvider({ children }) {
     }
   };
 
-  // ✅ Add a new house (Landlord only)
   const addHouse = async (formData, token) => {
     try {
-      const res = await axios.post(`${API_URL}/houses`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await API.post(`${API_URL}/houses`, formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
       });
-      // Add new house to state
       setHouses((prev) => [...prev, res.data.house]);
       return res.data.house;
     } catch (err) {
@@ -45,10 +44,9 @@ export function HouseProvider({ children }) {
     }
   };
 
-  // ✅ Delete a house by ID
   const deleteHouse = async (id, token) => {
     try {
-      await axios.delete(`${API_URL}/houses/${id}`, {
+      await API.delete(`${API_URL}/houses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setHouses((prev) => prev.filter((h) => h._id !== id));
@@ -58,21 +56,17 @@ export function HouseProvider({ children }) {
     }
   };
 
-  // Fetch houses on mount
   useEffect(() => {
     fetchHouses();
   }, []);
 
   return (
-    <HouseContext.Provider
-      value={{ houses, loading, error, fetchHouses, addHouse, deleteHouse }}
-    >
+    <HouseContext.Provider value={{ houses, loading, error, fetchHouses, addHouse, deleteHouse }}>
       {children}
     </HouseContext.Provider>
   );
 }
 
-// ✅ Hook to use house context
 export function useHouses() {
   return useContext(HouseContext);
 }
