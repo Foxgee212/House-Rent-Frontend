@@ -11,6 +11,7 @@ import {
   XCircle,
   Upload,
 } from "lucide-react";
+import { Switch } from "@headlessui/react";
 
 export default function DashBoard() {
   const { user } = useAuth();
@@ -36,7 +37,7 @@ export default function DashBoard() {
     );
   }
 
-  // Fetch landlord houses
+  // ✅ Fetch landlord houses
   useEffect(() => {
     const fetchMyHouses = async () => {
       setLoadingHouses(true);
@@ -56,11 +57,11 @@ export default function DashBoard() {
     fetchMyHouses();
   }, []);
 
-  // Handle form change
+  // ✅ Handle form changes
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // Handle form submit
+  // ✅ Add or update house
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!image && !editing) return toast.error("Please select an image");
@@ -79,7 +80,9 @@ export default function DashBoard() {
 
       setLandlordHouses((prev) =>
         editing
-          ? prev.map((h) => (h._id === editing._id ? res.data.house || res.data : h))
+          ? prev.map((h) =>
+              h._id === editing._id ? res.data.house || res.data : h
+            )
           : [...prev, res.data.house]
       );
 
@@ -95,7 +98,7 @@ export default function DashBoard() {
     }
   };
 
-  // Delete house
+  // ✅ Delete house
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     try {
@@ -107,7 +110,7 @@ export default function DashBoard() {
     }
   };
 
-  // Start editing house
+  // ✅ Start editing
   const startEditing = (house) => {
     setEditing(house);
     setForm({
@@ -116,6 +119,30 @@ export default function DashBoard() {
       price: house.price,
       description: house.description,
     });
+  };
+
+  // ✅ Toggle availability
+  const toggleAvailability = async (id, currentStatus) => {
+    try {
+      const res = await API.patch(`/houses/${id}/availability`, {
+        available: !currentStatus,
+      }, {
+        headers: { "Content-Type": "application/json" },
+      });
+      setLandlordHouses((prev) =>
+        prev.map((h) =>
+          h._id === id ? { ...h, available: !currentStatus } : h
+        )
+      );
+      toast.success(
+        !currentStatus
+          ? "🏠 House marked as available"
+          : "🚫 House marked as occupied"
+      );
+    } catch (error) {
+      console.error("Error updating availability:", error);
+      toast.error("Failed to update availability");
+    }
   };
 
   return (
@@ -244,8 +271,36 @@ export default function DashBoard() {
                 <p className="text-blue-600 font-semibold mt-2">
                   ₦{Number(h.price).toLocaleString()}
                 </p>
-                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{h.description}</p>
+                <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                  {h.description}
+                </p>
 
+                {/* ✅ Availability Toggle */}
+                <div className="flex items-center justify-between mt-4">
+                  <span
+                    className={`text-sm font-medium ${
+                      h.available ? "text-green-600" : "text-red-500"
+                    }`}
+                  >
+                    {h.available ? "Available" : "Occupied"}
+                  </span>
+
+                  <Switch
+                    checked={h.available}
+                    onChange={() => toggleAvailability(h._id, h.available)}
+                    className={`${
+                      h.available ? "bg-green-500" : "bg-gray-300"
+                    } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                  >
+                    <span
+                      className={`${
+                        h.available ? "translate-x-6" : "translate-x-1"
+                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                    />
+                  </Switch>
+                </div>
+
+                {/* Action Buttons */}
                 <div className="flex gap-2 mt-4 flex-wrap">
                   <button
                     onClick={() => startEditing(h)}
@@ -269,7 +324,9 @@ export default function DashBoard() {
                   onClick={() => setZoomedId(null)}
                 >
                   <img
-                    src={h.image || "https://via.placeholder.com/800x600?text=No+Image"}
+                    src={
+                      h.image || "https://via.placeholder.com/800x600?text=No+Image"
+                    }
                     alt={h.title}
                     className="max-w-[90%] max-h-[90%] border rounded-xl shadow-2xl"
                     onClick={(e) => e.stopPropagation()}

@@ -158,25 +158,64 @@ export default function Profile() {
           {/* Phone Input */}
           <div>
             <label className="block text-sm font-medium mb-1">Phone Number</label>
-            <PhoneInput
-              country={"ng"}
-              value={form.phone}
-              onChange={(phone) => setForm({ ...form, phone })}
-              inputClass="!w-full !p-3 !border !rounded-lg dark:!bg-gray-700 dark:!text-gray-100"
-              buttonClass="!border-gray-300"
-            />
+        <PhoneInput
+          country={"ng"}
+          value={form.phone}
+          onChange={(phone) => setForm({ ...form, phone })}
+          placeholder="Enter phone number"
+          containerClass="!w-full relative"
+          inputClass="!w-full !p-3 !pl-14 !border !rounded-lg !text-gray-800 dark:!text-gray-200 !border-gray-300 dark:!border-gray-600 focus:!border-blue-500 focus:!ring-0 dark:!bg-gray-700"
+          buttonClass="!border-gray-300 dark:!bg-gray-700 dark:!border-gray-600 !p-2 !rounded-l-lg"
+          dropdownClass="!bg-white dark:!bg-gray-800 dark:!text-gray-100 !text-gray-800"
+          searchClass="!text-gray-800 dark:!text-gray-100 dark:!bg-gray-700"
+          inputStyle={{ paddingLeft: "3.5rem" }}
+        />
+
+
           </div>
 
           {/* State */}
           <div>
             <label className="block text-sm font-medium mb-1">State</label>
-            <Select
+          <Select
               options={stateOptions}
               value={form.state ? { value: form.state, label: form.state } : null}
               onChange={(option) => handleSelectChange("state", option.value)}
               placeholder="Select State"
               className="text-gray-800 dark:text-gray-200"
-            />
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  backgroundColor: "#374151", // dark gray for main box (Tailwind bg-gray-700)
+                  color: "#f9fafb",
+                  borderColor: "#4b5563",
+                  boxShadow: "none",
+                  "&:hover": { borderColor: "#6b7280" },
+                }),
+                menu: (base) => ({
+                  ...base,
+                  backgroundColor: "#1f2937", // dropdown background (Tailwind bg-gray-800)
+                  color: "#f9fafb",
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isFocused
+                    ? "#4b5563" // hover state (Tailwind bg-gray-600)
+                    : "#1f2937", // default (Tailwind bg-gray-800)
+                  color: "#f9fafb",
+                  cursor: "pointer",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  color: "#f9fafb", // selected value text
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9ca3af", // muted gray placeholder
+                }),
+              }}
+          />
+
           </div>
 
           {/* Local Government */}
@@ -195,7 +234,41 @@ export default function Profile() {
               placeholder="Select LGA"
               isDisabled={!form.state}
               className="text-gray-800 dark:text-gray-200"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  backgroundColor: "#374151", // dark gray (Tailwind bg-gray-700)
+                  color: "#f9fafb",
+                  borderColor: state.isFocused ? "#6b7280" : "#4b5563",
+                  boxShadow: "none",
+                  "&:hover": { borderColor: "#9ca3af" },
+                  opacity: state.isDisabled ? 0.5 : 1,
+                  cursor: state.isDisabled ? "not-allowed" : "pointer",
+                }),
+                menu: (base) => ({
+                  ...base,
+                  backgroundColor: "#1f2937", // Tailwind bg-gray-800
+                  color: "#f9fafb",
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isFocused
+                    ? "#4b5563" // Tailwind bg-gray-700 on hover
+                    : "#1f2937", // Tailwind bg-gray-800 normal
+                  color: "#f9fafb",
+                  cursor: "pointer",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  color: "#f9fafb",
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9ca3af", // Tailwind text-gray-400
+                }),
+              }}
             />
+
           </div>
 
           {/* Bio */}

@@ -37,6 +37,13 @@ export default function HouseCard({ house }) {
           <Home size={14} /> Rent
         </div>
 
+        <div
+          className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md
+          ${house.available ? "bg-green-600/90 text-white" : "bg-red-600/90 text-white"}`}
+        >
+          {house.available ? "Available" : "Occupied"}
+        </div>
+
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl flex flex-col justify-center items-center text-white p-4 gap-2">
           {house.rooms && (

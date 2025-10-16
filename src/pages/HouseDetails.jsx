@@ -1,7 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useHouses } from "../context/HouseContext";
-import { MapPin, Mail, User, Home, Wallet, MessageCircle, Phone } from "lucide-react";
+import {
+  MapPin,
+  Mail,
+  User,
+  Home,
+  Wallet,
+  MessageCircle,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function HouseDetail() {
@@ -13,30 +20,30 @@ export default function HouseDetail() {
   const [recommendedHouses, setRecommendedHouses] = useState([]);
 
   const landlordPhone = user?.phone || "2340000000000";
-  const message = `Hello, I am interested in your ${house?.title || ''} located in ${house?.location || ''}. Is it still available?`;
+  const message = `Hello, I am interested in your ${house?.title || ""} located in ${
+    house?.location || ""
+  }. Is it still available?`;
 
   // Get the main house
   useEffect(() => {
-    const foundHouse = houses.find(h => h._id === id);
+    const foundHouse = houses.find((h) => h._id === id);
     setHouse(foundHouse || null);
   }, [id, houses]);
 
   // Compute recommendations AFTER house is loaded
   useEffect(() => {
-    if (!house || !user?.location) return;
+    if (!house) return;
 
-    const tenantState = user.location.split(", ")[0];
-    const tenantLGA = user.location.split(", ")[1];
+    const priceRange = 0.2; // ±20% price range
 
-    const priceRange = 0.2; // 20% above or below house price
+    const recommendations = houses.filter((h) => {
+      if (h._id === house._id) return false;
 
-    const recommendations = houses.filter(h => {
-      if (h._id === house._id) return false; // exclude current house
+      const locationMatch =
+        h.location &&
+        house.location &&
+        h.location.split(",")[0] === house.location.split(",")[0];
 
-      // location match (either state or LGA)
-      const locationMatch = (h.state && h.state === tenantState) || (h.localGovernment && h.localGovernment === tenantLGA);
-
-      // price match within ±20%
       const minPrice = house.price * (1 - priceRange);
       const maxPrice = house.price * (1 + priceRange);
       const priceMatch = h.price >= minPrice && h.price <= maxPrice;
@@ -45,25 +52,44 @@ export default function HouseDetail() {
     });
 
     setRecommendedHouses(recommendations.slice(0, 5));
-  }, [house, houses, user]);
+  }, [house, houses]);
 
   const handleWhatsAppContact = () => {
-    const formattedPhone = landlordPhone.replace(/[^0-9]/g, '');
+    const formattedPhone = landlordPhone.replace(/[^0-9]/g, "");
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
   };
 
-  if (!house) return <p className="p-12 text-center text-gray-500 text-lg animate-pulse">Loading house details...</p>;
+  if (!house)
+    return (
+      <p className="p-12 text-center text-gray-500 text-lg animate-pulse">
+        Loading house details...
+      </p>
+    );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 md:px-6">
       {/* Main House Card */}
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
-        <img
-          src={house.image || "https://via.placeholder.com/800x500"}
-          alt={house.title}
-          className="w-full h-64 md:h-72 object-cover"
-        />
+        <div className="relative">
+          <img
+            src={house.image || "https://via.placeholder.com/800x500"}
+            alt={house.title}
+            className="w-full h-64 md:h-72 object-cover"
+          />
+
+          {/* ✅ Availability Badge */}
+          <span
+            className={`absolute top-4 right-4 px-4 py-1 rounded-full text-sm font-semibold ${
+              house.available
+                ? "bg-green-100 text-green-700 border border-green-300"
+                : "bg-red-100 text-red-700 border border-red-300"
+            }`}
+          >
+            {house.available ? "Available" : "Occupied"}
+          </span>
+        </div>
+
         <div className="p-6 md:p-8">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Home size={24} className="text-blue-600" /> {house.title}
@@ -75,10 +101,16 @@ export default function HouseDetail() {
 
           <p className="text-blue-700 dark:text-blue-400 font-bold text-xl mt-3 flex items-center gap-2">
             <Wallet size={18} /> ₦{house.price?.toLocaleString()}
-            <span className="text-gray-500 dark:text-gray-400 text-base font-medium">/month</span>
+            <span className="text-gray-500 dark:text-gray-400 text-base font-medium">
+              /month
+            </span>
           </p>
 
-          {house.description && <p className="mt-4 text-gray-700 dark:text-gray-300">{house.description}</p>}
+          {house.description && (
+            <p className="mt-4 text-gray-700 dark:text-gray-300">
+              {house.description}
+            </p>
+          )}
 
           {house.landlord && (
             <div className="mt-6 bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-inner">
@@ -100,17 +132,42 @@ export default function HouseDetail() {
         </div>
       </div>
 
-      {/* Recommended Houses */}
+      {/* ✅ Recommended Houses */}
       {recommendedHouses.length > 0 && (
         <div className="max-w-4xl mx-auto mt-10">
-          <h2 className="text-xl font-bold mb-4">Recommended for You</h2>
+          <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+            Recommended for You
+          </h2>
           <div className="flex gap-4 overflow-x-auto pb-2">
-            {recommendedHouses.map(h => (
-              <div key={h._id} className="min-w-[200px] bg-white dark:bg-gray-700 shadow-md rounded-xl p-3 flex-shrink-0">
-                <img src={h.image || "https://via.placeholder.com/200x120"} alt={h.title} className="w-full h-32 object-cover rounded-lg" />
-                <h3 className="mt-2 font-semibold text-gray-800 dark:text-gray-100">{h.title}</h3>
+            {recommendedHouses.map((h) => (
+              <div
+                key={h._id}
+                className="min-w-[220px] bg-white dark:bg-gray-700 shadow-md rounded-xl p-3 flex-shrink-0 relative"
+              >
+                <img
+                  src={h.image || "https://via.placeholder.com/200x120"}
+                  alt={h.title}
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+
+                {/* Availability Badge */}
+                <span
+                  className={`absolute top-2 right-2 px-3 py-0.5 text-xs rounded-full font-semibold ${
+                    h.available
+                      ? "bg-green-100 text-green-700 border border-green-300"
+                      : "bg-red-100 text-red-700 border border-red-300"
+                  }`}
+                >
+                  {h.available ? "Available" : "Occupied"}
+                </span>
+
+                <h3 className="mt-2 font-semibold text-gray-800 dark:text-gray-100">
+                  {h.title}
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{h.location}</p>
-                <p className="mt-1 font-semibold text-blue-700 dark:text-blue-400">₦{h.price?.toLocaleString()}</p>
+                <p className="mt-1 font-semibold text-blue-700 dark:text-blue-400">
+                  ₦{h.price?.toLocaleString()}
+                </p>
               </div>
             ))}
           </div>

@@ -60,7 +60,7 @@ export default function Listings() {
             placeholder="Search by keyword..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="p-3 pl-10 border-blue-300 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 ring-1 ring-gray-400  text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
 
@@ -72,7 +72,7 @@ export default function Listings() {
             placeholder="Search by location..."
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="p-3 pl-10 border-blue-300 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 ring-1 ring-gray-400  text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
 
@@ -84,7 +84,7 @@ export default function Listings() {
             placeholder="Max price"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            className="p-3 pl-10 border-blue-300 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 ring-1 ring-gray-500  text-gray-600  w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
 
@@ -94,7 +94,7 @@ export default function Listings() {
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
-            className="p-3 pl-10 border w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 border ring-1  text-gray-600 ring-gray-400 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           >
             <option value="">Sort by price</option>
             <option value="asc">Price: Low → High</option>

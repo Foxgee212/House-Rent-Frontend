@@ -8,11 +8,11 @@ import { Mail, Lock, LogIn } from "lucide-react";
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const { email, password } = form;
-  const { login, user } = useAuth();
+  const { login } = useAuth();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -22,9 +22,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      // ✅ get the logged-in user directly from login() return value
+      const loggedInUser = await login(email, password);
 
-      toast.success("Login successful 🚀", {
+      if (!loggedInUser) throw new Error("Login failed. Please try again.");
+
+      toast.success(`Welcome Back ${loggedInUser.name || "User"} 🚀`, {
         duration: 2000,
         style: {
           borderRadius: "10px",
@@ -33,17 +36,14 @@ export default function Login() {
         },
       });
 
-      // Redirect based on role
+      // ✅ Role-based redirect
       setTimeout(() => {
-        switch (user?.role) {
-          case "landlord":
-            navigate("/dashboard");
-            break;
-          case "tenant":
-          default:
-            navigate("/");
+        if (loggedInUser.role === "landlord") {
+          navigate("/dashboard");
+        } else {
+          navigate("/");
         }
-      }, 600);
+      }, 500);
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
