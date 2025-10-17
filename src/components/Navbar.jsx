@@ -89,6 +89,16 @@ export default function Navbar() {
                 </li>
               )}
 
+              {/* Admin Dashboard } */}
+              {user.role === "admin" && (
+                <li>
+                  <NavLink to="/admin" className={navLinkClass}>
+                    <LayoutDashboard size={18} /> Admin Panel
+                  </NavLink>
+                </li>
+              )}
+
+
               {/* Profile Dropdown */}
               <li className="relative" ref={profileRef}>
                 <button

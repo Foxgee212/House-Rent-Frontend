@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Set token in axios headers automatically
+  // ✅ Automatically set Authorization header
   useEffect(() => {
     if (token) {
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // sync user state with localStorage
+  // ✅ Keep user in sync with localStorage
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -27,57 +27,73 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  // Auto-fetch profile if token exists  but no user(on page reload)
+  // ✅ Fetch user if token exists but user missing
   useEffect(() => {
     if (token && !user) {
       fetchUser();
     }
   }, [token]);
 
+  // ✅ LOGIN
   const login = async (email, password) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post(`/auth/login`, { email, password });
+
       setUser(res.data.user);
       setToken(res.data.token);
-
-      // save to local storage
       localStorage.setItem("user", JSON.stringify(res.data.user));
       localStorage.setItem("token", res.data.token);
+
+      return res.data; // ✅ Return success response for component to handle
     } catch (err) {
-      setError(err.response?.data?.msg || "Login failed");
+      const message =
+        err.response?.data?.message || // ✅ use 'message' from backend
+        err.response?.data?.msg ||
+        "Login failed";
+      setError(message);
+      throw new Error(message); // ✅ rethrow for component to catch
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ SIGNUP
   const signup = async (name, email, password, role, location, bio, phone, profilePic) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.post(`/auth/register`, { 
-                      name,
-                      email, 
-                      password, 
-                      role, 
-                      location: location || "", 
-                      bio: bio || "", 
-                      phone: phone || "", 
-                      profilePic: profilePic || "" });
+      const res = await API.post(`/auth/register`, {
+        name,
+        email,
+        password,
+        role,
+        location: location || "",
+        bio: bio || "",
+        phone: phone || "",
+        profilePic: profilePic || "",
+      });
+
       setUser(res.data.user);
       setToken(res.data.token);
-
-      //save to local storage
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("token", res.data.token);  
+      localStorage.setItem("token", res.data.token);
+
+      return res.data;
     } catch (err) {
-      setError(err.response?.data?.msg || "Signup failed");
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        "Signup failed";
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ LOGOUT
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -85,7 +101,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
   };
 
-  // ✅ Fetch user from backend (optional for profile refresh)
+  // ✅ Fetch user from backend (optional)
   const fetchUser = async () => {
     if (!token) return;
     setLoading(true);
@@ -111,7 +127,7 @@ export function AuthProvider({ children }) {
         signup,
         logout,
         fetchUser,
-        setUser, // allow profile edits
+        setUser, // for profile updates
       }}
     >
       {children}

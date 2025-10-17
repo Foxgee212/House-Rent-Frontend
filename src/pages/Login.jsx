@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
@@ -8,13 +8,14 @@ import { Mail, Lock, LogIn } from "lucide-react";
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const { email, password } = form;
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,12 +23,9 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // ✅ get the logged-in user directly from login() return value
-      const loggedInUser = await login(email, password);
+      await login(email, password);
 
-      if (!loggedInUser) throw new Error("Login failed. Please try again.");
-
-      toast.success(`Welcome Back ${loggedInUser.name || "User"} 🚀`, {
+      toast.success("Login successful 🚀", {
         duration: 2000,
         style: {
           borderRadius: "10px",
@@ -35,21 +33,25 @@ export default function Login() {
           color: "#fff",
         },
       });
-
-      // ✅ Role-based redirect
-      setTimeout(() => {
-        if (loggedInUser.role === "landlord") {
-          navigate("/dashboard");
-        } else {
-          navigate("/");
-        }
-      }, 500);
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Automatic role-based redirect when user changes
+  useEffect(() => {
+    if (user?.role) {
+      if (user.role === "landlord") {
+        navigate("/dashboard");
+      } else if (user.role === "tenant") {
+        navigate("/");
+      } else if (user.role === "admin") {
+        navigate("/admin");
+      }
+    }
+  }, [user, navigate]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
@@ -70,7 +72,6 @@ export default function Login() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
             <input
@@ -84,7 +85,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Password */}
           <div className="relative">
             <Lock className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
             <input
@@ -98,7 +98,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -117,10 +116,12 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="mt-5 text-center text-gray-600">
           Don’t have an account?{" "}
-          <Link to="/signup" className="text-blue-600 font-medium hover:underline">
+          <Link
+            to="/signup"
+            className="text-blue-600 font-medium hover:underline"
+          >
             Create one
           </Link>
         </p>
