@@ -1,29 +1,39 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios.js"; // your pre-configured axios instance
+import API from "../Api/axios";
 
 export default function StatsCards() {
   const [stats, setStats] = useState({
     totalHouses: 0,
-    approved: 0,
-    pending: 0,
+    approvedHouses: 0,
+    pendingHouses: 0,
     totalUsers: 0,
   });
+
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true; // avoid state update on unmounted component
+
     const fetchStats = async () => {
       try {
         const res = await API.get("/admin/stats");
-        setStats(res.data);
-        console.log(res.data)
+        if (isMounted) setStats(res.data);
+      
       } catch (error) {
         console.error("Failed to load stats:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    fetchStats();
+
+    fetchStats(); // initial fetch
+    const interval = setInterval(fetchStats, 5000); // fetch every 5 seconds
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval); // cleanup
+    };
   }, []);
 
   if (loading) {
@@ -32,8 +42,8 @@ export default function StatsCards() {
 
   const cards = [
     { label: "Total Houses", value: stats.totalHouses },
-    { label: "Approved", value: stats.approved },
-    { label: "Pending", value: stats.pending },
+    { label: "Approved", value: stats.approvedHouses },
+    { label: "Pending", value: stats.pendingHouses },
     { label: "Users", value: stats.totalUsers },
   ];
 

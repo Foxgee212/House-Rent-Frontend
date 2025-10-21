@@ -4,15 +4,9 @@ import { MapPin, Home, Info, Wallet, BedDouble, Bath, Ruler } from "lucide-react
 export default function HouseCard({ house }) {
   const [zoomed, setZoomed] = useState(false);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(price || 0);
 
-  // Close modal on ESC
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && setZoomed(false);
     window.addEventListener("keydown", handleEsc);
@@ -28,7 +22,7 @@ export default function HouseCard({ house }) {
         <img
           src={house.image || "https://via.placeholder.com/400x250?text=No+Image"}
           alt={house.title || "House image"}
-          onClick={(e) => { e.stopPropagation(); setZoomed(!zoomed); }}
+          onClick={(e) => { e.stopPropagation(); setZoomed(true); }}
           className="w-full h-52 object-cover rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
         />
 
@@ -37,42 +31,29 @@ export default function HouseCard({ house }) {
           <Home size={14} /> Rent
         </div>
 
-        <div
-          className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md
-          ${house.available ? "bg-green-600/90 text-white" : "bg-red-600/90 text-white"}`}
-        >
+        {/* Availability */}
+        <div className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md
+          ${house.available ? "bg-green-600/90 text-white" : "bg-red-600/90 text-white"}`}>
           {house.available ? "Available" : "Occupied"}
         </div>
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl flex flex-col justify-center items-center text-white p-4 gap-2">
-          {house.rooms && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <BedDouble size={16} /> {house.rooms} Rooms
-            </div>
-          )}
-          {house.baths && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Bath size={16} /> {house.baths} Baths
-            </div>
-          )}
-          {house.area && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Ruler size={16} /> {house.area} sqft
-            </div>
-          )}
+          {house.rooms && <div className="flex items-center gap-1 text-sm font-medium"><BedDouble size={16} /> {house.rooms} Rooms</div>}
+          {house.baths && <div className="flex items-center gap-1 text-sm font-medium"><Bath size={16} /> {house.baths} Baths</div>}
+          {house.area && <div className="flex items-center gap-1 text-sm font-medium"><Ruler size={16} /> {house.area} sqft</div>}
         </div>
       </div>
 
-      {/* Details */}
+      {/* House Details */}
       <div className="p-5">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <Info size={18} className="text-blue-600" /> {house.title}
+          <Info size={18} className="text-blue-600" /> {house.title || "Untitled House"}
         </h3>
 
         <div className="flex items-center gap-2 mt-2 text-gray-500 dark:text-gray-400">
           <MapPin size={16} className="text-blue-500" />
-          <span className="truncate">{house.location}</span>
+          <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
 
         <p className="text-blue-700 dark:text-blue-400 font-bold mt-3 flex items-center gap-1">

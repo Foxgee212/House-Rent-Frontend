@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
 import HouseCard from "../components/HouseCard";
 import Spinner from "../components/Spinner";
-import { useAuth } from "../context/AuthContext";
 import { Search, MapPin, Home } from "lucide-react";
 
 export default function HomePage() {
-  const { houses, fetchHouses, loading } = useHouses();
-  const { user } = useAuth();
-
+  const { houses, fetchApprovedHouses, loading } = useHouses();
   const [search, setSearch] = useState("");
   const [filtered, setFiltered] = useState([]);
 
+  // Fetch approved houses on mount
   useEffect(() => {
-    fetchHouses();
+    fetchApprovedHouses();
   }, []);
 
+  // Filter houses based on search input
   useEffect(() => {
     if (!Array.isArray(houses)) return;
+
     if (!search.trim()) {
       setFiltered(houses);
       return;
@@ -34,7 +34,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      {/* 🌇 Hero Section */}
+      {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-blue-600 to-blue-500 py-24 text-center text-white overflow-hidden">
         <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1560185127-6ed189bf02b9?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center"></div>
 
@@ -47,7 +47,7 @@ export default function HomePage() {
             Explore affordable and luxurious houses available for rent near you
           </p>
 
-          {/* 🔍 Search Bar */}
+          {/* Search Bar */}
           <div className="mt-10 flex justify-center px-4">
             <div className="relative w-full max-w-md backdrop-blur-md bg-white/20 rounded-2xl shadow-lg border border-white/30">
               <Search
@@ -66,7 +66,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 🏘️ Houses Section */}
+      {/* Houses Section */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="flex items-center justify-center mb-10">
           <MapPin size={24} className="text-blue-600 mr-2" />
@@ -82,20 +82,15 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filtered.map((house) => (
-              <div
-                key={house._id}
-                className="transition-transform duration-300 hover:scale-[1.02]"
-              >
-              <Link to={`/listings/${house._id}`}>
+              <Link key={house._id} to={`/listings/${house._id}`} className="transition-transform duration-300 hover:scale-[1.02]">
                 <HouseCard house={house} />
               </Link>
-              </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* 🌟 Footer */}
+      {/* Footer */}
       <footer className="bg-blue-600 text-white text-center py-6 mt-10">
         <p className="text-sm opacity-90">
           © {new Date().getFullYear()} RentHouse — Find comfort where you belong.

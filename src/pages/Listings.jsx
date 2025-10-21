@@ -1,17 +1,22 @@
-import { useState } from "react";
-import HouseCard from "../components/HouseCard";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import HouseCard from "../components/HouseCard";
 import { useHouses } from "../context/HouseContext";
 import { Search, MapPin, DollarSign, ArrowUpDown, XCircle } from "lucide-react";
+import Spinner from "../components/Spinner";
 
 export default function Listings() {
-  
+  const { houses, fetchApprovedHouses, loading } = useHouses();
+
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState(""); // "asc" or "desc"
 
-  const { houses, loading } = useHouses();
+  // Fetch approved houses on mount
+  useEffect(() => {
+    fetchApprovedHouses();
+  }, []);
 
   // Filter houses
   let filtered = houses.filter((house) => {
@@ -35,23 +40,14 @@ export default function Listings() {
     setSortOrder("");
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center mt-20">
-        <div className="loader border-blue-500 border-t-transparent border-4 w-12 h-12 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  if (loading) return <Spinner />;
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 p-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-        Available Houses
-      </h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Available Houses</h1>
 
       {/* Sticky Filter Bar */}
       <div className="sticky top-4 z-20 bg-white/95 dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col sm:flex-row gap-4 mb-6 items-center">
-        
         {/* Keyword */}
         <div className="relative w-full sm:w-1/4">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -60,7 +56,7 @@ export default function Listings() {
             placeholder="Search by keyword..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="p-3 pl-10 ring-1 ring-gray-400  text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 ring-1 ring-gray-400 text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
 
@@ -72,7 +68,7 @@ export default function Listings() {
             placeholder="Search by location..."
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="p-3 pl-10 ring-1 ring-gray-400  text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 ring-1 ring-gray-400 text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
 
@@ -84,7 +80,7 @@ export default function Listings() {
             placeholder="Max price"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            className="p-3 pl-10 ring-1 ring-gray-500  text-gray-600  w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 ring-1 ring-gray-500 text-gray-600 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
 
@@ -94,7 +90,7 @@ export default function Listings() {
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
-            className="p-3 pl-10 border ring-1  text-gray-600 ring-gray-400 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="p-3 pl-10 border ring-1 text-gray-600 ring-gray-400 w-full rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
           >
             <option value="">Sort by price</option>
             <option value="asc">Price: Low → High</option>

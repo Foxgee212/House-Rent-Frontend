@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import API from "../api/axios";
+import API from "../Api/axios";
 import { toast } from "react-hot-toast";
 
 const HouseContext = createContext();
@@ -11,11 +11,11 @@ export function HouseProvider({ children }) {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Fetch houses
-  const fetchHouses = async () => {
+  // Fetch Approved houses houses
+  const fetchApprovedHouses = async () => {
     setLoading(true);
     try {
-      const res = await API.get(`${API_URL}/houses`);
+      const res = await API.get("/houses/approved");
       const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
       setHouses(fetched);
       localStorage.setItem("houses", JSON.stringify(fetched));
@@ -57,11 +57,11 @@ export function HouseProvider({ children }) {
   };
 
   useEffect(() => {
-    fetchHouses();
+    fetchApprovedHouses();
   }, []);
 
   return (
-    <HouseContext.Provider value={{ houses, loading, error, fetchHouses, addHouse, deleteHouse }}>
+    <HouseContext.Provider value={{ houses, loading, error, fetchApprovedHouses, addHouse, deleteHouse }}>
       {children}
     </HouseContext.Provider>
   );
