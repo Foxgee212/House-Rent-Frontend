@@ -38,7 +38,7 @@ export default function AdminHouseCard({ house, onApprove, onDelete }) {
       {/* House Image */}
       <div className="relative">
         <img
-          src={house.image || "https://via.placeholder.com/400x250?text=No+Image"}
+          src={house.images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
           alt={house.title || "House image"}
           onClick={(e) => {
             e.stopPropagation();
@@ -155,7 +155,7 @@ export default function AdminHouseCard({ house, onApprove, onDelete }) {
           onClick={() => setZoomed(false)}
         >
           <img
-            src={house.image || "https://via.placeholder.com/800x500?text=No+Image"}
+            src={house.images || "https://via.placeholder.com/800x500?text=No+Image"}
             alt={house.title || "Zoomed house image"}
             className="max-w-[90%] max-h-[90%] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}

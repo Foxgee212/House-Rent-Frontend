@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { useHouses } from "../context/HouseContext";
 import {
   MapPin,
-  Mail,
   User,
   Home,
   Wallet,
   MessageCircle,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -18,41 +20,50 @@ export default function HouseDetail() {
 
   const [house, setHouse] = useState(null);
   const [recommendedHouses, setRecommendedHouses] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const landlordPhone = user?.phone || "2340000000000";
-  const message = `Hello, I am interested in your ${house?.title || ""} located in ${
-    house?.location || ""
-  }. Is it still available?`;
 
-  // Get the main house
+  // Fetch and load house
   useEffect(() => {
-    const foundHouse = houses.find((h) => h._id === id);
-    setHouse(foundHouse || null);
+    const timer = setTimeout(() => setLoading(false), 800); // Simulate smooth load
+    const found = houses.find((h) => h._id === id);
+    if (found) {
+      setHouse(found);
+      setSelectedImage(found.images?.[0]);
+    }
+    return () => clearTimeout(timer);
   }, [id, houses]);
 
-  // Compute recommendations AFTER house is loaded
+  // Recommendations
   useEffect(() => {
     if (!house) return;
 
-    const priceRange = 0.2; // ±20% price range
-
-    const recommendations = houses.filter((h) => {
+    const priceRange = 0.2;
+    const recs = houses.filter((h) => {
       if (h._id === house._id) return false;
-
       const locationMatch =
         h.location &&
         house.location &&
         h.location.split(",")[0] === house.location.split(",")[0];
 
-      const minPrice = house.price * (1 - priceRange);
-      const maxPrice = house.price * (1 + priceRange);
-      const priceMatch = h.price >= minPrice && h.price <= maxPrice;
+      const min = house.price * (1 - priceRange);
+      const max = house.price * (1 + priceRange);
+      const priceMatch = h.price >= min && h.price <= max;
 
       return locationMatch && priceMatch;
     });
 
-    setRecommendedHouses(recommendations.slice(0, 5));
+    setRecommendedHouses(recs.slice(0, 5));
   }, [house, houses]);
+
+  const message = `Hello, I am interested in your ${house?.title || ""} located in ${
+    house?.location || ""
+  }. Is it still available?`;
 
   const handleWhatsAppContact = () => {
     const formattedPhone = landlordPhone.replace(/[^0-9]/g, "");
@@ -60,27 +71,60 @@ export default function HouseDetail() {
     window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
   };
 
-  if (!house)
-    return (
-      <p className="p-12 text-center text-gray-500 text-lg animate-pulse">
-        Loading house details...
-      </p>
+  const handleImageClick = (img, index) => {
+    setSelectedImage(img);
+    setZoomIndex(index);
+  };
+
+  const openZoom = (index) => {
+    setZoomIndex(index);
+    setZoomOpen(true);
+  };
+
+  const nextImage = () => {
+    setZoomIndex((prev) => (prev + 1) % (house?.images?.length || 1));
+  };
+
+  const prevImage = () => {
+    setZoomIndex((prev) =>
+      (prev - 1 + (house?.images?.length || 1)) % (house?.images?.length || 1)
     );
+  };
+
+  // Skeleton loading screen
+  if (loading || !house) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 mt-12 animate-pulse">
+        <div className="h-72 bg-gray-300 dark:bg-gray-700 rounded-2xl mb-4"></div>
+        <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full mb-2"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-5/6"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 md:px-6">
-      {/* Main House Card */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 md:px-6 transition-all duration-500">
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
+        {/* ✅ Main Image */}
         <div className="relative">
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+          )}
           <img
-            src={house.image || "https://via.placeholder.com/800x500"}
+            src={selectedImage || house.images?.[0] || "https://via.placeholder.com/800x500"}
             alt={house.title}
-            className="w-full h-64 md:h-72 object-cover"
+            onLoad={() => setImageLoaded(true)}
+            onClick={() => openZoom(zoomIndex)}
+            className={`w-full h-72 md:h-96 object-cover cursor-pointer rounded-b-none transition-all duration-700 ${
+              imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+            }`}
           />
 
           {/* ✅ Availability Badge */}
           <span
-            className={`absolute top-4 right-4 px-4 py-1 rounded-full text-sm font-semibold ${
+            className={`absolute top-4 right-4 px-4 py-1 rounded-full text-sm font-semibold shadow-sm ${
               house.available
                 ? "bg-green-100 text-green-700 border border-green-300"
                 : "bg-red-100 text-red-700 border border-red-300"
@@ -90,8 +134,24 @@ export default function HouseDetail() {
           </span>
         </div>
 
+        {/* ✅ Thumbnails Carousel */}
+        <div className="flex overflow-x-auto gap-3 p-4 bg-gray-100 dark:bg-gray-700">
+          {house.images?.map((img, i) => (
+            <img
+              key={i}
+              src={img}
+              alt={`Thumbnail ${i}`}
+              className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${
+                selectedImage === img ? "border-blue-500" : "border-transparent"
+              }`}
+              onClick={() => handleImageClick(img, i)}
+            />
+          ))}
+        </div>
+
+        {/* ✅ House Info */}
         <div className="p-6 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 transition-opacity duration-300">
             <Home size={24} className="text-blue-600" /> {house.title}
           </h1>
 
@@ -107,13 +167,13 @@ export default function HouseDetail() {
           </p>
 
           {house.description && (
-            <p className="mt-4 text-gray-700 dark:text-gray-300">
+            <p className="mt-4 text-gray-700 dark:text-gray-300 leading-relaxed">
               {house.description}
             </p>
           )}
 
           {house.landlord && (
-            <div className="mt-6 bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-inner">
+            <div className="mt-6 bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-inner transition-all">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-2">
                 <User size={18} className="text-blue-600" /> Landlord Info
               </h2>
@@ -124,7 +184,7 @@ export default function HouseDetail() {
           )}
 
           <button
-            className="mt-6 w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl flex items-center justify-center gap-2"
+            className="mt-6 w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95"
             onClick={handleWhatsAppContact}
           >
             <MessageCircle size={18} /> Contact Landlord
@@ -142,15 +202,14 @@ export default function HouseDetail() {
             {recommendedHouses.map((h) => (
               <div
                 key={h._id}
-                className="min-w-[220px] bg-white dark:bg-gray-700 shadow-md rounded-xl p-3 flex-shrink-0 relative"
+                className="min-w-[220px] bg-white dark:bg-gray-700 shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all duration-200"
               >
                 <img
-                  src={h.image || "https://via.placeholder.com/200x120"}
+                  src={h.images?.[0] || "https://via.placeholder.com/200x120"}
                   alt={h.title}
                   className="w-full h-32 object-cover rounded-lg"
                 />
 
-                {/* Availability Badge */}
                 <span
                   className={`absolute top-2 right-2 px-3 py-0.5 text-xs rounded-full font-semibold ${
                     h.available
@@ -170,6 +229,40 @@ export default function HouseDetail() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Fullscreen Zoom Modal */}
+      {zoomOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50 backdrop-blur-sm transition-opacity">
+          <button
+            className="absolute top-6 right-6 text-white bg-gray-700 hover:bg-gray-600 p-2 rounded-full"
+            onClick={() => setZoomOpen(false)}
+          >
+            <X size={24} />
+          </button>
+
+          <div className="flex items-center justify-center w-full h-full px-6">
+            <button
+              className="text-white p-3 rounded-full hover:bg-gray-700"
+              onClick={prevImage}
+            >
+              <ChevronLeft size={32} />
+            </button>
+
+            <img
+              src={house.images?.[zoomIndex]}
+              alt="Zoomed view"
+              className="max-h-[90vh] max-w-full object-contain rounded-xl transition-transform duration-300"
+            />
+
+            <button
+              className="text-white p-3 rounded-full hover:bg-gray-700"
+              onClick={nextImage}
+            >
+              <ChevronRight size={32} />
+            </button>
           </div>
         </div>
       )}

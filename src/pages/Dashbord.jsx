@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import API from "../api/axios";
+import API from "../Api/axios";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 import {
@@ -10,6 +10,7 @@ import {
   MapPin,
   XCircle,
   Upload,
+  X,
 } from "lucide-react";
 import { Switch } from "@headlessui/react";
 
@@ -20,15 +21,18 @@ export default function DashBoard() {
     location: "",
     price: "",
     description: "",
+    negotiable: false,
   });
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [landlordHouses, setLandlordHouses] = useState([]);
-  const [zoomedId, setZoomedId] = useState(null);
+  const [zoomedHouse, setZoomedHouse] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [editing, setEditing] = useState(null);
   const [loadingHouses, setLoadingHouses] = useState(true);
 
-  // ✅ Only landlords can access this dashboard
+  // Restrict non-landlords
   if (user?.role !== "landlord") {
     return (
       <div className="p-8 max-w-4xl mx-auto text-center text-gray-700">
@@ -37,19 +41,15 @@ export default function DashBoard() {
     );
   }
 
-  // ✅ Fetch landlord houses
+  // Fetch landlord houses
   useEffect(() => {
     const fetchMyHouses = async () => {
       setLoadingHouses(true);
       try {
         const res = await API.get("/houses/my");
-        const housesData = Array.isArray(res.data)
-          ? res.data
-          : res.data.houses || [];
-        setLandlordHouses(housesData);
-      } catch (error) {
+        setLandlordHouses(res.data?.houses || res.data || []);
+      } catch {
         toast.error("Failed to load your listings");
-        setLandlordHouses([]);
       } finally {
         setLoadingHouses(false);
       }
@@ -57,20 +57,41 @@ export default function DashBoard() {
     fetchMyHouses();
   }, []);
 
-  // ✅ Handle form changes
+  // Handle form input
   const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // ✅ Add or update house
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImages((prev) => [...prev, ...files]);
+    setPreviewUrls((prev) => [...prev, ...newPreviews]);
+    e.target.value = null;
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!image && !editing) return toast.error("Please select an image");
+    if (!editing && images.length === 0)
+      return toast.error("Please select at least one image");
     setUploading(true);
 
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, val]) => formData.append(key, val));
-      if (image) formData.append("image", image);
+      Object.entries(form).forEach(([key, val]) => {
+          if (typeof val === "boolean"){
+            formData.append(key, val? "true": "false");
+
+          }else {
+            formData.append(key, val)
+          }
+      });
+      images.forEach((img) => formData.append("images", img));
 
       const res = editing
         ? await API.put(`/houses/${editing._id}`, form)
@@ -86,19 +107,19 @@ export default function DashBoard() {
           : [...prev, res.data.house]
       );
 
-      setForm({ title: "", location: "", price: "", description: "" });
-      setImage(null);
-      setEditing(null);
       toast.success(editing ? "✅ House updated!" : "🏠 House added!");
+      setForm({ title: "", location: "", price: "", description: "", negotiable: false });
+      setImages([]);
+      setPreviewUrls([]);
+      setEditing(null);
     } catch (error) {
-      toast.error("Something went wrong");
       console.error("Error uploading house:", error);
+      toast.error("Something went wrong while uploading");
     } finally {
       setUploading(false);
     }
   };
 
-  // ✅ Delete house
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     try {
@@ -110,7 +131,6 @@ export default function DashBoard() {
     }
   };
 
-  // ✅ Start editing
   const startEditing = (house) => {
     setEditing(house);
     setForm({
@@ -118,17 +138,18 @@ export default function DashBoard() {
       location: house.location,
       price: house.price,
       description: house.description,
+      negotiable: house.negotiable || false,
     });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ✅ Toggle availability
   const toggleAvailability = async (id, currentStatus) => {
     try {
-      const res = await API.patch(`/houses/${id}/availability`, {
-        available: !currentStatus,
-      }, {
-        headers: { "Content-Type": "application/json" },
-      });
+      await API.patch(
+        `/houses/${id}/availability`,
+        { available: !currentStatus },
+        { headers: { "Content-Type": "application/json" } }
+      );
       setLandlordHouses((prev) =>
         prev.map((h) =>
           h._id === id ? { ...h, available: !currentStatus } : h
@@ -139,15 +160,15 @@ export default function DashBoard() {
           ? "🏠 House marked as available"
           : "🚫 House marked as occupied"
       );
-    } catch (error) {
-      console.error("Error updating availability:", error);
+    } catch {
       toast.error("Failed to update availability");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 py-10 px-4 sm:px-10">
-      {/* Heading */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 py-10 px-4 sm:px-10 transition-all">
+
+      {/* Title */}
       <div className="flex items-center gap-3 mb-10 justify-center">
         <Home className="text-blue-600" size={34} />
         <h1 className="text-4xl font-extrabold text-blue-800 drop-shadow-sm">
@@ -158,7 +179,7 @@ export default function DashBoard() {
       {/* Form Section */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-blue-100 mb-12 max-w-4xl mx-auto transition-all duration-300"
+        className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-blue-100 mb-12 max-w-4xl mx-auto"
       >
         <h2 className="text-xl font-semibold mb-5 text-blue-700 flex items-center gap-2">
           {editing ? <Edit3 size={20} /> : <PlusCircle size={20} />}
@@ -197,18 +218,55 @@ export default function DashBoard() {
             <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-blue-50 transition bg-gray-50">
               <Upload size={18} className="text-blue-600" />
               <span className="text-gray-700">
-                {image ? image.name : "Upload house image"}
+                {images.length > 0
+                  ? `${images.length} image${images.length > 1 ? "s" : ""} selected`
+                  : "Upload house images"}
               </span>
               <input
                 type="file"
-                onChange={(e) => setImage(e.target.files[0])}
+                multiple
+                onChange={handleImageChange}
                 className="hidden"
                 accept="image/*"
-                required={!editing}
               />
             </label>
           )}
         </div>
+
+        {/* Negotiable toggle */}
+        <div className="mt-3 flex items-center gap-3">
+          <Switch
+            checked={form.negotiable}
+            onChange={(val) => setForm((prev) => ({ ...prev, negotiable: val }))}
+            className={`${form.negotiable ? "bg-green-500" : "bg-gray-300"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+          >
+            <span
+              className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+            />
+          </Switch>
+          <span className="text-sm text-gray-700 font-medium">Price Negotiable</span>
+        </div>
+
+        {/* Image previews */}
+        {previewUrls.length > 0 && (
+          <div className="flex flex-wrap gap-3 mt-5">
+            {previewUrls.map((url, i) => (
+              <div
+                key={i}
+                className="relative w-24 h-24 border rounded-xl overflow-hidden shadow-sm group"
+              >
+                <img src={url} alt={`preview-${i}`} className="w-full h-full object-cover"/>
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         <textarea
           name="description"
@@ -233,7 +291,7 @@ export default function DashBoard() {
               type="button"
               onClick={() => {
                 setEditing(null);
-                setForm({ title: "", location: "", price: "", description: "" });
+                setForm({ title: "", location: "", price: "", description: "", negotiable: false });
               }}
               className="flex items-center gap-2 text-gray-600 hover:text-blue-600"
             >
@@ -257,46 +315,48 @@ export default function DashBoard() {
           {landlordHouses.map((h) => (
             <div
               key={h._id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-transform duration-300 border border-gray-100"
+              className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-transform duration-300 border border-gray-100"
             >
               <img
-                src={h.image || "https://via.placeholder.com/400x300?text=No+Image"}
+                src={h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
                 alt={h.title}
-                onClick={() => setZoomedId(h._id)}
+                onClick={() => {
+                  setZoomedHouse(h);
+                  setActiveIndex(0);
+                }}
                 className="w-full h-48 object-cover cursor-pointer hover:opacity-90"
               />
+
+              {h.images?.length > 1 && (
+                <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                  +{h.images.length - 1} more
+                </span>
+              )}
+
               <div className="p-5">
                 <h3 className="text-lg font-bold text-gray-800">{h.title}</h3>
                 <p className="text-gray-500">{h.location}</p>
-                <p className="text-blue-600 font-semibold mt-2">
+                <p className="text-blue-600 font-semibold mt-2 flex items-center gap-2">
                   ₦{Number(h.price).toLocaleString()}
+                  {h.negotiable && (
+                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                      Negotiable
+                    </span>
+                  )}
                 </p>
-                <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                  {h.description}
-                </p>
+                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{h.description}</p>
 
-                {/* ✅ Availability Toggle */}
+                {/* Availability */}
                 <div className="flex items-center justify-between mt-4">
-                  <span
-                    className={`text-sm font-medium ${
-                      h.available ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
+                  <span className={`text-sm font-medium ${h.available ? "text-green-600" : "text-red-500"}`}>
                     {h.available ? "Available" : "Occupied"}
                   </span>
-
                   <Switch
                     checked={h.available}
                     onChange={() => toggleAvailability(h._id, h.available)}
-                    className={`${
-                      h.available ? "bg-green-500" : "bg-gray-300"
-                    } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                    className={`${h.available ? "bg-green-500" : "bg-gray-300"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
                   >
-                    <span
-                      className={`${
-                        h.available ? "translate-x-6" : "translate-x-1"
-                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                    />
+                    <span className={`${h.available ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}/>
                   </Switch>
                 </div>
 
@@ -316,25 +376,65 @@ export default function DashBoard() {
                   </button>
                 </div>
               </div>
-
-              {/* Zoomed Image Modal */}
-              {zoomedId === h._id && (
-                <div
-                  className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center"
-                  onClick={() => setZoomedId(null)}
-                >
-                  <img
-                    src={
-                      h.image || "https://via.placeholder.com/800x600?text=No+Image"
-                    }
-                    alt={h.title}
-                    className="max-w-[90%] max-h-[90%] border rounded-xl shadow-2xl"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-              )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Zoom Modal with Carousel */}
+      {zoomedHouse && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 overflow-auto"
+          onClick={() => setZoomedHouse(null)}
+        >
+          <button
+            className="absolute top-5 right-5 bg-white/80 text-black rounded-full p-2 shadow-md hover:bg-white transition"
+            onClick={() => setZoomedHouse(null)}
+          >
+            <X size={20} />
+          </button>
+
+          <div
+            className="relative flex flex-col items-center gap-4 max-w-[90%] max-h-[90%] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Main Image */}
+            <img
+              src={zoomedHouse.images?.[activeIndex] || zoomedHouse.images?.[0] || "https://via.placeholder.com/800x500?text=No+Image"}
+              alt={zoomedHouse.title || "House Image"}
+              className="max-w-[90%] max-h-[70vh] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300"
+            />
+
+            {/* Negotiable Badge */}
+            {zoomedHouse.negotiable !== undefined && (
+              <div
+                className={`absolute top-5 right-5 text-xs font-semibold px-3 py-1 rounded-full shadow-md border ${
+                  zoomedHouse.negotiable
+                    ? "bg-green-100 text-green-800 border-green-300"
+                    : "bg-gray-200 text-gray-700 border-gray-300"
+                }`}
+              >
+                {zoomedHouse.negotiable ? "Negotiable" : "Fixed Price"}
+              </div>
+            )}
+
+            {/* Thumbnails */}
+            <div className="flex gap-2 flex-wrap justify-center mt-4">
+              {zoomedHouse.images?.map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={`House ${index + 1}`}
+                  onClick={() => setActiveIndex(index)}
+                  className={`w-20 h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
+                    index === activeIndex
+                      ? "border-blue-500 scale-105"
+                      : "border-transparent hover:opacity-80"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
