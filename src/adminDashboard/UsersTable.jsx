@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trash2, Loader2, AlertCircle, UserCircle } from "lucide-react";
-import API from "../Api/axios";
+import API from "../api/axios";
 
 export default function UsersTable({ onDataChange }) {
   const [users, setUsers] = useState([]);

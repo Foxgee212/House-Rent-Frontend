@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import API from "../Api/axios";
+import API from "../api/axios";
 import { toast } from "react-hot-toast";
 
 const HouseContext = createContext();

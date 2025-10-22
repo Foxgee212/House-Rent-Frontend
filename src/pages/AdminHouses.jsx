@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../Api/axios";
+import API from "../api/axios";
 import AdminHouseCard from "../components/AdminHouseCard"; // ✅ your house card component
 
 export default function AdminHouses({ filterType = "all" }) {

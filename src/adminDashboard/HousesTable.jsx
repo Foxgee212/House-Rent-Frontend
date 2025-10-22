@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../Api/axios";
+import API from "../api/axios";
 import AdminHouseCard from "../components/AdminHouseCard"; // ✅ use the modern card we designed earlier
 import { useHouses } from "../context/HouseContext";
 

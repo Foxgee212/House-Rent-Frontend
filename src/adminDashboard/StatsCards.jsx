@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../Api/axios";
+import API from "../api/axios";
 
 export default function StatsCards() {
   const [stats, setStats] = useState({
