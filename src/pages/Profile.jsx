@@ -93,9 +93,9 @@ export default function Profile() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950 py-10 px-6">
-      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-8 relative">
-        <h1 className="text-3xl font-bold mb-6 text-center">My Profile</h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 py-10 px-6">
+      <div className="max-w-3xl mx-auto bg-gray-800 shadow-2xl rounded-2xl p-8 relative">
+        <h1 className="text-3xl font-bold mb-6 text-center text-white">My Profile</h1>
 
         {/* Profile Picture */}
         <div className="flex flex-col items-center mb-8">
@@ -119,7 +119,7 @@ export default function Profile() {
               className="hidden"
             />
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-gray-400">
             Click the camera icon to change your picture
           </p>
         </div>
@@ -128,8 +128,8 @@ export default function Profile() {
           <div
             className={`text-center mb-4 p-2 rounded-lg ${
               message.startsWith("✅")
-                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
-                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                ? "bg-green-900 text-green-200"
+                : "bg-red-900 text-red-200"
             }`}
           >
             {message}
@@ -164,10 +164,10 @@ export default function Profile() {
           onChange={(phone) => setForm({ ...form, phone })}
           placeholder="Enter phone number"
           containerClass="!w-full relative"
-          inputClass="!w-full !p-3 !pl-14 !border !rounded-lg !text-gray-800 dark:!text-gray-200 !border-gray-300 dark:!border-gray-600 focus:!border-blue-500 focus:!ring-0 dark:!bg-gray-700"
-          buttonClass="!border-gray-300 dark:!bg-gray-700 dark:!border-gray-600 !p-2 !rounded-l-lg"
-          dropdownClass="!bg-white dark:!bg-gray-800 dark:!text-gray-100 !text-gray-800"
-          searchClass="!text-gray-800 dark:!text-gray-100 dark:!bg-gray-700"
+          inputClass="!w-full !p-3 !pl-14 !border !rounded-lg !text-gray-200 !border-gray-600 focus:!border-blue-500 focus:!ring-0 !bg-gray-700"
+          buttonClass="!border-gray-300 !bg-gray-700 !border-gray-600 !p-2 !rounded-l-lg"
+          dropdownClass="!bg-gray-800 !text-gray-100 "
+          searchClass="!text-gray-100 !bg-gray-700"
           inputStyle={{ paddingLeft: "3.5rem" }}
         />
 
@@ -182,7 +182,7 @@ export default function Profile() {
               value={form.state ? { value: form.state, label: form.state } : null}
               onChange={(option) => handleSelectChange("state", option.value)}
               placeholder="Select State"
-              className="text-gray-800 dark:text-gray-200"
+              className=" text-gray-200"
               styles={{
                 control: (base) => ({
                   ...base,
@@ -233,7 +233,7 @@ export default function Profile() {
               }
               placeholder="Select LGA"
               isDisabled={!form.state}
-              className="text-gray-800 dark:text-gray-200"
+              className="text-gray-200"
               styles={{
                 control: (base, state) => ({
                   ...base,
@@ -277,7 +277,7 @@ export default function Profile() {
             placeholder="Short bio or additional info"
             value={form.bio}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <button
@@ -297,7 +297,7 @@ export default function Profile() {
 // ✅ Reusable Input Component
 function InputField({ icon, ...props }) {
   return (
-    <div className="flex items-center gap-2 border rounded-lg p-3 dark:bg-gray-700 dark:text-gray-100 focus-within:ring-2 focus-within:ring-blue-500">
+    <div className="flex items-center gap-2 border rounded-lg p-3 bg-gray-700 text-gray-100 focus-within:ring-2 focus-within:ring-blue-500">
       {icon}
       <input {...props} className="w-full bg-transparent focus:outline-none" />
     </div>

@@ -51,22 +51,22 @@ export default function Navbar() {
 
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition ${
-      isActive ? "text-blue-600 font-semibold border-b-2 border-blue-600 pb-1" : "text-gray-700 dark:text-gray-200"
+      isActive ? "text-blue-600 font-semibold border-b-2 border-blue-600 pb-1" : "text-gray-200 dark:text-gray-200"
     }`;
 
   return (
-    <nav className="bg-white/90 dark:bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-blue-100 dark:border-gray-700">
+    <nav className="bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <Link
           to="/"
-          className="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400 hover:scale-105 transition-transform"
+          className="flex items-center gap-2 text-2xl font-bold text-blue-400 hover:scale-105 transition-transform"
         >
           🏠 RentHouse
         </Link>
 
         {/* Desktop Menu */}
-        <ul className="hidden md:flex items-center gap-8 text-gray-700 dark:text-gray-200 font-medium">
+        <ul className="hidden md:flex items-center gap-8 text-white font-medium">
           <li>
             <NavLink to="/" className={navLinkClass}>
               <Home size={18} /> Home
@@ -103,7 +103,7 @@ export default function Navbar() {
               <li className="relative" ref={profileRef}>
                 <button
                   onClick={toggleProfile}
-                  className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition"
+                  className="flex items-center gap-2 hover:text-blue-400 transition"
                   aria-label="Profile menu"
                 >
                   <img
@@ -113,7 +113,7 @@ export default function Navbar() {
                         `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=0D8ABC&color=fff`
                       }
                       alt="profile"
-                      className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 object-cover transition-transform duration-300 hover:scale-110"
+                      className="w-9 h-9 rounded-full border border-gray-600 object-cover transition-transform duration-300 hover:scale-110"
                     />
 
                   <span className="font-medium hidden lg:block">
@@ -122,17 +122,17 @@ export default function Navbar() {
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 animate-fade-in">
+                  <div className="absolute right-0 mt-3 w-48 bg-gray-800 rounded-xl shadow-lg border border-gray-700 py-2 animate-fade-in">
                     <Link
                       to="/profile"
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 text-gray-200"
                       onClick={() => setProfileOpen(false)}
                     >
                       <User size={18} /> Profile
                     </Link>
                     <button
                       onClick={onLogout}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-gray-700"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-red-600 hover:bg-gray-700"
                     >
                       <LogOut size={18} /> Logout
                     </button>
@@ -159,7 +159,7 @@ export default function Navbar() {
         {/* Mobile Menu Button */}
         <button
           onClick={toggleMenu}
-          className="md:hidden text-gray-700 dark:text-gray-200"
+          className="md:hidden text-gray-200"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
           {menuOpen ? <X size={26} /> : <Menu size={26} />}
@@ -168,8 +168,8 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4 animate-slide-down">
-          <ul className="flex flex-col gap-4 text-gray-700 dark:text-gray-200">
+        <div className="md:hidden bg-gray-900 border-t border-gray-700 px-6 py-4 animate-slide-down">
+          <ul className="flex flex-col gap-4 text-gray-200">
             <li>
               <NavLink
                 to="/"

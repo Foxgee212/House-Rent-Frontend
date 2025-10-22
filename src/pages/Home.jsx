@@ -33,7 +33,7 @@ export default function HomePage() {
   if (loading) return <Spinner />;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-900 transition-colors duration-300">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-blue-600 to-blue-500 py-24 text-center text-white overflow-hidden">
         <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1560185127-6ed189bf02b9?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center"></div>

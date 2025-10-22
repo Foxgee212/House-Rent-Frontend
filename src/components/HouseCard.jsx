@@ -31,7 +31,7 @@ export default function HouseCard({ house }) {
 
   return (
     <div
-      className="bg-white/95 dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden
+      className=" dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden
       hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 cursor-pointer border border-gray-100 relative group"
     >
       {/* House Image */}
@@ -96,7 +96,7 @@ export default function HouseCard({ house }) {
 
       {/* House Details */}
       <div className="p-5">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
           <Info size={18} className="text-blue-600" /> {house.title || "Untitled House"}
         </h3>
 
@@ -105,13 +105,13 @@ export default function HouseCard({ house }) {
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
 
-        <p className="text-blue-700 dark:text-blue-400 font-bold mt-3 flex items-center gap-1">
+        <p className="text-blue-400 font-bold mt-3 flex items-center gap-1">
           <Wallet size={18} /> {formatPrice(house.price)}
           <span className="text-gray-500 text-sm">/month</span>
         </p>
 
         {house.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-300 mt-3 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-gray-300 mt-3 line-clamp-2 leading-relaxed">
             {house.description}
           </p>
         )}

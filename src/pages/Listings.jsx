@@ -43,11 +43,11 @@ export default function Listings() {
   if (loading) return <Spinner />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 p-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Available Houses</h1>
+    <div className="min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-8">
+      <h1 className="text-3xl font-bold mb-6 text-gray-100">Available Houses</h1>
 
       {/* Sticky Filter Bar */}
-      <div className="sticky top-4 z-20 bg-white/95 dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col sm:flex-row gap-4 mb-6 items-center">
+      <div className="sticky top-4 z-20 bg-gray-800 p-4 rounded-xl shadow-md flex flex-col sm:flex-row gap-4 mb-6 items-center">
         {/* Keyword */}
         <div className="relative w-full sm:w-1/4">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

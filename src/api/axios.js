@@ -2,7 +2,7 @@ import axios from "axios";
 
 // ✅ Create a pre-configured Axios instance
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
   withCredentials: true, // allows cookies / auth headers across domains
   timeout: 10000, // ⏳ prevents hanging requests
 });
