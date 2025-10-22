@@ -10,7 +10,8 @@
     "predeploy": "npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "postbuild": "copy dist\\index.html dist\\404.html"
+    "postbuild": "cpy dist/index.html dist/404.html"
+
   },
   "dependencies": {
     "@cloudinary/react": "^1.14.3",
@@ -36,6 +37,7 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.3",
+    "cpy-cli": "^6.0.0",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
