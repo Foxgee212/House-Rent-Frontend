@@ -12,10 +12,12 @@ import {
   Phone,
   Trash2,
   CheckCircle,
+  X,
 } from "lucide-react";
 
 export default function AdminHouseCard({ house, onApprove, onDelete }) {
   const [zoomed, setZoomed] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-NG", {
@@ -30,21 +32,17 @@ export default function AdminHouseCard({ house, onApprove, onDelete }) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  const images = Array.isArray(house.images) ? house.images : [];
+
   return (
-    <div
-      className="bg-white/95 dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden
-        hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 border border-gray-100 relative group"
-    >
+    <div className="bg-white/95 dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 border border-gray-100 relative group">
       {/* House Image */}
       <div className="relative">
         <img
-          src={house.images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
+          src={images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
           alt={house.title || "House image"}
-          onClick={(e) => {
-            e.stopPropagation();
-            setZoomed(true);
-          }}
-          className="w-full h-52 object-cover rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
+          onClick={() => setZoomed(true)}
+          className="w-full h-52 object-cover rounded-t-2xl transition-transform duration-500 group-hover:scale-105 cursor-pointer"
         />
 
         {/* Rent Badge */}
@@ -148,18 +146,42 @@ export default function AdminHouseCard({ house, onApprove, onDelete }) {
         </button>
       </div>
 
-      {/* Zoomed Modal */}
+      {/* Zoom Modal with Carousel */}
       {zoomed && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-auto"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4 overflow-auto"
           onClick={() => setZoomed(false)}
         >
+          <button
+            onClick={() => setZoomed(false)}
+            className="absolute top-5 right-5 bg-white/80 text-black rounded-full p-2 shadow-md hover:bg-white transition"
+          >
+            <X size={20} />
+          </button>
+
           <img
-            src={house.images || "https://via.placeholder.com/800x500?text=No+Image"}
+            src={images[activeIndex] || images[0] || "https://via.placeholder.com/800x500?text=No+Image"}
             alt={house.title || "Zoomed house image"}
-            className="max-w-[90%] max-h-[90%] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300"
+            className="max-w-[90%] max-h-[70vh] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           />
+
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="flex gap-2 flex-wrap justify-center mt-4" onClick={(e) => e.stopPropagation()}>
+              {images.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`House ${idx + 1}`}
+                  onClick={() => setActiveIndex(idx)}
+                  className={`w-20 h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
+                    idx === activeIndex ? "border-blue-500 scale-105" : "border-transparent hover:opacity-80"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
