@@ -10,6 +10,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -171,24 +173,46 @@ export default function HouseDetail() {
           )}
 
           {house.landlord && (
-            <div className="mt-6 bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-inner transition-all">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-2">
-                <User size={18} className="text-blue-600" /> Landlord Info
+            <div className="mt-6 bg-gray-50 dark:bg-gray-800 p-5 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                <User size={20} className="text-blue-600" />
+                Landlord Info
               </h2>
-              <div className="flex items-center ">
-                <img
-                  src={house.landlord.profilePic || "/default-profile.png"}
-                  alt="Profile"
-                  className="w-30 h-30 rounded-full object-cover border-4 border-blue-500 shadow-md"
-                />
-                <div className="pl-4">
-                    <p>{house.landlord.name}</p>
-                    <p>{house.landlord.email}</p>
-                    <p>{house.landlord.phone}</p>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-5">
+                {/* Profile Image */}
+                <div className="relative mx-auto sm:mx-0">
+                  <img
+                    src={house.landlord.profilePic || "/default-profile.png"}
+                    alt="Landlord Profile"
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-blue-500 shadow-lg"
+                  />
+                  {/* Online indicator (optional) */}
+                  <span className="absolute bottom-2 right-2 block w-3 h-3 bg-green-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
+                </div>
+
+                {/* Info Section */}
+                <div className="mt-4 sm:mt-0 text-center sm:text-left flex-1">
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    {house.landlord.name}
+                  </p>
+
+                  <div className="mt-2 space-y-1 text-gray-600 dark:text-gray-300">
+                    <p className="flex items-center justify-center sm:justify-start gap-2">
+                      <Mail size={16} className="text-blue-500" />
+                      <span>{house.landlord.email}</span>
+                    </p>
+
+                    <p className="flex items-center justify-center sm:justify-start gap-2">
+                      <Phone size={16} className="text-blue-500" />
+                      <span>{house.landlord.phone}</span>
+                    </p>
+                  </div>
+
                 </div>
               </div>
-              
             </div>
+
           )}
 
           <button
