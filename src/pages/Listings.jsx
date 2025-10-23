@@ -12,29 +12,34 @@ export default function Listings() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [showFullFilter, setShowFullFilter] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // ✅ Fetch approved houses on mount
+  // ✅ Handle resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // ✅ Fetch data on mount
   useEffect(() => {
     fetchApprovedHouses();
   }, []);
 
-  // ✅ More sensitive scroll detection with smoother transition
+  // ✅ Scroll detection (mobile only)
   useEffect(() => {
+    if (!isMobile) return; // only for mobile
+
     let lastScrollY = window.scrollY;
     let ticking = false;
 
     const update = () => {
       const currentScroll = window.scrollY;
-
-      // Smaller threshold → more sensitive scroll
       if (currentScroll > lastScrollY + 10) {
-        // Scrolling down fast
-        setShowFullFilter(false);
+        setShowFullFilter(false); // hide on scroll down
       } else if (currentScroll < lastScrollY - 10) {
-        // Scrolling up slightly → reveal quickly
-        setShowFullFilter(true);
+        setShowFullFilter(true); // show on scroll up
       }
-
       lastScrollY = currentScroll;
       ticking = false;
     };
@@ -48,18 +53,20 @@ export default function Listings() {
 
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [isMobile]);
 
-  // ✅ Filtering logic
+  // ✅ Filtering and sorting
   let filtered = houses.filter((house) => {
     const titleMatch = house.title?.toLowerCase().includes(search.toLowerCase());
     const descMatch = house.description?.toLowerCase().includes(search.toLowerCase());
     const locationMatch = house.location?.toLowerCase().includes(location.toLowerCase());
     const priceMatch = maxPrice === "" || house.price <= Number(maxPrice);
 
-    return (search === "" || titleMatch || descMatch) &&
-           (location === "" || locationMatch) &&
-           priceMatch;
+    return (
+      (search === "" || titleMatch || descMatch) &&
+      (location === "" || locationMatch) &&
+      priceMatch
+    );
   });
 
   if (sortOrder === "asc") filtered.sort((a, b) => a.price - b.price);
@@ -75,22 +82,28 @@ export default function Listings() {
   if (loading) return <Spinner />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-8">
+    <div className="min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-6 sm:p-8">
       <h1 className="text-3xl font-bold mb-6 text-gray-100">Available Houses</h1>
 
-      {/* ✅ Modern Smart Filter Bar */}
+      {/* ✅ Filter bar - fixed on mobile, inline on desktop */}
       <div
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] sm:w-[90%] md:w-[80%] 
-          bg-gray-900/80 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl 
-          transition-all duration-400 ease-in-out 
-          ${showFullFilter ? "p-4 scale-100 opacity-100" : "p-2 scale-[0.98] opacity-90"} `}
+        className={`
+          ${isMobile
+            ? `fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] bg-gray-900/80 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl 
+               transition-all duration-400 ease-in-out ${showFullFilter ? "p-4 scale-100 opacity-100" : "p-2 scale-[0.98] opacity-90"}`
+            : `bg-gray-800/90 backdrop-blur-lg border border-gray-700/60 rounded-2xl shadow-lg p-4 mb-8`
+          }`}
       >
         <div
           className={`flex flex-col sm:flex-row items-center gap-4 transition-all duration-500 overflow-hidden ${
-            showFullFilter ? "max-h-[500px]" : "max-h-[70px]"
+            isMobile
+              ? showFullFilter
+                ? "max-h-[500px]"
+                : "max-h-[70px]"
+              : "max-h-none"
           }`}
         >
-          {/* 🔍 Always visible search */}
+          {/* 🔍 Search (always visible) */}
           <div className="relative w-full sm:w-1/4">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
             <input
@@ -102,8 +115,8 @@ export default function Listings() {
             />
           </div>
 
-          {/* 📍 Other filters only visible when expanded */}
-          {showFullFilter && (
+          {/* 📍 Other filters */}
+          {(!isMobile || showFullFilter) && (
             <>
               <div className="relative w-full sm:w-1/4">
                 <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-green-400" />
@@ -151,8 +164,8 @@ export default function Listings() {
         </div>
       </div>
 
-      {/* Spacer for fixed bar */}
-      <div className="h-28"></div>
+      {/* Spacer for fixed mobile filter */}
+      {isMobile && <div className="h-28"></div>}
 
       {/* 🏠 House listings */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
