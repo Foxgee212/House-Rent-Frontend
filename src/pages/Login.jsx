@@ -40,32 +40,31 @@ export default function Login() {
     }
   };
 
-  // ✅ Automatic role-based redirect when user changes
+  // ✅ Automatic role-based redirect
   useEffect(() => {
     if (user?.role) {
-      if (user.role === "landlord") {
-        navigate("/dashboard");
-      } else if (user.role === "tenant") {
-        navigate("/");
-      } else if (user.role === "admin") {
-        navigate("/admin");
-      }
+      if (user.role === "landlord") navigate("/dashboard");
+      else if (user.role === "tenant") navigate("/");
+      else if (user.role === "admin") navigate("/admin");
     }
   }, [user, navigate]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md border border-blue-100">
+    <div className="flex justify-center items-center min-h-screen bg-gray-900">
+      {/* Card */}
+      <div className="bg-gray-800 shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700">
         {/* Header */}
         <div className="text-center mb-6">
-          <LogIn className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-          <h1 className="text-3xl font-bold text-blue-700">Welcome Back</h1>
-          <p className="text-gray-500 mt-1">Log in to continue your journey</p>
+          <div className="bg-blue-600/10 w-14 h-14 flex items-center justify-center rounded-full mx-auto mb-3">
+            <LogIn className="w-8 h-8 text-blue-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-white">Welcome Back</h1>
+          <p className="text-gray-400 mt-1">Log in to continue your journey</p>
         </div>
 
-        {/* Error */}
+        {/* Error Message */}
         {error && (
-          <p className="text-red-500 text-sm text-center mb-3 bg-red-50 py-2 rounded-lg border border-red-100">
+          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700">
             {error}
           </p>
         )}
@@ -80,7 +79,7 @@ export default function Login() {
               placeholder="Email Address"
               value={email}
               onChange={handleChange}
-              className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              className="w-full pl-10 p-3 bg-gray-900 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
               required
             />
           </div>
@@ -93,7 +92,7 @@ export default function Login() {
               placeholder="Password"
               value={password}
               onChange={handleChange}
-              className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              className="w-full pl-10 p-3 bg-gray-900 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
               required
             />
           </div>
@@ -116,11 +115,12 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-5 text-center text-gray-600">
+        {/* Signup Link */}
+        <p className="mt-5 text-center text-gray-400">
           Don’t have an account?{" "}
           <Link
             to="/signup"
-            className="text-blue-600 font-medium hover:underline"
+            className="text-blue-500 font-medium hover:underline"
           >
             Create one
           </Link>

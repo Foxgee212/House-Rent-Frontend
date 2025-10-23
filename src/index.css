@@ -13,3 +13,11 @@
   animation: spin 1s linear infinite;
 }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #1f1f1f; /* match your app background */
+  font-family: sans-serif; /* optional */
+}
+

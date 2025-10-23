@@ -23,11 +23,15 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      {/* Topbar */}
       <Topbar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="p-4 sm:p-6 space-y-6">
-        <StatsCards />
-        {renderContent()}
+
+      {/* Main Content */}
+      <main className="p-4 sm:p-6 space-y-6 flex-1">
+        {/* ✅ Pass both props so StatsCards knows which one is active */}
+        <StatsCards activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className="space-y-6">{renderContent()}</div>
       </main>
     </div>
   );

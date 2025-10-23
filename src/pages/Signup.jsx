@@ -19,7 +19,7 @@ export default function Signup() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { name, email, password, role, location, bio, phone, profilePic } = form;
+  const { name, email, password, role } = form;
   const { signup } = useAuth();
 
   const handleChange = (e) => {
@@ -60,17 +60,22 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md border border-blue-100">
+    <div className="flex justify-center items-center min-h-screen bg-gray-900">
+      <div className="bg-gray-800 shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700">
         {/* Header */}
         <div className="text-center mb-6">
-          <UserPlus className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-          <h1 className="text-3xl font-bold text-blue-700">Create an Account</h1>
-          <p className="text-gray-500 mt-1">Join and find your perfect home today!</p>
+          <div className="bg-blue-600/10 w-14 h-14 flex items-center justify-center rounded-full mx-auto mb-3">
+            <UserPlus className="w-8 h-8 text-blue-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-white">Create an Account</h1>
+          <p className="text-gray-400 mt-1">
+            Join and find your perfect home today!
+          </p>
         </div>
 
+        {/* Error */}
         {error && (
-          <p className="text-red-500 text-sm text-center mb-3 bg-red-50 py-2 rounded-lg border border-red-100">
+          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700">
             {error}
           </p>
         )}
@@ -86,7 +91,7 @@ export default function Signup() {
               placeholder="Full Name"
               value={name}
               onChange={handleChange}
-              className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              className="w-full pl-10 p-3 bg-gray-900 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
               required
             />
           </div>
@@ -100,7 +105,7 @@ export default function Signup() {
               placeholder="Email Address"
               value={email}
               onChange={handleChange}
-              className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              className="w-full pl-10 p-3 bg-gray-900 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
               required
             />
           </div>
@@ -114,7 +119,7 @@ export default function Signup() {
               placeholder="Password"
               value={password}
               onChange={handleChange}
-              className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              className="w-full pl-10 p-3 bg-gray-900 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
               required
             />
           </div>
@@ -126,14 +131,14 @@ export default function Signup() {
               name="role"
               value={role}
               onChange={handleChange}
-              className="w-full pl-10 p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+              className="w-full pl-10 p-3 bg-gray-900 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
               <option value="tenant">Tenant</option>
               <option value="landlord">Landlord</option>
             </select>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             className={`bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 ${
@@ -152,9 +157,12 @@ export default function Signup() {
         </form>
 
         {/* Footer */}
-        <p className="mt-5 text-center text-gray-600">
+        <p className="mt-5 text-center text-gray-400">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 font-medium hover:underline">
+          <Link
+            to="/login"
+            className="text-blue-500 font-medium hover:underline"
+          >
             Login here
           </Link>
         </p>
