@@ -26,8 +26,6 @@ export default function HouseDetail() {
   const [loading, setLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const landlordPhone = user?.phone || "2340000000000";
-
   // Fetch and load house
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800); // Simulate smooth load
@@ -66,7 +64,7 @@ export default function HouseDetail() {
   }. Is it still available?`;
 
   const handleWhatsAppContact = () => {
-    const formattedPhone = landlordPhone.replace(/[^0-9]/g, "");
+    const formattedPhone = house.landlord.phone.replace(/[^0-9]/g, "");
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
   };
@@ -177,9 +175,19 @@ export default function HouseDetail() {
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-2">
                 <User size={18} className="text-blue-600" /> Landlord Info
               </h2>
-              <p>{house.landlord.name}</p>
-              <p>{house.landlord.email}</p>
-              <p>{landlordPhone}</p>
+              <div className="flex items-center ">
+                <img
+                  src={house.landlord.profilePic || "/default-profile.png"}
+                  alt="Profile"
+                  className="w-30 h-30 rounded-full object-cover border-4 border-blue-500 shadow-md"
+                />
+                <div className="pl-4">
+                    <p>{house.landlord.name}</p>
+                    <p>{house.landlord.email}</p>
+                    <p>{house.landlord.phone}</p>
+                </div>
+              </div>
+              
             </div>
           )}
 
