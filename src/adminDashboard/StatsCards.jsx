@@ -87,12 +87,7 @@ export default function StatsCards({ setActiveTab, activeTab }) {
     },
   ];
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center py-10">
-        <p className="text-gray-400 animate-pulse">Loading stats...</p>
-      </div>
-    );
+  
 
   return (
     <motion.div
