@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Trash2, Loader2, AlertCircle, UserCircle, Search } from "lucide-react";
+import { Trash2, AlertCircle, UserCircle, Search } from "lucide-react";
 import API from "../api/axios";
 
 export default function UsersTable({ onDataChange }) {
@@ -58,11 +58,28 @@ export default function UsersTable({ onDataChange }) {
     fetchUsers();
   }, []);
 
-  // ✅ Loading & error UI
+  // ✅ Modern Loading Bar
   if (loading)
     return (
-      <div className="flex justify-center items-center h-40">
-        <Loader2 className="animate-spin text-indigo-500" size={28} />
+      <div className="relative h-40 flex items-center justify-center bg-gray-900">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gray-800 overflow-hidden">
+          <div className="h-full w-1/2 bg-blue-500 animate-slide" />
+        </div>
+        <p className="text-blue-400 text-sm font-medium">Loading users...</p>
+
+        <style>
+          {`
+            @keyframes slide {
+              0% { transform: translateX(-100%); }
+              50% { transform: translateX(50%); }
+              100% { transform: translateX(100%); }
+            }
+            .animate-slide {
+              animation: slide 1.2s ease-in-out infinite;
+              box-shadow: 0 0 10px rgba(59,130,246,0.8);
+            }
+          `}
+        </style>
       </div>
     );
 
@@ -89,7 +106,7 @@ export default function UsersTable({ onDataChange }) {
             placeholder="Search by name, email or phone..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 pr-3 py-2 w-full bg-gray-800 text-gray-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+            className="pl-10 pr-3 py-2 w-full bg-gray-800 text-gray-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
           />
         </div>
       </div>
@@ -97,12 +114,11 @@ export default function UsersTable({ onDataChange }) {
       {filtered.length === 0 ? (
         <p className="text-center text-gray-400 py-10">No users found.</p>
       ) : (
-        // 📱 Responsive Grid: 2 per line on mobile, 3–5 on larger screens
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
           {filtered.map((u) => (
             <div
               key={u._id}
-              className="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-indigo-600 transition-all flex flex-col items-center text-center"
+              className="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-blue-600 transition-all flex flex-col items-center text-center"
             >
               {u.profilePic ? (
                 <img
@@ -126,7 +142,7 @@ export default function UsersTable({ onDataChange }) {
                 📞 {u.phone || "No phone"}
               </p>
 
-              <span className="mt-2 inline-block px-3 py-1 text-[11px] sm:text-xs font-medium bg-indigo-600/20 text-indigo-400 rounded-full capitalize">
+              <span className="mt-2 inline-block px-3 py-1 text-[11px] sm:text-xs font-medium bg-blue-600/20 text-blue-400 rounded-full capitalize">
                 {u.role}
               </span>
 
