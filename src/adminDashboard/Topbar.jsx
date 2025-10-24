@@ -10,11 +10,8 @@ export default function Topbar({ activeTab, setActiveTab }) {
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
-      if (currentY > lastScrollY && currentY > 100) {
-        setShowNav(false); // hide
-      } else if (currentY < lastScrollY - 5) {
-        setShowNav(true); // show
-      }
+      if (currentY > lastScrollY && currentY > 100) setShowNav(false);
+      else if (currentY < lastScrollY - 5) setShowNav(true);
       setLastScrollY(currentY);
     };
     window.addEventListener("scroll", handleScroll);
@@ -29,43 +26,53 @@ export default function Topbar({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <motion.header
-      animate={{ y: showNav ? 0 : -100 }}
-      transition={{ type: "spring", stiffness: 120, damping: 18 }}
-      className="fixed top-0 left-0 w-full z-40 bg-gray-900/95 backdrop-blur-xl border-b border-gray-800 shadow-lg"
-    >
-      <div className="flex items-center justify-between px-4 py-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-indigo-500 tracking-tight">
-          SkyRent Admin
-        </h1>
+    <>
+      {/* 🧭 Fixed Top Header */}
+      <motion.header
+        animate={{ y: showNav ? 0 : -100 }}
+        transition={{ type: "spring", stiffness: 120, damping: 18 }}
+        className="fixed top-0 left-0 w-full z-40 bg-gray-900/95 backdrop-blur-xl border-b border-gray-800 shadow-lg"
+      >
+        <div className="flex items-center justify-between px-4 py-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-indigo-500 tracking-tight">
+            SkyRent Admin
+          </h1>
+        </div>
+      </motion.header>
+
+      {/* ⬇️ Navigation Row (sits right above stats) */}
+      <div className="mt-24 mb-6 px-4">
+        <nav className="flex flex-wrap justify-center sm:justify-start gap-4">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <motion.button
+                key={item.id}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                  isActive
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-600/30"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white"
+                }`}
+              >
+                <Icon
+                  size={18}
+                  className={isActive ? "text-white" : "text-gray-300"}
+                />
+                <span>{item.label}</span>
+              </motion.button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* 🔹 Navigation Buttons */}
-      <nav className="flex flex-wrap justify-center sm:justify-start gap-3 px-4 pb-3">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <motion.button
-              key={item.id}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                isActive
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white"
-              }`}
-            >
-              <Icon
-                size={18}
-                className={isActive ? "text-white" : "text-gray-300"}
-              />
-              <span>{item.label}</span>
-            </motion.button>
-          );
-        })}
-      </nav>
-    </motion.header>
+      {/* 📊 Padding space before stats section */}
+      <div className="px-2 mb-0">
+        <hr className="border-gray-800" />
+      </div>
+    </>
   );
 }

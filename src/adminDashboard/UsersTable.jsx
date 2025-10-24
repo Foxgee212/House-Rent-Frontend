@@ -31,7 +31,7 @@ export default function UsersTable({ onDataChange }) {
     try {
       await API.delete(`/admin/users/${id}`);
       await fetchUsers();
-      if (onDataChange) onDataChange();
+      onDataChange?.();
     } catch (err) {
       console.error("Error deleting user:", err);
       alert("Failed to delete user.");
@@ -75,9 +75,11 @@ export default function UsersTable({ onDataChange }) {
     );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200 p-6 transition-all">
+    <div className="min-h-screen bg-gray-900 text-gray-200 p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-100">👥 User Management</h2>
+        <h2 className="text-xl font-semibold text-gray-100">
+          👥 User Management
+        </h2>
 
         {/* 🔍 Search Input */}
         <div className="relative w-full sm:w-72 mt-3 sm:mt-0">
@@ -95,41 +97,44 @@ export default function UsersTable({ onDataChange }) {
       {filtered.length === 0 ? (
         <p className="text-center text-gray-400 py-10">No users found.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        // 📱 Responsive Grid: 2 per line on mobile, 3–5 on larger screens
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
           {filtered.map((u) => (
             <div
               key={u._id}
-              className="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-md hover:shadow-lg hover:border-indigo-600 transition-all flex flex-col items-center text-center"
+              className="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-indigo-600 transition-all flex flex-col items-center text-center"
             >
               {u.profilePic ? (
                 <img
                   src={u.profilePic}
                   alt={u.name || "User"}
-                  className="w-20 h-20 rounded-full object-cover mb-3 border border-gray-600"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover mb-3 border border-gray-600"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center mb-3">
-                  <UserCircle className="text-gray-400" size={50} />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-700 flex items-center justify-center mb-3">
+                  <UserCircle className="text-gray-400" size={42} />
                 </div>
               )}
 
-              <h3 className="font-semibold text-gray-100">
+              <h3 className="font-semibold text-gray-100 truncate w-full">
                 {u.name || "Unnamed User"}
               </h3>
-              <p className="text-sm text-gray-400">{u.email}</p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs sm:text-sm text-gray-400 truncate w-full">
+                {u.email}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 truncate w-full">
                 📞 {u.phone || "No phone"}
               </p>
 
-              <span className="mt-2 inline-block px-3 py-1 text-xs font-medium bg-indigo-600/20 text-indigo-400 rounded-full capitalize">
+              <span className="mt-2 inline-block px-3 py-1 text-[11px] sm:text-xs font-medium bg-indigo-600/20 text-indigo-400 rounded-full capitalize">
                 {u.role}
               </span>
 
               <button
                 onClick={() => deleteUser(u._id)}
-                className="mt-4 text-red-400 hover:text-red-500 flex items-center gap-1 transition"
+                className="mt-4 text-red-400 hover:text-red-500 flex items-center gap-1 transition text-sm"
               >
-                <Trash2 size={16} />
+                <Trash2 size={15} />
                 <span>Delete</span>
               </button>
             </div>
