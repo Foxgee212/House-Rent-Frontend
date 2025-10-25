@@ -10,6 +10,8 @@ import HouseDetail from "./pages/HouseDetails";
 import PrivateRoute from "./components/PrivateRoute";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./adminDashboard/AdminDashboard"
+import VerifyLandlord from "./pages/VerifyLandlord"
+import FaceLiveness from "./pages/FaceLiveness"
 
 function App() {
   return (
@@ -43,7 +45,18 @@ function App() {
             </PrivateRoute>
           }
          />
+         <Route 
+      path="/verify"
+      element= {
+        <PrivateRoute roles={["landlord"]}>
+          <VerifyLandlord />
+        </PrivateRoute>
+      }/>
+      <Route path="liveness" element={<FaceLiveness />} />
       </Routes>
+      
+
+      
     </>
   );
 }

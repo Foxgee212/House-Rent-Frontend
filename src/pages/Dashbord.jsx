@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
@@ -10,13 +11,13 @@ import {
   MapPin,
   XCircle,
   Upload,
-  X,
 } from "lucide-react";
 import { Switch } from "@headlessui/react";
 import imageCompression from "browser-image-compression";
 
 export default function DashBoard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     title: "",
     location: "",
@@ -58,12 +59,13 @@ export default function DashBoard() {
     fetchMyHouses();
   }, []);
 
+  // Form changes
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    if (!files.length) return;
 
     const compressedFiles = [];
     const newPreviews = [];
@@ -93,8 +95,14 @@ export default function DashBoard() {
     e.preventDefault();
     if (!editing && images.length === 0)
       return toast.error("Please select at least one image");
-    setUploading(true);
 
+    if (user.verificationStatus !== "verified") {
+      toast.error("You must verify your identity before posting houses");
+      navigate("/verify");
+      return;
+    }
+
+    setUploading(true);
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, val]) =>
@@ -178,10 +186,27 @@ export default function DashBoard() {
         </h1>
       </div>
 
+      {/* Verification Notice */}
+      {user.verificationStatus !== "verified" && (
+        <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+          <p>
+            ⚠️ Your account is not verified. You must verify your identity to post houses.
+          </p>
+          <button
+            onClick={() => navigate("/verify")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+          >
+            Verify Identity
+          </button>
+        </div>
+      )}
+
       {/* Form Section */}
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5"
+        className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
+          user.verificationStatus !== "verified" ? "opacity-60 pointer-events-none" : ""
+        }`}
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
           {editing ? <Edit3 size={20} /> : <PlusCircle size={20} />}
@@ -253,7 +278,7 @@ export default function DashBoard() {
                   onClick={() => removeImage(i)}
                   className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
                 >
-                  <X size={14} />
+                  <XCircle size={14} />
                 </button>
               </div>
             ))}
@@ -307,7 +332,7 @@ export default function DashBoard() {
                 className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
               >
                 <img
-                  src={h.images?.[0] || 'https://placehold.co/400x300?text=No+Image'}
+                  src={h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
                   alt={h.title}
                   onClick={() => { setZoomedHouse(h); setActiveIndex(0); }}
                   className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition"

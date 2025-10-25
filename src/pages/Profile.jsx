@@ -5,10 +5,12 @@ import PhoneInput from "react-phone-input-2";
 import Select from "react-select";
 import 'react-phone-input-2/lib/style.css';
 import API from "../api/axios";
-import { nigeriaStatesAndLgas } from "../utils/nigeriaData"; // We'll create this small data file
+import { nigeriaStatesAndLgas } from "../utils/nigeriaData";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
   const { user, token, setUser } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -22,7 +24,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // ✅ Pre-fill user data
+  // Pre-fill user data
   useEffect(() => {
     if (user) {
       const [state, localGovernment] = (user.location || "").split(", ");
@@ -39,7 +41,6 @@ export default function Profile() {
   }, [user]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
   const handleSelectChange = (field, value) => setForm({ ...form, [field]: value });
 
   const handleImageChange = (e) => {
@@ -82,7 +83,7 @@ export default function Profile() {
     }
   };
 
-  // ✅ Convert states to react-select options
+  // Convert states to react-select options
   const stateOptions = Object.keys(nigeriaStatesAndLgas).map((state) => ({
     value: state,
     label: state,
@@ -97,8 +98,8 @@ export default function Profile() {
       <div className="max-w-3xl mx-auto bg-gray-800 shadow-2xl rounded-2xl p-8 relative">
         <h1 className="text-3xl font-bold mb-6 text-center text-white">My Profile</h1>
 
-        {/* Profile Picture */}
-        <div className="flex flex-col items-center mb-8">
+        {/* Profile Picture + Badge */}
+        <div className="flex flex-col items-center mb-8 relative">
           <div className="relative">
             <img
               src={preview || "/default-profile.png"}
@@ -122,14 +123,23 @@ export default function Profile() {
           <p className="mt-2 text-sm text-gray-400">
             Click the camera icon to change your picture
           </p>
+
+          {/* Not Verified Badge for Landlords */}
+          {user?.role === "landlord" && !user?.verified && (
+            <span
+              onClick={() => navigate("/verify")}
+              className="absolute top-0 right-0 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md animate-pulse cursor-pointer hover:bg-red-600 transition"
+              title="Click to verify account"
+            >
+              Not Verified
+            </span>
+          )}
         </div>
 
         {message && (
           <div
             className={`text-center mb-4 p-2 rounded-lg ${
-              message.startsWith("✅")
-                ? "bg-green-900 text-green-200"
-                : "bg-red-900 text-red-200"
+              message.startsWith("✅") ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"
             }`}
           >
             {message}
@@ -158,64 +168,31 @@ export default function Profile() {
           {/* Phone Input */}
           <div>
             <label className="block text-sm font-medium mb-1">Phone Number</label>
-        <PhoneInput
-          country={"ng"}
-          value={form.phone}
-          onChange={(phone) => setForm({ ...form, phone })}
-          placeholder="Enter phone number"
-          containerClass="!w-full relative"
-          inputClass="!w-full !p-3 !pl-14 !border !rounded-lg !text-gray-200 !border-gray-600 focus:!border-blue-500 focus:!ring-0 !bg-gray-700"
-          buttonClass="!border-gray-300 !bg-gray-700 !border-gray-600 !p-2 !rounded-l-lg"
-          dropdownClass="!bg-gray-800 !text-gray-100 "
-          searchClass="!text-gray-100 !bg-gray-700"
-          inputStyle={{ paddingLeft: "3.5rem" }}
-        />
-
-
+            <PhoneInput
+              country={"ng"}
+              value={form.phone}
+              onChange={(phone) => setForm({ ...form, phone })}
+              placeholder="Enter phone number"
+              containerClass="!w-full relative"
+              inputClass="!w-full !p-3 !pl-14 !border !rounded-lg !text-gray-200 !border-gray-600 focus:!border-blue-500 focus:!ring-0 !bg-gray-700"
+              buttonClass="!border-gray-300 !bg-gray-700 !border-gray-600 !p-2 !rounded-l-lg"
+              dropdownClass="!bg-gray-800 !text-gray-100"
+              searchClass="!text-gray-100 !bg-gray-700"
+              inputStyle={{ paddingLeft: "3.5rem" }}
+            />
           </div>
 
           {/* State */}
           <div>
             <label className="block text-sm font-medium mb-1">State</label>
-          <Select
+            <Select
               options={stateOptions}
               value={form.state ? { value: form.state, label: form.state } : null}
               onChange={(option) => handleSelectChange("state", option.value)}
               placeholder="Select State"
-              className=" text-gray-200"
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  backgroundColor: "#374151", // dark gray for main box (Tailwind bg-gray-700)
-                  color: "#f9fafb",
-                  borderColor: "#4b5563",
-                  boxShadow: "none",
-                  "&:hover": { borderColor: "#6b7280" },
-                }),
-                menu: (base) => ({
-                  ...base,
-                  backgroundColor: "#1f2937", // dropdown background (Tailwind bg-gray-800)
-                  color: "#f9fafb",
-                }),
-                option: (base, state) => ({
-                  ...base,
-                  backgroundColor: state.isFocused
-                    ? "#4b5563" // hover state (Tailwind bg-gray-600)
-                    : "#1f2937", // default (Tailwind bg-gray-800)
-                  color: "#f9fafb",
-                  cursor: "pointer",
-                }),
-                singleValue: (base) => ({
-                  ...base,
-                  color: "#f9fafb", // selected value text
-                }),
-                placeholder: (base) => ({
-                  ...base,
-                  color: "#9ca3af", // muted gray placeholder
-                }),
-              }}
-          />
-
+              className="text-gray-200"
+              styles={selectStyles}
+            />
           </div>
 
           {/* Local Government */}
@@ -224,51 +201,14 @@ export default function Profile() {
             <Select
               options={lgaOptions}
               value={
-                form.localGovernment
-                  ? { value: form.localGovernment, label: form.localGovernment }
-                  : null
+                form.localGovernment ? { value: form.localGovernment, label: form.localGovernment } : null
               }
-              onChange={(option) =>
-                handleSelectChange("localGovernment", option.value)
-              }
+              onChange={(option) => handleSelectChange("localGovernment", option.value)}
               placeholder="Select LGA"
               isDisabled={!form.state}
               className="text-gray-200"
-              styles={{
-                control: (base, state) => ({
-                  ...base,
-                  backgroundColor: "#374151", // dark gray (Tailwind bg-gray-700)
-                  color: "#f9fafb",
-                  borderColor: state.isFocused ? "#6b7280" : "#4b5563",
-                  boxShadow: "none",
-                  "&:hover": { borderColor: "#9ca3af" },
-                  opacity: state.isDisabled ? 0.5 : 1,
-                  cursor: state.isDisabled ? "not-allowed" : "pointer",
-                }),
-                menu: (base) => ({
-                  ...base,
-                  backgroundColor: "#1f2937", // Tailwind bg-gray-800
-                  color: "#f9fafb",
-                }),
-                option: (base, state) => ({
-                  ...base,
-                  backgroundColor: state.isFocused
-                    ? "#4b5563" // Tailwind bg-gray-700 on hover
-                    : "#1f2937", // Tailwind bg-gray-800 normal
-                  color: "#f9fafb",
-                  cursor: "pointer",
-                }),
-                singleValue: (base) => ({
-                  ...base,
-                  color: "#f9fafb",
-                }),
-                placeholder: (base) => ({
-                  ...base,
-                  color: "#9ca3af", // Tailwind text-gray-400
-                }),
-              }}
+              styles={selectStyles}
             />
-
           </div>
 
           {/* Bio */}
@@ -294,7 +234,7 @@ export default function Profile() {
   );
 }
 
-// ✅ Reusable Input Component
+// Reusable Input Component
 function InputField({ icon, ...props }) {
   return (
     <div className="flex items-center gap-2 border rounded-lg p-3 bg-gray-700 text-gray-100 focus-within:ring-2 focus-within:ring-blue-500">
@@ -303,3 +243,26 @@ function InputField({ icon, ...props }) {
     </div>
   );
 }
+
+// React-select custom styles
+const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: "#374151",
+    color: "#f9fafb",
+    borderColor: state.isFocused ? "#6b7280" : "#4b5563",
+    boxShadow: "none",
+    "&:hover": { borderColor: "#9ca3af" },
+    opacity: state.isDisabled ? 0.5 : 1,
+    cursor: state.isDisabled ? "not-allowed" : "pointer",
+  }),
+  menu: (base) => ({ ...base, backgroundColor: "#1f2937", color: "#f9fafb" }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#4b5563" : "#1f2937",
+    color: "#f9fafb",
+    cursor: "pointer",
+  }),
+  singleValue: (base) => ({ ...base, color: "#f9fafb" }),
+  placeholder: (base) => ({ ...base, color: "#9ca3af" }),
+};

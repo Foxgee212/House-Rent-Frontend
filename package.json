@@ -20,8 +20,13 @@
     "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.12.2",
     "browser-image-compression": "^2.0.2",
+    "canvas": "^3.2.0",
+    "express": "^5.1.0",
+    "face-api.js": "^0.22.2",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.545.0",
+    "mongoose": "^8.19.2",
+    "multer": "^2.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",
@@ -31,7 +36,8 @@
     "react-slick": "^0.31.0",
     "react-top-loading-bar": "^3.0.2",
     "slick-carousel": "^1.8.1",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
