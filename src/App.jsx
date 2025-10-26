@@ -11,7 +11,6 @@ import PrivateRoute from "./components/PrivateRoute";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./adminDashboard/AdminDashboard"
 import VerifyLandlord from "./pages/VerifyLandlord"
-import FaceLiveness from "./pages/FaceLiveness"
 
 function App() {
   return (
@@ -52,7 +51,6 @@ function App() {
           <VerifyLandlord />
         </PrivateRoute>
       }/>
-      <Route path="liveness" element={<FaceLiveness />} />
       </Routes>
       
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import API from "../api/axios";
 import { toast } from "react-hot-toast";
-import { Loader2, Upload, X, Camera } from "lucide-react";
+import { Loader2, Upload, X, Camera, StopCircle } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 export default function VerifyLandlord() {
@@ -11,44 +11,71 @@ export default function VerifyLandlord() {
   const [loading, setLoading] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [livenessPassed, setLivenessPassed] = useState(false);
+  const [stream, setStream] = useState(null);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const detectionIntervalRef = useRef(null);
 
-  // ✅ Load models
+  // ✅ Load face-api models once
   useEffect(() => {
     const loadModels = async () => {
       const MODEL_URL = "/models";
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-      ]);
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+        ]);
+        console.log("✅ Face-API models loaded");
+      } catch (err) {
+        console.error("Model load error:", err);
+        toast.error("Failed to load face-detection models.");
+      }
     };
     loadModels();
+
+    // Cleanup when component unmounts
+    return () => stopCamera();
   }, []);
 
   // ✅ Start camera
   const startCamera = async () => {
     try {
+      if (detecting) return;
       setDetecting(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) videoRef.current.srcObject = stream;
+      const streamData = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = streamData;
+        setStream(streamData);
+      }
+      toast("Camera started — look into the camera 👀");
+      runLivenessCheck();
     } catch (err) {
       toast.error("Camera access denied or unavailable.");
       setDetecting(false);
     }
   };
 
+  // ✅ Stop camera & detection
+  const stopCamera = () => {
+    if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setDetecting(false);
+  };
+
   // ✅ Perform liveness detection
-  const runLivenessCheck = async () => {
+  const runLivenessCheck = () => {
     const video = videoRef.current;
     if (!video) return;
 
     let blinkDetected = false;
     let headTurnDetected = false;
 
-    const interval = setInterval(async () => {
+    detectionIntervalRef.current = setInterval(async () => {
       const detections = await faceapi
         .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
@@ -58,34 +85,35 @@ export default function VerifyLandlord() {
         const canvas = canvasRef.current;
         const dims = faceapi.matchDimensions(canvas, video, true);
         const resized = faceapi.resizeResults(detections, dims);
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         faceapi.draw.drawDetections(canvas, resized);
 
-        // Estimate blink: low eye height ratio
+        // Estimate blink
         const leftEye = detections.landmarks.getLeftEye();
         const rightEye = detections.landmarks.getRightEye();
         const eyeHeight =
           (Math.abs(leftEye[1].y - leftEye[5].y) +
-            Math.abs(rightEye[1].y - rightEye[5].y)) /
-          2;
+            Math.abs(rightEye[1].y - rightEye[5].y)) / 2;
         if (eyeHeight < 3 && !blinkDetected) {
           blinkDetected = true;
           toast.success("✅ Blink detected!");
         }
 
-        // Estimate head turn using horizontal movement
+        // Estimate head turn
         const nose = detections.landmarks.getNose()[3];
         if (nose.x < 100 && !headTurnDetected) {
           headTurnDetected = true;
           toast.success("✅ Head turn detected!");
         }
 
-        // When both detected, capture selfie
+        // When both detected → capture selfie
         if (blinkDetected && headTurnDetected) {
-          clearInterval(interval);
+          clearInterval(detectionIntervalRef.current);
           captureSelfie(video);
           setLivenessPassed(true);
           setDetecting(false);
+          stopCamera();
           toast.success("🎉 Liveness confirmed!");
         }
       }
@@ -99,14 +127,23 @@ export default function VerifyLandlord() {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob((blob) => setSelfie(new File([blob], "selfie.jpg", { type: "image/jpeg" })), "image/jpeg");
+    canvas.toBlob(
+      (blob) => setSelfie(new File([blob], "selfie.jpg", { type: "image/jpeg" })),
+      "image/jpeg"
+    );
   };
 
-  // ✅ Form submission
+  // ✅ Submit verification
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.idType || !form.idNumber || !idImage || !selfie) {
       toast.error("Please fill all fields and complete liveness check");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please log in first.");
       return;
     }
 
@@ -119,7 +156,10 @@ export default function VerifyLandlord() {
     try {
       setLoading(true);
       const res = await API.post("/verification/auto", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
       toast.success(res.data?.msg || "✅ Verification submitted successfully!");
       setForm({ idType: "", idNumber: "" });
@@ -134,6 +174,7 @@ export default function VerifyLandlord() {
     }
   };
 
+  // ✅ Reusable upload card
   const UploadCard = ({ label, image, setImage }) => (
     <div>
       <label className="block text-sm mb-1 text-gray-400">{label}</label>
@@ -209,19 +250,25 @@ export default function VerifyLandlord() {
 
         {/* Liveness Section */}
         <div className="mt-6 text-center">
-          <h3 className="text-blue-400 font-semibold mb-2">
-            Live Face Verification
-          </h3>
+          <h3 className="text-blue-400 font-semibold mb-2">Live Face Verification</h3>
+
           {!detecting && !livenessPassed && (
             <button
               type="button"
-              onClick={() => {
-                startCamera();
-                runLivenessCheck();
-              }}
+              onClick={startCamera}
               className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md mx-auto hover:bg-green-700 transition"
             >
               <Camera size={18} /> Start Liveness Check
+            </button>
+          )}
+
+          {detecting && (
+            <button
+              type="button"
+              onClick={stopCamera}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md mx-auto hover:bg-red-700 transition"
+            >
+              <StopCircle size={18} /> Stop
             </button>
           )}
 
@@ -243,9 +290,7 @@ export default function VerifyLandlord() {
             />
           </div>
 
-          {livenessPassed && (
-            <p className="text-green-400 text-sm mt-2">✅ Liveness confirmed</p>
-          )}
+          {livenessPassed && <p className="text-green-400 text-sm mt-2">✅ Liveness confirmed</p>}
         </div>
 
         <button

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import API from "../api/axios";
-import { Home, CheckCircle, Clock, Users } from "lucide-react";
+import { Home, CheckCircle, Clock, Users, ShieldCheck } from "lucide-react";
 
 export default function StatsCards({ setActiveTab, activeTab }) {
   const [stats, setStats] = useState({
@@ -9,6 +9,7 @@ export default function StatsCards({ setActiveTab, activeTab }) {
     approvedHouses: 0,
     pendingHouses: 0,
     totalUsers: 0,
+    totalVerifications: 0,
   });
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
@@ -20,7 +21,10 @@ export default function StatsCards({ setActiveTab, activeTab }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await API.get("/admin/stats");
+        const token = localStorage.getItem("token");
+        const res = await API.get("/admin/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setStats(res.data);
       } catch (error) {
         console.error("Failed to load stats:", error);
@@ -43,11 +47,8 @@ export default function StatsCards({ setActiveTab, activeTab }) {
         window.requestAnimationFrame(() => {
           const diff = currentScrollY - lastScrollY.current;
 
-          if (diff > 25 && currentScrollY > 100) {
-            setHidden(true);
-          } else if (diff < -25) {
-            setHidden(false);
-          }
+          if (diff > 25 && currentScrollY > 100) setHidden(true);
+          else if (diff < -25) setHidden(false);
 
           lastScrollY.current = currentScrollY;
           ticking.current = false;
@@ -60,6 +61,7 @@ export default function StatsCards({ setActiveTab, activeTab }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // ✅ Updated cards list (added Verifications)
   const cards = [
     {
       label: "Total Houses",
@@ -85,9 +87,13 @@ export default function StatsCards({ setActiveTab, activeTab }) {
       icon: <Users className="text-blue-500" size={22} />,
       tab: "users",
     },
+    {
+      label: "Verifications",
+      value: stats.totalVerifications,
+      icon: <ShieldCheck className="text-purple-500" size={22} />,
+      tab: "verifications",
+    },
   ];
-
-  
 
   return (
     <motion.div
@@ -102,7 +108,11 @@ export default function StatsCards({ setActiveTab, activeTab }) {
       }}
       className="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700 px-3 py-3 sm:px-5 sm:py-4 shadow-md"
     >
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div
+        className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 ${
+          loading ? "animate-pulse" : ""
+        }`}
+      >
         {cards.map((c) => {
           const isActive = activeTab === c.tab;
           return (
@@ -133,7 +143,7 @@ export default function StatsCards({ setActiveTab, activeTab }) {
                   isActive ? "text-indigo-400" : "text-indigo-500"
                 }`}
               >
-                {c.value}
+                {c.value ?? 0}
               </p>
             </motion.div>
           );
