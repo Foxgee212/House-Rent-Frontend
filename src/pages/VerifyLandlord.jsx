@@ -1,135 +1,73 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import API from "../api/axios";
 import { toast } from "react-hot-toast";
-import { Loader2, Upload, X, Camera, StopCircle } from "lucide-react";
-import * as faceapi from "face-api.js";
+import {
+  Loader2,
+  Upload,
+  X,
+  Camera,
+  StopCircle,
+  CheckCircle,
+  RefreshCcw,
+} from "lucide-react";
 
 export default function VerifyLandlord() {
   const [form, setForm] = useState({ idType: "", idNumber: "" });
   const [idImage, setIdImage] = useState(null);
   const [selfie, setSelfie] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [detecting, setDetecting] = useState(false);
-  const [livenessPassed, setLivenessPassed] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
   const [stream, setStream] = useState(null);
-
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const detectionIntervalRef = useRef(null);
-
-  // ✅ Load face-api models once
-  useEffect(() => {
-    const loadModels = async () => {
-      const MODEL_URL = "/models";
-      try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-        ]);
-        console.log("✅ Face-API models loaded");
-      } catch (err) {
-        console.error("Model load error:", err);
-        toast.error("Failed to load face-detection models.");
-      }
-    };
-    loadModels();
-
-    // Cleanup when component unmounts
-    return () => stopCamera();
-  }, []);
 
   // ✅ Start camera
   const startCamera = async () => {
     try {
-      if (detecting) return;
-      setDetecting(true);
-      const streamData = await navigator.mediaDevices.getUserMedia({ video: true });
+      stopCamera(); // make sure old stream stops
+      const streamData = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false,
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = streamData;
-        setStream(streamData);
+        videoRef.current.play();
       }
-      toast("Camera started — look into the camera 👀");
-      runLivenessCheck();
+      setStream(streamData);
+      setCameraActive(true);
+      toast.success("Camera started — center your face and click Capture 📸");
     } catch (err) {
-      toast.error("Camera access denied or unavailable.");
-      setDetecting(false);
+      console.error("Camera error:", err);
+      toast.error("Unable to access your camera. Please allow camera permission.");
     }
   };
 
-  // ✅ Stop camera & detection
+  // ✅ Stop camera
   const stopCamera = () => {
-    if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
-    setDetecting(false);
+    setCameraActive(false);
   };
 
-  // ✅ Perform liveness detection
-  const runLivenessCheck = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    let blinkDetected = false;
-    let headTurnDetected = false;
-
-    detectionIntervalRef.current = setInterval(async () => {
-      const detections = await faceapi
-        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceExpressions();
-
-      if (detections) {
-        const canvas = canvasRef.current;
-        const dims = faceapi.matchDimensions(canvas, video, true);
-        const resized = faceapi.resizeResults(detections, dims);
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        faceapi.draw.drawDetections(canvas, resized);
-
-        // Estimate blink
-        const leftEye = detections.landmarks.getLeftEye();
-        const rightEye = detections.landmarks.getRightEye();
-        const eyeHeight =
-          (Math.abs(leftEye[1].y - leftEye[5].y) +
-            Math.abs(rightEye[1].y - rightEye[5].y)) / 2;
-        if (eyeHeight < 3 && !blinkDetected) {
-          blinkDetected = true;
-          toast.success("✅ Blink detected!");
-        }
-
-        // Estimate head turn
-        const nose = detections.landmarks.getNose()[3];
-        if (nose.x < 100 && !headTurnDetected) {
-          headTurnDetected = true;
-          toast.success("✅ Head turn detected!");
-        }
-
-        // When both detected → capture selfie
-        if (blinkDetected && headTurnDetected) {
-          clearInterval(detectionIntervalRef.current);
-          captureSelfie(video);
-          setLivenessPassed(true);
-          setDetecting(false);
-          stopCamera();
-          toast.success("🎉 Liveness confirmed!");
-        }
-      }
-    }, 300);
-  };
-
-  // ✅ Capture selfie frame
-  const captureSelfie = (video) => {
+  // ✅ Capture selfie
+  const captureSelfie = () => {
+    if (!videoRef.current) return;
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+
     canvas.toBlob(
-      (blob) => setSelfie(new File([blob], "selfie.jpg", { type: "image/jpeg" })),
-      "image/jpeg"
+      (blob) => {
+        const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
+        setSelfie(file);
+        stopCamera();
+        toast.success("✅ Selfie captured successfully!");
+      },
+      "image/jpeg",
+      0.9
     );
   };
 
@@ -137,7 +75,7 @@ export default function VerifyLandlord() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.idType || !form.idNumber || !idImage || !selfie) {
-      toast.error("Please fill all fields and complete liveness check");
+      toast.error("Please fill all fields and upload both images");
       return;
     }
 
@@ -165,7 +103,6 @@ export default function VerifyLandlord() {
       setForm({ idType: "", idNumber: "" });
       setIdImage(null);
       setSelfie(null);
-      setLivenessPassed(false);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.msg || "❌ Verification failed.");
@@ -174,16 +111,16 @@ export default function VerifyLandlord() {
     }
   };
 
-  // ✅ Reusable upload card
+  // ✅ Reusable image uploader
   const UploadCard = ({ label, image, setImage }) => (
     <div>
       <label className="block text-sm mb-1 text-gray-400">{label}</label>
       {image ? (
-        <div className="relative mt-2 w-32 h-32">
+        <div className="relative mt-2 w-44 h-44">
           <img
             src={URL.createObjectURL(image)}
             alt="Preview"
-            className="w-full h-full object-cover rounded-md border border-gray-700"
+            className="w-full h-full object-contain rounded-md border border-gray-700 bg-black"
           />
           <button
             type="button"
@@ -194,7 +131,7 @@ export default function VerifyLandlord() {
           </button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 mt-2 w-32 h-32 bg-gray-800 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-700 transition">
+        <label className="flex flex-col items-center justify-center gap-2 mt-2 w-44 h-44 bg-gray-800 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-700 transition">
           <Upload size={24} className="text-blue-400" />
           <span className="text-gray-300 text-sm text-center">Click to upload</span>
           <input
@@ -214,10 +151,11 @@ export default function VerifyLandlord() {
         Landlord Verification
       </h2>
       <p className="text-sm text-gray-400 mb-6 text-center">
-        Upload your government-issued ID and complete a short liveness check.
+        Upload your valid government-issued ID and a clear selfie to verify your identity.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" encType="multipart/form-data">
+        {/* ID Type */}
         <div>
           <label className="block text-sm mb-1 text-gray-400">ID Type</label>
           <select
@@ -233,6 +171,7 @@ export default function VerifyLandlord() {
           </select>
         </div>
 
+        {/* ID Number */}
         <div>
           <label className="block text-sm mb-1 text-gray-400">ID Number</label>
           <input
@@ -248,51 +187,84 @@ export default function VerifyLandlord() {
         {/* Upload ID Image */}
         <UploadCard label="Upload ID Image" image={idImage} setImage={setIdImage} />
 
-        {/* Liveness Section */}
+        {/* Selfie Section */}
         <div className="mt-6 text-center">
-          <h3 className="text-blue-400 font-semibold mb-2">Live Face Verification</h3>
+          <h3 className="text-blue-400 font-semibold mb-3">Take a Selfie</h3>
 
-          {!detecting && !livenessPassed && (
+          {!cameraActive && !selfie && (
             <button
               type="button"
               onClick={startCamera}
               className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md mx-auto hover:bg-green-700 transition"
             >
-              <Camera size={18} /> Start Liveness Check
+              <Camera size={18} /> Open Camera
             </button>
           )}
 
-          {detecting && (
-            <button
-              type="button"
-              onClick={stopCamera}
-              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md mx-auto hover:bg-red-700 transition"
-            >
-              <StopCircle size={18} /> Stop
-            </button>
+          {cameraActive && (
+            <div className="flex flex-col items-center gap-3">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="rounded-lg border border-gray-700 w-[320px] h-[240px] bg-black"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={captureSelfie}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                >
+                  <Camera size={18} /> Capture
+                </button>
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+                >
+                  <StopCircle size={18} /> Stop
+                </button>
+              </div>
+            </div>
           )}
 
-          <div className="relative flex justify-center mt-3">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              width="320"
-              height="240"
-              className="rounded-lg border border-gray-700"
-            />
-            <canvas
-              ref={canvasRef}
-              width="320"
-              height="240"
-              className="absolute top-0 left-0"
-            />
-          </div>
+          {selfie && (
+            <div className="mt-4 relative w-44 h-44 mx-auto">
+              <img
+                src={URL.createObjectURL(selfie)}
+                alt="Selfie Preview"
+                className="w-full h-full object-cover rounded-lg border border-gray-700"
+              />
+              <div className="absolute bottom-1 right-1 flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSelfie(null)}
+                  className="bg-black/70 text-white rounded-full p-1 hover:bg-red-600 transition"
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="bg-black/70 text-white rounded-full p-1 hover:bg-blue-600 transition"
+                  title="Retake"
+                >
+                  <RefreshCcw size={14} />
+                </button>
+              </div>
+            </div>
+          )}
 
-          {livenessPassed && <p className="text-green-400 text-sm mt-2">✅ Liveness confirmed</p>}
+          {selfie && (
+            <p className="text-green-400 text-sm mt-2 flex items-center justify-center gap-1">
+              <CheckCircle size={14} /> Selfie ready
+            </p>
+          )}
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -302,8 +274,7 @@ export default function VerifyLandlord() {
         >
           {loading ? (
             <>
-              <Loader2 className="animate-spin w-5 h-5" />
-              Submitting...
+              <Loader2 className="animate-spin w-5 h-5" /> Submitting...
             </>
           ) : (
             "Submit Verification"

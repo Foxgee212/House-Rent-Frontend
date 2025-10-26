@@ -46,17 +46,26 @@ export default function DashBoard() {
   // Fetch landlord houses
   useEffect(() => {
     const fetchMyHouses = async () => {
-      setLoadingHouses(true);
-      try {
-        const res = await API.get("/houses/my");
-        setLandlordHouses(res.data?.houses || res.data || []);
-      } catch {
-        toast.error("Failed to load your listings");
-      } finally {
-        setLoadingHouses(false);
-      }
-    };
-    fetchMyHouses();
+  setLoadingHouses(true);
+  try {
+    const res = await API.get("/houses/my");
+    setLandlordHouses(res.data?.houses || res.data || []);
+  } catch (err) {
+    // Extract backend error message
+    const message =
+      err.response?.data?.error || err.response?.data?.msg || err.message;
+
+    if (message?.toLowerCase().includes("identity verification required")) {
+      toast.error("Please verify your identity to view your houses");
+    } else {
+      toast.error("Failed to load your listings");
+    }
+  } finally {
+    setLoadingHouses(false);
+  }
+};
+
+fetchMyHouses()
   }, []);
 
   // Form changes
