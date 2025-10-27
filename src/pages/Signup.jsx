@@ -4,10 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 import { User, Mail, Lock, UserPlus, Building2, Globe, Facebook } from "lucide-react";
 
-// Enhanced XSS sanitizer
-const sanitizeInput = (value) => {
-  return value.replace(/[<>/'"`;(){}$]/g, "").trim();
-};
+const sanitizeInput = (value) => value.replace(/[<>/'"`;(){}$]/g, "").trim();
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -21,7 +18,6 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
 
-  // Handle input with sanitization
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: sanitizeInput(value) });
@@ -54,46 +50,38 @@ export default function Signup() {
     }
   };
 
-  // Placeholder for social signup
-  const handleGoogleSignup = () => {
-    toast("Google signup coming soon ⚙️", { icon: "⚡" });
-  };
-
-  const handleFacebookSignup = () => {
-    toast("Facebook signup coming soon ⚙️", { icon: "💙" });
-  };
+  const handleGoogleSignup = () => toast("Google signup coming soon ⚙️", { icon: "⚡" });
+  const handleFacebookSignup = () => toast("Facebook signup coming soon ⚙️", { icon: "💙" });
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
-      <div className="relative bg-gray-800/60 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700/50">
-        {/* Glow effect */}
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-3 sm:p-4">
+      <div className="relative bg-gray-800/60 backdrop-blur-lg shadow-2xl rounded-2xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md border border-gray-700/50">
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600/20 to-blue-400/10 blur-2xl -z-10"></div>
 
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="bg-blue-600/20 w-16 h-16 flex items-center justify-center rounded-full mx-auto mb-4 shadow-[0_0_20px_3px_rgba(37,99,235,0.3)]">
-            <UserPlus className="w-8 h-8 text-blue-500" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="bg-blue-600/20 w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-full mx-auto mb-3 sm:mb-4 shadow-[0_0_20px_3px_rgba(37,99,235,0.3)]">
+            <UserPlus className="w-7 h-7 sm:w-8 sm:h-8 text-blue-500" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Create an Account
           </h1>
-          <p className="text-gray-400 mt-2 text-sm">
+          <p className="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-sm">
             Join and find your perfect home today!
           </p>
         </div>
 
-        {/* Error */}
         {error && (
-          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40">
+          <p className="text-red-400 text-xs sm:text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40">
             {error}
           </p>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5">
           {/* Name */}
           <div className="relative">
-            <User className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+            <User className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="text"
               name="name"
@@ -102,13 +90,13 @@ export default function Signup() {
               onChange={handleChange}
               required
               autoComplete="name"
-              className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
+              className="w-full pl-9 sm:pl-10 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500 text-sm sm:text-base"
             />
           </div>
 
           {/* Email */}
           <div className="relative">
-            <Mail className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+            <Mail className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="email"
               name="email"
@@ -117,13 +105,13 @@ export default function Signup() {
               onChange={handleChange}
               required
               autoComplete="email"
-              className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
+              className="w-full pl-9 sm:pl-10 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500 text-sm sm:text-base"
             />
           </div>
 
           {/* Password */}
           <div className="relative">
-            <Lock className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+            <Lock className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="password"
               name="password"
@@ -132,37 +120,37 @@ export default function Signup() {
               onChange={handleChange}
               required
               autoComplete="new-password"
-              className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
+              className="w-full pl-9 sm:pl-10 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500 text-sm sm:text-base"
             />
           </div>
 
           {/* Role */}
           <div className="relative">
-            <Building2 className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+            <Building2 className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <select
               name="role"
               value={form.role}
               onChange={handleChange}
-              className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full pl-9 sm:pl-10 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm sm:text-base"
             >
               <option value="tenant">Tenant</option>
               <option value="landlord">Landlord</option>
             </select>
           </div>
 
-          {/* Submit */}
+          {/* Button */}
           <button
             type="submit"
             disabled={loading}
-            className={`relative flex justify-center items-center gap-2 py-3 rounded-lg font-semibold transition-all duration-300 ${
+            className={`relative flex justify-center items-center gap-2 py-2.5 sm:py-3 rounded-lg font-semibold transition-all duration-300 ${
               loading
                 ? "bg-blue-600/50 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
-            } text-white`}
+            } text-white text-sm sm:text-base`}
           >
             {loading ? (
               <>
-                <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
                 <span>Signing up...</span>
               </>
             ) : (
@@ -172,30 +160,30 @@ export default function Signup() {
         </form>
 
         {/* Divider */}
-        <div className="flex items-center justify-center mt-6 mb-2">
-          <div className="h-px w-16 bg-gray-600"></div>
-          <span className="mx-3 text-gray-400 text-sm">or</span>
-          <div className="h-px w-16 bg-gray-600"></div>
+        <div className="flex items-center justify-center mt-5 sm:mt-6 mb-2">
+          <div className="h-px w-14 sm:w-16 bg-gray-600"></div>
+          <span className="mx-2 sm:mx-3 text-gray-400 text-xs sm:text-sm">or</span>
+          <div className="h-px w-14 sm:w-16 bg-gray-600"></div>
         </div>
 
         {/* Social Signup */}
-        <div className="flex flex-col gap-3 mt-3">
+        <div className="flex flex-col gap-2 sm:gap-3 mt-2 sm:mt-3">
           <button
             onClick={handleGoogleSignup}
-            className="flex items-center justify-center gap-3 w-full py-3 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition"
+            className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2.5 sm:py-3 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition text-sm sm:text-base"
           >
-            <Globe className="w-5 h-5 text-blue-600" /> Continue with Google
+            <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" /> Continue with Google
           </button>
           <button
             onClick={handleFacebookSignup}
-            className="flex items-center justify-center gap-3 w-full py-3 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition"
+            className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2.5 sm:py-3 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition text-sm sm:text-base"
           >
-            <Facebook className="w-5 h-5" /> Continue with Facebook
+            <Facebook className="w-4 h-4 sm:w-5 sm:h-5" /> Continue with Facebook
           </button>
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-gray-400 text-sm">
+        <p className="mt-5 sm:mt-6 text-center text-gray-400 text-xs sm:text-sm">
           Already have an account?{" "}
           <Link
             to="/login"
