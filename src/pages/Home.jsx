@@ -53,15 +53,6 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-blue-600 to-blue-500 text-center text-white overflow-hidden py-16 sm:py-24 md:py-32">
-        {/* Background Image */}
-        <div className="absolute inset-0 opacity-25">
-          <img
-            src="https://images.unsplash.com/photo-1560185127-6ed189bf02b9?auto=format&fit=crop&w=1600&q=80"
-            alt="Hero Background"
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
-
         <div className="relative z-10 flex flex-col items-center justify-center space-y-3 sm:space-y-4 px-4 max-w-4xl mx-auto">
           {/* Icon + Title */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center">
@@ -124,14 +115,14 @@ export default function HomePage() {
             No houses found for “{search || "all locations"}”
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((house) => (
               <Link
                 key={house._id}
                 to={`/listings/${house._id}`}
                 className="transition-transform duration-300 hover:scale-[1.02]"
               >
-                <HouseCard house={house} />
+                <HouseCard house={house} className="scale-[0.95] sm:scale-100" />
               </Link>
             ))}
           </div>
