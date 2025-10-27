@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Automatically set Authorization header
+  // Automatically set Authorization header
   useEffect(() => {
     if (token) {
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -18,74 +18,28 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // ✅ Keep user in sync with localStorage
+  // Sync user to localStorage
   useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("user");
-    }
+    if (user) localStorage.setItem("user", JSON.stringify(user));
+    else localStorage.removeItem("user");
   }, [user]);
 
-  // ✅ Fetch user if token exists but user missing
+  // Fetch user if token exists but user missing
   useEffect(() => {
-    if (token && !user) {
-      fetchUser();
-    }
+    if (token && !user) fetchUser();
   }, [token]);
 
-  // ✅ LOGIN
+  // LOGIN (password)
   const login = async (email, password) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post(`/auth/login`, { email, password });
-
       setUser(res.data.user);
       setToken(res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("token", res.data.token);
-
-      return res.data; // ✅ Return success response for component to handle
-    } catch (err) {
-      const message =
-        err.response?.data?.message || // ✅ use 'message' from backend
-        err.response?.data?.msg ||
-        "Login failed";
-      setError(message);
-      throw new Error(message); // ✅ rethrow for component to catch
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ SIGNUP
-  const signup = async (name, email, password, role, location, bio, phone, profilePic) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await API.post(`/auth/register`, {
-        name,
-        email,
-        password,
-        role,
-        location: location || "",
-        bio: bio || "",
-        phone: phone || "",
-        profilePic: profilePic || "",
-      });
-
-      setUser(res.data.user);
-      setToken(res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("token", res.data.token);
-
       return res.data;
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.msg ||
-        "Signup failed";
+      const message = err.response?.data?.message || err.response?.data?.msg || "Login failed";
       setError(message);
       throw new Error(message);
     } finally {
@@ -93,7 +47,25 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ✅ LOGOUT
+  // SIGNUP
+  const signup = async (name, email, password, role, location, bio, phone, profilePic) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await API.post(`/auth/register`, { name, email, password, role, location, bio, phone, profilePic });
+      setUser(res.data.user);
+      setToken(res.data.token);
+      return res.data;
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.msg || "Signup failed";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // LOGOUT
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -101,18 +73,70 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
   };
 
-  // ✅ Fetch user from backend (optional)
+  // FETCH USER
   const fetchUser = async () => {
     if (!token) return;
     setLoading(true);
     try {
       const res = await API.get("/auth/me");
-      setUser(res.data.user);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-    } catch (err) {
+      setUser(res.data.user || res.data); // adjust based on backend
+    } catch {
       logout();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --------------------------
+  // OTP LOGIN
+  // --------------------------
+  const requestLoginOtp = async (email) => {
+    try {
+      await API.post("/auth/login/request-otp", { email });
+      return true;
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Failed to send OTP");
+    }
+  };
+
+  const verifyLoginOtp = async (email, otp) => {
+    try {
+      const res = await API.post("/auth/login/verify-otp", { email, otp });
+      setUser(res.data.user);
+      setToken(res.data.token);
+      return res.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Invalid OTP");
+    }
+  };
+
+  // --------------------------
+  // FORGOT PASSWORD
+  // --------------------------
+  const requestForgotPasswordOtp = async (email) => {
+    try {
+      await API.post("/auth/forgot-password/request-otp", { email });
+      return true; // OTP sent
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Failed to send OTP");
+    }
+  };
+
+  const verifyForgotPasswordOtp = async (email, otp) => {
+    try {
+      await API.post("/auth/forgot-password/verify-otp", { email, otp });
+      return true; // OTP verified
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Invalid OTP");
+    }
+  };
+
+  const resetPassword = async (email, otp, newPassword) => {
+    try {
+      await API.post("/auth/forgot-password/verify-otp", { email, otp, newPassword });
+      return true; // Password reset successfully
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Failed to reset password");
     }
   };
 
@@ -127,7 +151,12 @@ export function AuthProvider({ children }) {
         signup,
         logout,
         fetchUser,
-        setUser, // for profile updates
+        requestLoginOtp,
+        verifyLoginOtp,
+        requestForgotPasswordOtp,
+        verifyForgotPasswordOtp,
+        resetPassword,
+        setUser,
       }}
     >
       {children}
