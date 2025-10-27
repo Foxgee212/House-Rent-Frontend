@@ -31,7 +31,7 @@ export default function HouseCard({ house }) {
 
   return (
     <div
-      className=" dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden
+      className="dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden
       hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 cursor-pointer border border-gray-100 relative group"
     >
       {/* House Image */}
@@ -44,17 +44,17 @@ export default function HouseCard({ house }) {
             setZoomed(true);
             setActiveIndex(0);
           }}
-          className="w-full h-52 object-cover rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-40 sm:h-52 object-cover rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
         />
 
         {/* Rent Badge */}
-        <div className="absolute top-3 left-3 bg-blue-600/90 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-          <Home size={14} /> Rent
+        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-blue-600/90 text-white text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md flex items-center gap-1">
+          <Home size={12} /> Rent
         </div>
 
         {/* Availability */}
         <div
-          className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md
+          className={`absolute top-2 sm:top-3 right-2 sm:right-3 text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md
           ${house.available ? "bg-green-600/90 text-white" : "bg-red-600/90 text-white"}`}
         >
           {house.available ? "Available" : "Occupied"}
@@ -63,7 +63,7 @@ export default function HouseCard({ house }) {
         {/* Negotiable Flag */}
         {house.negotiable !== undefined && (
           <div
-            className={`absolute bottom-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md border
+            className={`absolute bottom-2 sm:bottom-3 right-2 sm:right-3 text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md border
               ${
                 house.negotiable
                   ? "bg-yellow-100 text-yellow-800 border-yellow-300"
@@ -75,43 +75,43 @@ export default function HouseCard({ house }) {
         )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl flex flex-col justify-center items-center text-white p-4 gap-2">
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl flex flex-col justify-center items-center text-white p-2 sm:p-4 gap-1 sm:gap-2 text-xs sm:text-sm">
           {house.rooms && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <BedDouble size={16} /> {house.rooms} Rooms
+            <div className="flex items-center gap-1">
+              <BedDouble size={14} /> {house.rooms} Rooms
             </div>
           )}
           {house.baths && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Bath size={16} /> {house.baths} Baths
+            <div className="flex items-center gap-1">
+              <Bath size={14} /> {house.baths} Baths
             </div>
           )}
           {house.area && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Ruler size={16} /> {house.area} sqft
+            <div className="flex items-center gap-1">
+              <Ruler size={14} /> {house.area} sqft
             </div>
           )}
         </div>
       </div>
 
       {/* House Details */}
-      <div className="p-5">
-        <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
-          <Info size={18} className="text-blue-600" /> {house.title || "Untitled House"}
+      <div className="p-3 sm:p-5">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-100 flex items-center gap-2">
+          <Info size={16} className="text-blue-600" /> {house.title || "Untitled House"}
         </h3>
 
-        <div className="flex items-center gap-2 mt-2 text-gray-500 dark:text-gray-400">
-          <MapPin size={16} className="text-blue-500" />
+        <div className="flex items-center gap-1 sm:gap-2 mt-1 text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+          <MapPin size={14} className="text-blue-500" />
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
 
-        <p className="text-blue-400 font-bold mt-3 flex items-center gap-1">
-          <Wallet size={18} /> {formatPrice(house.price)}
-          <span className="text-gray-500 text-sm">/month</span>
+        <p className="text-blue-400 font-bold mt-2 sm:mt-3 flex items-center gap-1 text-sm sm:text-base">
+          <Wallet size={16} /> {formatPrice(house.price)}
+          <span className="text-gray-500 text-xs sm:text-sm">/month</span>
         </p>
 
         {house.description && (
-          <p className="text-sm text-gray-300 mt-3 line-clamp-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-300 mt-2 sm:mt-3 line-clamp-2 sm:line-clamp-3 leading-relaxed">
             {house.description}
           </p>
         )}
@@ -137,21 +137,15 @@ export default function HouseCard({ house }) {
             onClick={(e) => e.stopPropagation()}
           />
 
-          {/* Thumbnails */}
-          <div
-            className="flex gap-2 flex-wrap justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex gap-2 flex-wrap justify-center" onClick={(e) => e.stopPropagation()}>
             {images.map((img, index) => (
               <img
                 key={index}
                 src={img}
                 alt={`House ${index + 1}`}
                 onClick={() => setActiveIndex(index)}
-                className={`w-20 h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
-                  activeIndex === index
-                    ? "border-blue-500 scale-105"
-                    : "border-transparent hover:opacity-80"
+                className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
+                  activeIndex === index ? "border-blue-500 scale-105" : "border-transparent hover:opacity-80"
                 }`}
               />
             ))}
