@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAsyncError, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
@@ -42,6 +42,7 @@ export default function DashBoard() {
       </div>
     );
   }
+ console.log(user)
 
   // Fetch landlord houses
   useEffect(() => {
@@ -100,12 +101,13 @@ fetchMyHouses()
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!editing && images.length === 0)
       return toast.error("Please select at least one image");
 
-    if (user.verificationStatus !== "verified") {
+    if (user.verification.status !== "verified") {
       toast.error("You must verify your identity before posting houses");
       navigate("/verify");
       return;
@@ -196,7 +198,7 @@ fetchMyHouses()
       </div>
 
       {/* Verification Notice */}
-      {user.verificationStatus !== "verified" && (
+      {user?.verification?.status !== "verified" && (
         <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
           <p>
             ⚠️ Your account is not verified. You must verify your identity to post houses.
@@ -214,7 +216,7 @@ fetchMyHouses()
       <form
         onSubmit={handleSubmit}
         className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
-          user.verificationStatus !== "verified" ? "opacity-60 pointer-events-none" : ""
+          user?.verification?.status !== "verified" ? "opacity-60 pointer-events-none" : ""
         }`}
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
