@@ -15,13 +15,5 @@ export default function PrivateRoute({ children, roles }) {
     return <Navigate to="/" replace />;
   }
 
-  // ✅ If user is tenant or landlord and not verified, redirect to OTP
-  if (
-    (user.role === "landlord" || user.role === "tenant") &&
-    !user.isVerified
-  ) {
-    return <Navigate to="/otp" replace state={{ email: user.email }} />;
-  }
-
   return children;
 }

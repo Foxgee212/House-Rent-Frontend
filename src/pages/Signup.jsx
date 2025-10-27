@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { User, Mail, Lock, UserPlus, Building2 } from "lucide-react";
+import { User, Mail, Lock, UserPlus, Building2, Globe, Facebook } from "lucide-react";
+
+// Enhanced XSS sanitizer
+const sanitizeInput = (value) => {
+  return value.replace(/[<>/'"`;(){}$]/g, "").trim();
+};
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -16,8 +21,10 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
 
+  // Handle input with sanitization
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: sanitizeInput(value) });
   };
 
   const handleSubmit = async (e) => {
@@ -41,10 +48,19 @@ export default function Signup() {
         navigate(form.role === "landlord" ? "/dashboard" : "/");
       }, 600);
     } catch (err) {
-      setError(err.message || "Signup failed");
+      setError(err.message || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Placeholder for social signup
+  const handleGoogleSignup = () => {
+    toast("Google signup coming soon ⚙️", { icon: "⚡" });
+  };
+
+  const handleFacebookSignup = () => {
+    toast("Facebook signup coming soon ⚙️", { icon: "💙" });
   };
 
   return (
@@ -85,6 +101,7 @@ export default function Signup() {
               value={form.name}
               onChange={handleChange}
               required
+              autoComplete="name"
               className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
             />
           </div>
@@ -99,6 +116,7 @@ export default function Signup() {
               value={form.email}
               onChange={handleChange}
               required
+              autoComplete="email"
               className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
             />
           </div>
@@ -113,6 +131,7 @@ export default function Signup() {
               value={form.password}
               onChange={handleChange}
               required
+              autoComplete="new-password"
               className="w-full pl-10 p-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
             />
           </div>
@@ -151,6 +170,29 @@ export default function Signup() {
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center justify-center mt-6 mb-2">
+          <div className="h-px w-16 bg-gray-600"></div>
+          <span className="mx-3 text-gray-400 text-sm">or</span>
+          <div className="h-px w-16 bg-gray-600"></div>
+        </div>
+
+        {/* Social Signup */}
+        <div className="flex flex-col gap-3 mt-3">
+          <button
+            onClick={handleGoogleSignup}
+            className="flex items-center justify-center gap-3 w-full py-3 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition"
+          >
+            <Globe className="w-5 h-5 text-blue-600" /> Continue with Google
+          </button>
+          <button
+            onClick={handleFacebookSignup}
+            className="flex items-center justify-center gap-3 w-full py-3 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition"
+          >
+            <Facebook className="w-5 h-5" /> Continue with Facebook
+          </button>
+        </div>
 
         {/* Footer */}
         <p className="mt-6 text-center text-gray-400 text-sm">

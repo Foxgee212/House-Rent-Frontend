@@ -7,7 +7,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { requestForgotPasswordOtp } = useAuth();
+  const { forgotPassword } = useAuth(); // ✅ updated to match AuthContext function
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,9 +16,9 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await requestForgotPasswordOtp(email);
+      await forgotPassword(email); // ✅ Calls backend: /auth/forgot-password
       toast.success("OTP sent to your email!");
-      navigate("/reset-password", { state: { email } }); // navigate to reset page with email
+      navigate("/reset-password", { state: { email } }); // pass email to reset screen
     } catch (err) {
       setError(err.message || "Failed to send OTP");
     } finally {
@@ -29,9 +29,11 @@ export default function ForgotPassword() {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
       <div className="bg-gray-800/60 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700/50">
-        <h1 className="text-2xl font-bold text-white text-center mb-4">Forgot Password</h1>
+        <h1 className="text-2xl font-bold text-white text-center mb-4">
+          Forgot Password
+        </h1>
         <p className="text-gray-400 text-center mb-6">
-          Enter your email to receive a password reset OTP
+          Enter your email address to receive a password reset OTP.
         </p>
 
         {error && (
@@ -54,7 +56,9 @@ export default function ForgotPassword() {
             type="submit"
             disabled={loading}
             className={`relative flex justify-center items-center gap-2 py-3 rounded-lg font-semibold transition-all duration-300 ${
-              loading ? "bg-blue-600/50 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
+              loading
+                ? "bg-blue-600/50 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
             } text-white`}
           >
             {loading ? "Sending OTP..." : "Send OTP"}

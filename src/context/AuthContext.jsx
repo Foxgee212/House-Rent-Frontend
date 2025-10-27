@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Automatically set Authorization header
+  // ✅ Automatically attach or remove Authorization header
   useEffect(() => {
     if (token) {
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -18,28 +18,33 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // Sync user to localStorage
+  // ✅ Keep user in sync with localStorage
   useEffect(() => {
     if (user) localStorage.setItem("user", JSON.stringify(user));
     else localStorage.removeItem("user");
   }, [user]);
 
-  // Fetch user if token exists but user missing
+  // ✅ Fetch user if token exists but user missing
   useEffect(() => {
     if (token && !user) fetchUser();
   }, [token]);
 
-  // LOGIN (password)
+  // ✅ LOGIN
   const login = async (email, password) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.post(`/auth/login`, { email, password });
+      const res = await API.post("/auth/login", { email, password });
       setUser(res.data.user);
       setToken(res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("token", res.data.token);
       return res.data;
     } catch (err) {
-      const message = err.response?.data?.message || err.response?.data?.msg || "Login failed";
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        "Login failed. Please check your credentials.";
       setError(message);
       throw new Error(message);
     } finally {
@@ -47,17 +52,32 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // SIGNUP
+  // ✅ SIGNUP
   const signup = async (name, email, password, role, location, bio, phone, profilePic) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.post(`/auth/register`, { name, email, password, role, location, bio, phone, profilePic });
+      const res = await API.post("/auth/register", {
+        name,
+        email,
+        password,
+        role,
+        location: location || "",
+        bio: bio || "",
+        phone: phone || "",
+        profilePic: profilePic || "",
+      });
+
       setUser(res.data.user);
       setToken(res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("token", res.data.token);
       return res.data;
     } catch (err) {
-      const message = err.response?.data?.message || err.response?.data?.msg || "Signup failed";
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        "Signup failed. Please try again.";
       setError(message);
       throw new Error(message);
     } finally {
@@ -65,7 +85,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // LOGOUT
+  // ✅ LOGOUT
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -73,70 +93,56 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
   };
 
-  // FETCH USER
+  // ✅ FETCH USER (for restoring session)
   const fetchUser = async () => {
     if (!token) return;
     setLoading(true);
     try {
       const res = await API.get("/auth/me");
-      setUser(res.data.user || res.data); // adjust based on backend
-    } catch {
+      setUser(res.data.user);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+    } catch (err) {
       logout();
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------
-  // OTP LOGIN
-  // --------------------------
-  const requestLoginOtp = async (email) => {
+  // ✅ FORGOT PASSWORD
+  const forgotPassword = async (email) => {
+    setLoading(true);
+    setError(null);
     try {
-      await API.post("/auth/login/request-otp", { email });
-      return true;
+      const res = await API.post("/auth/forgot-password", { email });
+      return res.data; // e.g. { message: "Reset email sent" }
     } catch (err) {
-      throw new Error(err.response?.data?.msg || "Failed to send OTP");
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        "Failed to send reset email.";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const verifyLoginOtp = async (email, otp) => {
+  // ✅ RESET PASSWORD
+  const resetPassword = async (token, newPassword) => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await API.post("/auth/login/verify-otp", { email, otp });
-      setUser(res.data.user);
-      setToken(res.data.token);
-      return res.data;
+      const res = await API.post(`/auth/reset-password/${token}`, { password: newPassword });
+      return res.data; // e.g. { message: "Password reset successful" }
     } catch (err) {
-      throw new Error(err.response?.data?.msg || "Invalid OTP");
-    }
-  };
-
-  // --------------------------
-  // FORGOT PASSWORD
-  // --------------------------
-  const requestForgotPasswordOtp = async (email) => {
-    try {
-      await API.post("/auth/forgot-password/request-otp", { email });
-      return true; // OTP sent
-    } catch (err) {
-      throw new Error(err.response?.data?.msg || "Failed to send OTP");
-    }
-  };
-
-  const verifyForgotPasswordOtp = async (email, otp) => {
-    try {
-      await API.post("/auth/forgot-password/verify-otp", { email, otp });
-      return true; // OTP verified
-    } catch (err) {
-      throw new Error(err.response?.data?.msg || "Invalid OTP");
-    }
-  };
-
-  const resetPassword = async (email, otp, newPassword) => {
-    try {
-      await API.post("/auth/forgot-password/verify-otp", { email, otp, newPassword });
-      return true; // Password reset successfully
-    } catch (err) {
-      throw new Error(err.response?.data?.msg || "Failed to reset password");
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        "Password reset failed.";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,10 +157,7 @@ export function AuthProvider({ children }) {
         signup,
         logout,
         fetchUser,
-        requestLoginOtp,
-        verifyLoginOtp,
-        requestForgotPasswordOtp,
-        verifyForgotPasswordOtp,
+        forgotPassword,
         resetPassword,
         setUser,
       }}
