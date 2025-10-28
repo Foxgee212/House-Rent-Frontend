@@ -100,18 +100,18 @@ export default function HouseDetail() {
 
   return (
     <motion.div
-      className="min-h-screen bg-[#1f1f1f] pb-16 transition-all duration-500"
+      className="min-h-screen bg-gray-900 pb-16 transition-all duration-500"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Card Wrapper */}
       <div className="px-4 sm:px-6 mt-6 flex justify-center">
-        <div className="w-full max-w-4xl bg-[#2c2c2c] rounded-3xl shadow-xl overflow-hidden">
+        <div className="w-full max-w-4xl bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-700">
           {/* Header Image */}
           <div className="relative w-full">
             {!imageLoaded && (
-              <div className="absolute inset-0 bg-gray-700 animate-pulse"></div>
+              <div className="absolute inset-0 bg-gray-800 animate-pulse"></div>
             )}
             <motion.img
               key={selectedImage}
@@ -140,7 +140,7 @@ export default function HouseDetail() {
 
           {/* Thumbnails */}
           <motion.div
-            className="flex overflow-x-auto gap-2 px-3 py-3 bg-[#1f1f1f]"
+            className="flex overflow-x-auto gap-2 px-3 py-3 bg-gray-800"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
@@ -189,7 +189,7 @@ export default function HouseDetail() {
 
             {/* Landlord Card */}
             {house.landlord && (
-              <motion.div className="bg-[#1f1f1f] p-4 sm:p-5 rounded-2xl shadow-md border border-gray-700">
+              <motion.div className="bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-700">
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
                   <User size={20} className="text-blue-400" /> Landlord Info
                 </h2>
@@ -200,7 +200,7 @@ export default function HouseDetail() {
                       alt="Landlord"
                       className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-blue-400 shadow-md"
                     />
-                    <span className="absolute bottom-2 right-2 w-3 h-3 bg-green-400 rounded-full ring-2 ring-[#2c2c2c]"></span>
+                    <span className="absolute bottom-2 right-2 w-3 h-3 bg-green-400 rounded-full ring-2 ring-gray-900"></span>
                   </div>
                   <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1">
                     <p className="text-lg font-semibold text-white">{house.landlord.name}</p>
@@ -240,7 +240,7 @@ export default function HouseDetail() {
                 {recommendedHouses.map((h) => (
                   <motion.div
                     key={h._id}
-                    className="min-w-[200px] bg-[#2c2c2c] shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all"
+                    className="min-w-[200px] bg-gray-800 shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all border border-gray-700"
                     whileHover={{ scale: 1.03 }}
                   >
                     <img
