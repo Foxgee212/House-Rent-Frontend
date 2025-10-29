@@ -110,11 +110,6 @@ export default function HouseCard({ house }) {
           <span className="text-gray-500 text-xs sm:text-sm">/month</span>
         </p>
 
-        {house.description && (
-          <p className="text-xs sm:text-sm text-gray-300 mt-2 sm:mt-3 line-clamp-2 sm:line-clamp-3 leading-relaxed">
-            {house.description}
-          </p>
-        )}
       </div>
 
       {/* Zoom Modal with Carousel */}
