@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
-import { FaSearch, FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaTachometerAlt } from "react-icons/fa";
+import { Home, Search, User, LogIn, LogOut, LayoutDashboard } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 
 // ✅ Even Bigger Custom SVG Logo
-const NaijahomeLogoSVG = ({ width = 200, height = 60 }) => (
+const NaijahomeLogoSVG = ({ width = 220, height = 66 }) => (
   <svg
     width={width}
     height={height}
@@ -80,11 +80,11 @@ export default function Navbar() {
     }`;
 
   const tabs = [
-    { to: "/", label: "Home", icon: FaSearch },
-    { to: "/listings", label: "Search", icon: FaSearch },
-    ...(user?.role === "landlord" ? [{ to: "/dashboard", label: "Dashboard", icon: FaTachometerAlt }] : []),
-    ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin", icon: FaTachometerAlt }] : []),
-    user ? { to: "/profile", label: "Profile", icon: FaUser } : { to: "/login", label: "Login", icon: FaSignInAlt },
+    { to: "/", label: "Home", icon: Home },
+    { to: "/listings", label: "Search", icon: Search },
+    ...(user?.role === "landlord" ? [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] : []),
+    ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin", icon: LayoutDashboard }] : []),
+    user ? { to: "/profile", label: "Profile", icon: User } : { to: "/login", label: "Login", icon: LogIn },
   ];
 
   return (
@@ -126,6 +126,7 @@ export default function Navbar() {
                   </li>
                 )}
 
+                {/* Profile Dropdown */}
                 <li className="relative" ref={profileRef}>
                   <button
                     onClick={toggleProfile}
@@ -140,9 +141,7 @@ export default function Navbar() {
                       alt="profile"
                       className="w-10 h-10 rounded-full border border-gray-600 object-cover transition-transform duration-300 hover:scale-110"
                     />
-                    <span className="font-medium hidden lg:block">
-                      {user.name?.split(" ")[0] || "User"}
-                    </span>
+                    <span className="font-medium hidden lg:block">{user.name?.split(" ")[0] || "User"}</span>
                   </button>
 
                   {profileOpen && (
@@ -152,13 +151,13 @@ export default function Navbar() {
                         className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 text-gray-200"
                         onClick={() => setProfileOpen(false)}
                       >
-                        <FaUser /> Profile
+                        <User /> Profile
                       </Link>
                       <button
                         onClick={onLogout}
                         className="flex w-full items-center gap-2 px-4 py-2 text-red-500 hover:bg-gray-700"
                       >
-                        <FaSignOutAlt /> Logout
+                        <LogOut /> Logout
                       </button>
                     </div>
                   )}
@@ -228,7 +227,7 @@ export default function Navbar() {
             }}
             className="flex flex-col items-center justify-center text-red-500"
           >
-            <FaSignOutAlt size={22} />
+            <LogOut size={22} />
             <span className="text-xs mt-1">Logout</span>
           </button>
         )}
