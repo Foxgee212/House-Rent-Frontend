@@ -91,7 +91,7 @@ export default function Navbar() {
     <>
       {/* Desktop Navbar */}
       <nav className="bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-6  flex justify-between items-center">
           {/* Logo clickable */}
           <div onClick={() => navigate("/")}>
             <NaijahomeLogoSVG />
