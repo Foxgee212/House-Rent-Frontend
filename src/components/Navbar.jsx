@@ -1,16 +1,37 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
-import {
-  Home,
-  Search,
-  LogIn,
-  UserPlus,
-  User,
-  LogOut,
-  LayoutDashboard,
-} from "lucide-react";
+import { FaSearch, FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaTachometerAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+
+// ✅ Even Bigger Custom SVG Logo
+const NaijahomeLogoSVG = ({ width = 200, height = 60 }) => (
+  <svg
+    width={width}
+    height={height}
+    viewBox="0 0 300 90"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="cursor-pointer transition-transform duration-300 hover:scale-105"
+  >
+    {/* House Icon */}
+    <path d="M20 40 L40 20 L60 40 V70 H20 V40 Z" fill="url(#grad1)" />
+    <path d="M40 70 V50 H50 V70 H40 Z" fill="#fff" />
+
+    {/* Text */}
+    <text x="70" y="55" fontFamily="Poppins, sans-serif" fontWeight="700" fontSize="36" fill="url(#grad1)">
+      Naijahome
+    </text>
+
+    {/* Gradient */}
+    <defs>
+      <linearGradient id="grad1" x1="0" y1="0" x2="100%" y2="0">
+        <stop offset="0%" stopColor="#667eea" />
+        <stop offset="100%" stopColor="#764ba2" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -19,7 +40,6 @@ export default function Navbar() {
   const profileRef = useRef();
   const navigate = useNavigate();
   const location = useLocation();
-
   const { user, logout } = useAuth();
 
   const toggleProfile = () => setProfileOpen(!profileOpen);
@@ -30,7 +50,6 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // 🧠 Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -41,93 +60,72 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 💨 Detect scroll direction to show/hide bottom bar
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
-        setShowBottomBar(false); // hide on scroll down
-      } else {
-        setShowBottomBar(true); // show on scroll up
-      }
+      setShowBottomBar(currentScrollY <= lastScrollY.current || currentScrollY <= 60);
       lastScrollY.current = currentScrollY;
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 🎯 Haptic feedback
   const triggerHaptic = () => {
     if (navigator.vibrate) navigator.vibrate(30);
   };
 
   const navLinkClass = ({ isActive }) =>
-    `flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition ${
-      isActive
-        ? "text-blue-600 font-semibold border-b-2 border-blue-600 pb-1"
-        : "text-gray-200 dark:text-gray-200"
+    `flex items-center gap-1 hover:text-blue-500 transition ${
+      isActive ? "text-blue-500 font-semibold border-b-2 border-blue-500 pb-1" : "text-gray-200"
     }`;
 
-  // 📱 Tabs for mobile bottom nav
   const tabs = [
-    { to: "/", label: "Home", icon: Home },
-    { to: "/listings", label: "Search", icon: Search },
-    ...(user?.role === "landlord"
-      ? [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]
-      : []),
-    ...(user?.role === "admin"
-      ? [{ to: "/admin", label: "Admin", icon: LayoutDashboard }]
-      : []),
-    user
-      ? { to: "/profile", label: "Profile", icon: User }
-      : { to: "/login", label: "Login", icon: LogIn },
+    { to: "/", label: "Home", icon: FaSearch },
+    { to: "/listings", label: "Search", icon: FaSearch },
+    ...(user?.role === "landlord" ? [{ to: "/dashboard", label: "Dashboard", icon: FaTachometerAlt }] : []),
+    ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin", icon: FaTachometerAlt }] : []),
+    user ? { to: "/profile", label: "Profile", icon: FaUser } : { to: "/login", label: "Login", icon: FaSignInAlt },
   ];
 
   return (
     <>
-      {/* 🧭 Desktop Navbar */}
+      {/* Desktop Navbar */}
       <nav className="bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-2xl font-bold text-blue-400 hover:scale-105 transition-transform"
-          >
-            🏠 RentHouse
-          </Link>
+          {/* Logo clickable */}
+          <div onClick={() => navigate("/")}>
+            <NaijahomeLogoSVG />
+          </div>
 
-          {/* Desktop Links */}
           <ul className="hidden md:flex items-center gap-8 text-white font-medium">
             <li>
               <NavLink to="/" className={navLinkClass}>
-                <Home size={18} /> Home
+                Home
               </NavLink>
             </li>
-
             <li>
               <NavLink to="/listings" className={navLinkClass}>
-                <Search size={18} /> Find House
+                Find House
               </NavLink>
             </li>
 
-            {user ? (
+            {user && (
               <>
                 {user.role === "landlord" && (
                   <li>
                     <NavLink to="/dashboard" className={navLinkClass}>
-                      <LayoutDashboard size={18} /> Dashboard
+                      Dashboard
                     </NavLink>
                   </li>
                 )}
                 {user.role === "admin" && (
                   <li>
                     <NavLink to="/admin" className={navLinkClass}>
-                      <LayoutDashboard size={18} /> Admin Panel
+                      Admin Panel
                     </NavLink>
                   </li>
                 )}
 
-                {/* Profile dropdown */}
                 <li className="relative" ref={profileRef}>
                   <button
                     onClick={toggleProfile}
@@ -137,12 +135,10 @@ export default function Navbar() {
                       src={
                         user?.profilePic ||
                         user?.avatar ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          user?.name || "User"
-                        )}&background=0D8ABC&color=fff`
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=0D8ABC&color=fff`
                       }
                       alt="profile"
-                      className="w-9 h-9 rounded-full border border-gray-600 object-cover transition-transform duration-300 hover:scale-110"
+                      className="w-10 h-10 rounded-full border border-gray-600 object-cover transition-transform duration-300 hover:scale-110"
                     />
                     <span className="font-medium hidden lg:block">
                       {user.name?.split(" ")[0] || "User"}
@@ -156,28 +152,30 @@ export default function Navbar() {
                         className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 text-gray-200"
                         onClick={() => setProfileOpen(false)}
                       >
-                        <User size={18} /> Profile
+                        <FaUser /> Profile
                       </Link>
                       <button
                         onClick={onLogout}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-red-600 hover:bg-gray-700"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-red-500 hover:bg-gray-700"
                       >
-                        <LogOut size={18} /> Logout
+                        <FaSignOutAlt /> Logout
                       </button>
                     </div>
                   )}
                 </li>
               </>
-            ) : (
+            )}
+
+            {!user && (
               <>
                 <li>
                   <NavLink to="/login" className={navLinkClass}>
-                    <LogIn size={18} /> Login
+                    Login
                   </NavLink>
                 </li>
                 <li>
                   <NavLink to="/signup" className={navLinkClass}>
-                    <UserPlus size={18} /> Signup
+                    Signup
                   </NavLink>
                 </li>
               </>
@@ -186,7 +184,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* 📱 Animated Bottom Tab Bar (Mobile only) */}
+      {/* Mobile Bottom Tab Bar */}
       <motion.div
         initial={{ y: 80 }}
         animate={{ y: showBottomBar ? 0 : 80 }}
@@ -210,16 +208,11 @@ export default function Navbar() {
               >
                 <Icon
                   size={22}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                  className={`${
-                    isActive ? "text-blue-500" : "text-gray-400"
-                  } transition-colors`}
+                  className={`${isActive ? "text-blue-500" : "text-gray-400"} transition-colors`}
                 />
               </motion.div>
               <span
-                className={`text-xs mt-1 ${
-                  isActive ? "text-blue-500 font-medium" : "text-gray-400"
-                }`}
+                className={`text-xs mt-1 ${isActive ? "text-blue-500 font-medium" : "text-gray-400"}`}
               >
                 {label}
               </span>
@@ -235,7 +228,7 @@ export default function Navbar() {
             }}
             className="flex flex-col items-center justify-center text-red-500"
           >
-            <LogOut size={22} />
+            <FaSignOutAlt size={22} />
             <span className="text-xs mt-1">Logout</span>
           </button>
         )}

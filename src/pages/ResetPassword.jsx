@@ -10,36 +10,29 @@ export default function ResetPassword() {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const { resetPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Get user email from previous page (already verified)
   const email = location.state?.email;
-
-  // Secure redirect if no email (user accessed directly)
-  useEffect(() => {
-    if (!email) navigate("/forgot-password");
-  }, [email, navigate]);
+  if (!email) navigate("/login"); // redirect if email is missing
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (password !== confirm) {
-      return setError("Passwords do not match");
-    }
-
-    if (password.length < 8) {
-      return setError("Password must be at least 8 characters long");
-    }
+    if (password !== confirm) return setError("Passwords do not match");
+    if (password.length < 8) return setError("Password must be at least 8 characters");
 
     setLoading(true);
     try {
-      await resetPassword(email, null, password); // OTP already verified
-      toast.success("Password reset successfully! Redirecting...");
+      await resetPassword(email, password); // Only password needed now
+      toast.success("Password changed successfully! Redirecting...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(err.message || "Failed to change password");
     } finally {
       setLoading(false);
     }
@@ -49,7 +42,7 @@ export default function ResetPassword() {
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
       <div className="bg-gray-800/60 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700/50">
         <h1 className="text-2xl font-bold text-white text-center mb-4">
-          Reset Password
+          Change Password
         </h1>
 
         {error && (
@@ -58,7 +51,7 @@ export default function ResetPassword() {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* New Password */}
           <div className="relative">
             <input
@@ -106,7 +99,7 @@ export default function ResetPassword() {
             disabled={loading}
             className={`py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300`}
           >
-            {loading ? "Resetting..." : "Reset Password"}
+            {loading ? "Updating..." : "Change Password"}
           </button>
         </form>
       </div>
