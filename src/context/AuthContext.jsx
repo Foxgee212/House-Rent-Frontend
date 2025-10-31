@@ -4,12 +4,18 @@ import API from "../api/axios";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+  // ✅ User info stored in sessionStorage (clears when tab closes)
+  const [user, setUser] = useState(
+    JSON.parse(sessionStorage.getItem("user")) || null
+  );
+
+  // ✅ Token stays in localStorage for persistent login
   const [token, setToken] = useState(localStorage.getItem("token") || null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Attach Authorization header
+  // ✅ Automatically attach Authorization header to requests
   useEffect(() => {
     if (token) {
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -18,13 +24,20 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // Sync user with localStorage
+  // ✅ Keep user synced with sessionStorage
   useEffect(() => {
-    if (user) localStorage.setItem("user", JSON.stringify(user));
-    else localStorage.removeItem("user");
+    if (user) sessionStorage.setItem("user", JSON.stringify(user));
+    else sessionStorage.removeItem("user");
   }, [user]);
 
-  // Fetch user if token exists but user is missing
+  // ✅ Optional: safety net — clear sessionStorage on tab close
+  useEffect(() => {
+    const handleUnload = () => sessionStorage.removeItem("user");
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, []);
+
+  // ✅ Fetch user info if token exists but user is missing
   useEffect(() => {
     if (token && !user) fetchUser();
   }, [token]);
@@ -37,8 +50,10 @@ export function AuthProvider({ children }) {
       const res = await API.post("/auth/login", { email, password });
       setUser(res.data.user);
       setToken(res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      sessionStorage.setItem("user", JSON.stringify(res.data.user));
       localStorage.setItem("token", res.data.token);
+
       return res.data;
     } catch (err) {
       const message =
@@ -67,7 +82,7 @@ export function AuthProvider({ children }) {
         phone: phone || "",
         profilePic: profilePic || "",
       });
-      return res.data; // { success: true, msg: "Check your email for OTP" }
+      return res.data;
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -88,8 +103,10 @@ export function AuthProvider({ children }) {
       const res = await API.post("/auth/verify-email", { email, otp });
       setUser(res.data.user);
       setToken(res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      sessionStorage.setItem("user", JSON.stringify(res.data.user));
       localStorage.setItem("token", res.data.token);
+
       return res.data;
     } catch (err) {
       const message =
@@ -107,7 +124,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     localStorage.removeItem("token");
   };
 
@@ -118,7 +135,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.get("/auth/me");
       setUser(res.data.user);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      sessionStorage.setItem("user", JSON.stringify(res.data.user));
     } catch (err) {
       logout();
     } finally {
@@ -126,13 +143,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ================= FORGOT PASSWORD =================
+  // ================= PASSWORD FLOWS =================
   const forgotPassword = async (email) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post("/auth/forgot-password", { email });
-      return res.data; // { success: true, msg: "OTP sent to email" }
+      return res.data;
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -145,13 +162,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ================= RESEND OTP =================
   const resendOtp = async (email) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post("/auth/resend-otp", { email });
-      return res.data; // { success: true, msg: "OTP resent to email" }
+      return res.data;
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -164,13 +180,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ================= RESET PASSWORD =================
   const resetPassword = async (email, newPassword) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post("/auth/reset-password", { email, newPassword });
-      return res.data; // { success: true, msg: "Password reset successful" }
+      return res.data;
     } catch (err) {
       const message =
         err.response?.data?.message ||

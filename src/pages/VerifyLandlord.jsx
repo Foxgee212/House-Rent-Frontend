@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { toast } from "react-hot-toast";
 import { Loader2, Upload, X, CheckCircle } from "lucide-react";
@@ -8,6 +8,10 @@ export default function VerifyLandlord() {
   const [idImage, setIdImage] = useState(null);
   const [selfie, setSelfie] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState(null);
+  const [matchScore, setMatchScore] = useState(null);
+  const [faceDistance, setFaceDistance] = useState(null);
+  const [reviewerNote, setReviewerNote] = useState("");
 
   // ✅ Submit verification
   const handleSubmit = async (e) => {
@@ -33,16 +37,40 @@ export default function VerifyLandlord() {
         },
         timeout: 60000,
       });
-      toast.success(res.data?.msg || "✅ Verification submitted successfully!");
+
+      toast.success(res.data?.msg || "⚠️ Verification submitted, pending outcome!");
       setForm({ idType: "", idNumber: "" });
       setIdImage(null);
       setSelfie(null);
+
+      // Start polling for verification status
+      const userId = res.data.verificationId;
+      pollVerification(userId);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.msg || "❌ Verification failed.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ Poll backend for verification status
+  const pollVerification = (userId) => {
+    setVerificationStatus("pending");
+    const interval = setInterval(async () => {
+      try {
+        const res = await API.get(`/verification/${userId}/status`);
+        const verification = res.data.verification;
+        setVerificationStatus(verification.status);
+        setMatchScore(verification.score);
+        setFaceDistance(verification.faceMatchDistance);
+        setReviewerNote(verification.reviewerNote);
+
+        if (verification.status !== "pending") clearInterval(interval);
+      } catch (err) {
+        console.error("Error polling verification status:", err);
+      }
+    }, 3000);
   };
 
   // ✅ Upload card component
@@ -97,7 +125,6 @@ export default function VerifyLandlord() {
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* ID Type */}
         <div>
           <label className="block text-sm mb-1 text-gray-400">ID Type</label>
           <select
@@ -113,7 +140,6 @@ export default function VerifyLandlord() {
           </select>
         </div>
 
-        {/* ID Number */}
         <div>
           <label className="block text-sm mb-1 text-gray-400">ID Number</label>
           <input
@@ -126,7 +152,6 @@ export default function VerifyLandlord() {
           />
         </div>
 
-        {/* Upload ID */}
         <UploadCard
           label="Upload ID Image"
           image={idImage}
@@ -134,7 +159,6 @@ export default function VerifyLandlord() {
           instructions="Ensure all details are clearly visible."
         />
 
-        {/* Upload Selfie */}
         <UploadCard
           label="Upload Selfie"
           image={selfie}
@@ -142,7 +166,6 @@ export default function VerifyLandlord() {
           instructions="Face should be well-lit and clearly visible."
         />
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -159,6 +182,23 @@ export default function VerifyLandlord() {
           )}
         </button>
       </form>
+
+      {/* ✅ Verification Status */}
+      {verificationStatus && (
+        <div className="mt-6 p-4 bg-gray-800 rounded-lg text-center">
+          <h3 className="font-semibold text-lg mb-2">Verification Status</h3>
+          <p className="text-sm">
+            {verificationStatus === "pending"
+              ? "⏳ Pending"
+              : verificationStatus === "verified"
+              ? "✅ Verified"
+              : "❌ Rejected"}
+          </p>
+          {matchScore !== null && <p>Match Score: {matchScore}%</p>}
+          {faceDistance !== null && <p>Face Distance: {faceDistance.toFixed(4)}</p>}
+          {reviewerNote && <p className="text-gray-400 text-sm mt-1">{reviewerNote}</p>}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { MapPin, Mail, Phone, User, Save, Camera } from "lucide-react";
 import PhoneInput from "react-phone-input-2";
 import Select from "react-select";
-import 'react-phone-input-2/lib/style.css';
+import "react-phone-input-2/lib/style.css";
 import API from "../api/axios";
 import { nigeriaStatesAndLgas } from "../utils/nigeriaData";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,12 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // ✅ Real-time verification state
+  const [verificationStatus, setVerificationStatus] = useState(
+    user?.verification?.status || user?.verified ? "verified" : "unverified"
+  );
+  const pollingRef = useRef(null);
+
   // Pre-fill user data
   useEffect(() => {
     if (user) {
@@ -37,8 +43,34 @@ export default function Profile() {
         bio: user.bio || "",
       });
       setPreview(user.profilePic || null);
+      setVerificationStatus(
+        user?.verification?.status || (user?.verified ? "verified" : "unverified")
+      );
     }
   }, [user]);
+
+  // ✅ Poll backend for verification status
+  useEffect(() => {
+    if (user?.role !== "landlord" || !token) return;
+    const startPolling = () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await API.get(`/verification/${user._id}/status`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const status = res.data.verification?.status || "unverified";
+          setVerificationStatus(status);
+        } catch (err) {
+          console.error("Error fetching verification status:", err);
+        }
+      }, 5000);
+    };
+    startPolling();
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [user, token]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
   const handleSelectChange = (field, value) => setForm({ ...form, [field]: value });
@@ -83,15 +115,28 @@ export default function Profile() {
     }
   };
 
-  // Convert states to react-select options
   const stateOptions = Object.keys(nigeriaStatesAndLgas).map((state) => ({
     value: state,
     label: state,
   }));
-
   const lgaOptions = form.state
     ? nigeriaStatesAndLgas[form.state]?.map((lga) => ({ value: lga, label: lga }))
     : [];
+
+  // ✅ Helper for badge color/text
+  const getBadge = (status) => {
+    switch (status) {
+      case "verified":
+        return { color: "bg-green-600", text: "Verified" };
+      case "pending_review":
+        return { color: "bg-yellow-500 animate-pulse", text: "Pending" };
+      case "rejected":
+        return { color: "bg-red-600 animate-pulse", text: "Rejected" };
+      default:
+        return { color: "bg-gray-600", text: "Not Verified" };
+    }
+  };
+  const badge = getBadge(verificationStatus);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 py-10 px-6">
@@ -101,14 +146,28 @@ export default function Profile() {
         {/* Profile Picture + Badge */}
         <div className="flex flex-col items-center mb-8 relative">
           <div className="relative">
+            {/* ✅ Pulse ring for pending */}
+            <div
+              className={`absolute inset-0 rounded-full ${
+                verificationStatus === "pending_review" ? "animate-ping bg-yellow-500/30" : ""
+              }`}
+            ></div>
+
             <img
               src={preview || "/default-profile.png"}
               alt="Profile"
-              className="w-32 h-32 rounded-full object-cover border-4 border-blue-500 shadow-md"
+              className={`w-32 h-32 rounded-full object-cover border-4 ${
+                verificationStatus === "verified"
+                  ? "border-green-500"
+                  : verificationStatus === "pending"
+                  ? "border-yellow-400"
+                  : "border-red-500"
+              } shadow-lg relative z-10`}
             />
+
             <label
               htmlFor="profilePic"
-              className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition"
+              className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition z-20"
             >
               <Camera size={18} className="text-white" />
             </label>
@@ -120,19 +179,28 @@ export default function Profile() {
               className="hidden"
             />
           </div>
-          <p className="mt-2 text-sm text-gray-400">
-            Click the camera icon to change your picture
-          </p>
 
-          {/* Not Verified Badge for Landlords */}
-          {user?.role === "landlord" && !user?.verified && (
-            <span
-              onClick={() => navigate("/verify")}
-              className="absolute top-0 right-0 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md animate-pulse cursor-pointer hover:bg-red-600 transition"
-              title="Click to verify account"
+          {/* ✅ Visible Badge Below Image */}
+          {user?.role === "landlord" && (
+            <div
+              onClick={() =>
+                ["pending", "rejected", "unverified"].includes(verificationStatus)
+                  ? navigate("/verify")
+                  : null
+              }
+              title={
+                verificationStatus === "verified"
+                  ? "Verified"
+                  : verificationStatus === "pending"
+                  ? "Verification Pending"
+                  : verificationStatus === "rejected"
+                  ? "Verification Rejected - Click to Retry"
+                  : "Click to Verify"
+              }
+              className={`mt-4 inline-block text-xs font-bold text-white px-4 py-1.5 rounded-full shadow-md cursor-pointer ${badge.color} hover:opacity-90`}
             >
-              Not Verified
-            </span>
+              {badge.text}
+            </div>
           )}
         </div>
 
@@ -165,7 +233,6 @@ export default function Profile() {
             onChange={handleChange}
           />
 
-          {/* Phone Input */}
           <div>
             <label className="block text-sm font-medium mb-1">Phone Number</label>
             <PhoneInput
@@ -182,7 +249,6 @@ export default function Profile() {
             />
           </div>
 
-          {/* State */}
           <div>
             <label className="block text-sm font-medium mb-1">State</label>
             <Select
@@ -195,7 +261,6 @@ export default function Profile() {
             />
           </div>
 
-          {/* Local Government */}
           <div>
             <label className="block text-sm font-medium mb-1">Local Government</label>
             <Select
@@ -211,7 +276,6 @@ export default function Profile() {
             />
           </div>
 
-          {/* Bio */}
           <textarea
             name="bio"
             placeholder="Short bio or additional info"
@@ -234,7 +298,7 @@ export default function Profile() {
   );
 }
 
-// Reusable Input Component
+// Input Field
 function InputField({ icon, ...props }) {
   return (
     <div className="flex items-center gap-2 border rounded-lg p-3 bg-gray-700 text-gray-100 focus-within:ring-2 focus-within:ring-blue-500">
@@ -244,7 +308,7 @@ function InputField({ icon, ...props }) {
   );
 }
 
-// React-select custom styles
+// Select Styles
 const selectStyles = {
   control: (base, state) => ({
     ...base,

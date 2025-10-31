@@ -42,16 +42,13 @@ export default function Signup() {
 
     try {
       if (step === "input") {
-        // Signup step: create user and send OTP
         await signup(form.name, form.email, form.password, form.role);
         toast.success("OTP sent to your email ✉️");
         setStep("otp");
         setResendTimer(60);
       } else if (step === "otp") {
-        // Verify OTP
         await verifyEmail(form.email, otp);
         toast.success("Registration complete! 🚀");
-
         navigate(form.role === "landlord" ? "/dashboard" : "/");
       }
     } catch (err) {
@@ -90,7 +87,9 @@ export default function Signup() {
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40">{error}</p>
+          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40">
+            {error}
+          </p>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -161,78 +160,83 @@ export default function Signup() {
                     : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
                 }`}
               >
-                {loading ? "Sending OTP..." : "Send OTP"}
+                {loading ? "Sending OTP..." : "Register"}
               </button>
+
+              {/* Social Login */}
+              <div className="flex items-center justify-center mt-5 mb-2">
+                <div className="h-px w-14 bg-gray-600"></div>
+                <span className="mx-2 text-gray-400 text-xs">or</span>
+                <div className="h-px w-14 bg-gray-600"></div>
+              </div>
+
+              <div className="flex flex-col gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignup}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition text-sm"
+                >
+                  <Globe className="w-4 h-4 text-blue-600" /> Continue with Google
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFacebookSignup}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition text-sm"
+                >
+                  <Facebook className="w-4 h-4" /> Continue with Facebook
+                </button>
+              </div>
+
+              <p className="mt-5 text-center text-gray-400 text-xs">
+                Already have an account?{" "}
+                <Link to="/login" className="text-blue-500 font-medium hover:text-blue-400 transition">
+                  Login here
+                </Link>
+              </p>
             </>
           ) : (
             <>
-              {/* OTP Input */}
-              <div className="relative">
+              {/* OTP Verification */}
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-white mb-2">Verify Your Email</h2>
+                <p className="text-gray-400 text-sm mb-4">
+                  Enter the 6-digit code sent to your email address.
+                </p>
+
                 <input
                   type="text"
-                  placeholder="Enter OTP"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="w-full pl-3 py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  onChange={(e) => setOtp(sanitizeInput(e.target.value))}
+                  placeholder="Enter OTP"
+                  maxLength="6"
+                  required
+                  className="w-full text-center tracking-widest py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
-              </div>
 
-              <div className="flex justify-between items-center mb-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full mt-4 py-2.5 rounded-lg font-semibold text-white transition-all duration-300 ${
+                    loading
+                      ? "bg-blue-600/50 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
+                  }`}
+                >
+                  {loading ? "Verifying..." : "Verify Email"}
+                </button>
+
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={resendTimer > 0}
-                  className={`text-sm text-blue-400 hover:text-blue-300 transition ${
-                    resendTimer > 0 ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className="w-full mt-3 text-blue-400 hover:text-blue-300 text-sm"
                 >
-                  {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
+                  {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Resend OTP"}
                 </button>
               </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={`py-2.5 rounded-lg font-semibold text-white transition-all duration-300 ${
-                  loading
-                    ? "bg-blue-600/50 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
-                }`}
-              >
-                {loading ? "Verifying OTP..." : "Verify & Register"}
-              </button>
             </>
           )}
         </form>
-
-        {/* Social Login */}
-        <div className="flex items-center justify-center mt-5 mb-2">
-          <div className="h-px w-14 bg-gray-600"></div>
-          <span className="mx-2 text-gray-400 text-xs">or</span>
-          <div className="h-px w-14 bg-gray-600"></div>
-        </div>
-
-        <div className="flex flex-col gap-2 mt-2">
-          <button
-            onClick={handleGoogleSignup}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition text-sm"
-          >
-            <Globe className="w-4 h-4 text-blue-600" /> Continue with Google
-          </button>
-          <button
-            onClick={handleFacebookSignup}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition text-sm"
-          >
-            <Facebook className="w-4 h-4" /> Continue with Facebook
-          </button>
-        </div>
-
-        <p className="mt-5 text-center text-gray-400 text-xs">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-500 font-medium hover:text-blue-400 transition">
-            Login here
-          </Link>
-        </p>
       </div>
     </div>
   );
