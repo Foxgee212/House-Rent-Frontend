@@ -12,7 +12,7 @@ import Profile from "./pages/Profile";
 import DashBoard from "./pages/Dashbord";
 import AdminDashboard from "./adminDashboard/AdminDashboard";
 import VerifyLandlord from "./pages/VerifyLandlord";
-import OTPPage from "./pages/OTPPage";
+import VerifyOtp from "./pages/OTPpage"; // ✅ renamed to match actual component
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -25,7 +25,7 @@ function App() {
       <Navbar />
 
       <Routes>
-        {/* Public Routes */}
+        {/* 🌍 Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/listings" element={<Listings />} />
         <Route path="/listings/:id" element={<HouseDetail />} />
@@ -33,12 +33,12 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
 
-        {/* OTP & Password Recovery */}
-        <Route path="/otp" element={<OTPPage />} />
+        {/* 🔐 OTP & Password Recovery */}
+        <Route path="/verify-otp" element={<VerifyOtp />} /> {/* ✅ updated */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protected Routes */}
+        {/* 🧭 Protected Routes */}
         <Route
           path="/dashboard"
           element={

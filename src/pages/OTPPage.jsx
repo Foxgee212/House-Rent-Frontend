@@ -1,59 +1,36 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { RefreshCcw } from "lucide-react";
+import { ShieldCheck, Loader2 } from "lucide-react";
+import API from "../api/axios";
 
 export default function VerifyOtp() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { verifyForgotPasswordOtp, verifyEmail, forgotPassword, resendOtp } = useAuth();
+  const navigate = useNavigate();
 
-  const { email, redirectTo } = location.state || {};
-  const OTP_LENGTH = 6;
+  const email = location.state?.email || "";
+  const context = location.state?.context || "signup"; // "signup" or "forgot"
 
-  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [resendTimer, setResendTimer] = useState(0);
-
+  const [resending, setResending] = useState(false);
   const inputRefs = useRef([]);
 
-  // Redirect if accessed without email
+  // Focus first input on mount
   useEffect(() => {
-    if (!email) navigate("/");
-  }, [email, navigate]);
+    inputRefs.current[0]?.focus();
+  }, []);
 
-  // Countdown timer for resending OTP
-  useEffect(() => {
-    let timer;
-    if (resendTimer > 0) {
-      timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [resendTimer]);
-
-  const handleChange = (e, index) => {
-    const value = e.target.value;
-    if (!/^[0-9]*$/.test(value)) return;
-
-    // Paste support
-    if (value.length > 1) {
-      const digits = value.slice(0, OTP_LENGTH).split("");
-      setOtp([...digits, ...Array(OTP_LENGTH - digits.length).fill("")]);
-      digits.forEach((_, i) => inputRefs.current[i]?.focus());
-      return;
-    }
+  // ====== Handle OTP input ======
+  const handleChange = (value, index) => {
+    if (!/^[0-9]?$/.test(value)) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Move focus
-    if (value && index < OTP_LENGTH - 1) {
+    if (value && index < otp.length - 1) {
       inputRefs.current[index + 1]?.focus();
-    } else if (!value && index > 0) {
-      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -63,105 +40,130 @@ export default function VerifyOtp() {
     }
   };
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").slice(0, 6);
+    if (!/^[0-9]+$/.test(pasted)) return;
+
+    const digits = pasted.split("");
+    const newOtp = [...otp];
+    digits.forEach((d, i) => (newOtp[i] = d));
+    setOtp(newOtp);
+    inputRefs.current[Math.min(digits.length - 1, 5)]?.focus();
+  };
+
+  // ====== Submit handler ======
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    const code = otp.join("");
 
-    const otpString = otp.join("");
-    if (otpString.length !== OTP_LENGTH) return setError("Please enter the full 6-digit OTP.");
+    if (code.length !== 6) {
+      toast.error("Please enter the full 6-digit code.");
+      return;
+    }
 
     setLoading(true);
     try {
-      // Decide which verification to use based on redirectTo
-      if (redirectTo === "reset-password") {
-        await verifyForgotPasswordOtp(email, otpString);
-        toast.success("OTP verified! You can now reset your password.");
+      const { data } = await API.post("/auth/verify-otp", { email, code, context });
+
+      toast.success("✅ OTP verified successfully!");
+
+      if (context === "signup") navigate("/login");
+      else if (context === "forgot")
         navigate("/reset-password", { state: { email } });
-      } else if (redirectTo === "home") {
-        await verifyEmail(email, otpString);
-        toast.success("OTP verified! Redirecting to home...");
-        navigate("/");
-      }
     } catch (err) {
-      setError(err.message || "Invalid or expired OTP");
+      toast.error(err.response?.data?.message || "Invalid or expired OTP");
     } finally {
       setLoading(false);
     }
   };
 
+  // ====== Resend OTP ======
   const handleResend = async () => {
-    if (resendTimer > 0) return;
-
+    setResending(true);
     try {
-      if (redirectTo === "reset-password") {
-        await forgotPassword(email);
-      } else if (redirectTo === "home") {
-        await resendOtp(email);
-      }
-
-      toast.success("OTP resent to your email!");
-      setResendTimer(60);
+      await API.post("/auth/resend-otp", { email, context });
+      toast.success("📩 A new OTP has been sent to your email!");
     } catch (err) {
-      toast.error(err.message || "Failed to resend OTP");
+      toast.error(err.response?.data?.message || "Failed to resend OTP");
+    } finally {
+      setResending(false);
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
-      <div className="bg-gray-800/60 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700/50">
-        <h1 className="text-2xl font-bold text-white text-center mb-4">Verify OTP</h1>
-        <p className="text-gray-400 text-center mb-6">
-          Enter the 6-digit code sent to{" "}
-          <span className="text-blue-400 font-medium">{email}</span>.
-        </p>
+      <div className="relative bg-gray-800/60 backdrop-blur-lg border border-gray-700/50 shadow-2xl rounded-2xl p-8 w-full max-w-md">
+        {/* Glow effect */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600/20 to-blue-400/10 blur-2xl -z-10" />
 
-        {error && (
-          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40">
-            {error}
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="bg-blue-600/20 w-16 h-16 flex items-center justify-center rounded-full mx-auto mb-4 shadow-[0_0_25px_3px_rgba(37,99,235,0.3)]">
+            <ShieldCheck className="w-8 h-8 text-blue-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Verify Your Email
+          </h1>
+          <p className="text-gray-400 mt-1 text-sm">
+            Enter the 6-digit code sent to{" "}
+            <span className="text-blue-400 font-medium">{email}</span>
           </p>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div className="flex justify-center gap-3">
-            {otp.map((digit, index) => (
+        {/* OTP Inputs */}
+        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6">
+          <div
+            className="flex justify-between w-full max-w-xs select-none"
+            onPaste={handlePaste}
+          >
+            {otp.map((digit, i) => (
               <input
-                key={index}
+                key={i}
+                ref={(el) => (inputRefs.current[i] = el)}
                 type="text"
+                inputMode="numeric"
+                maxLength="1"
                 value={digit}
-                onChange={(e) => handleChange(e, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                maxLength={1}
-                ref={(el) => (inputRefs.current[index] = el)}
-                className="w-12 h-12 text-center text-xl rounded-lg bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                onChange={(e) => handleChange(e.target.value, i)}
+                onKeyDown={(e) => handleKeyDown(e, i)}
+                className="w-12 h-12 text-center text-xl font-semibold text-white bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-200 hover:border-blue-500"
               />
             ))}
           </div>
 
-          <div className="flex justify-end mb-2">
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resendTimer > 0}
-              className={`flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition ${
-                resendTimer > 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              <RefreshCcw size={16} />
-              {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
-            </button>
-          </div>
-
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className={`py-3 rounded-lg font-semibold text-white transition-all duration-300 ${
+            className={`w-full py-2.5 rounded-lg font-semibold text-white transition-all duration-300 ${
               loading
                 ? "bg-blue-600/50 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-600/30"
             }`}
           >
-            {loading ? "Verifying..." : "Verify OTP"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Verifying...
+              </span>
+            ) : (
+              "Verify Code"
+            )}
           </button>
+
+          {/* Resend */}
+          <p className="text-sm text-gray-400 mt-2 text-center">
+            Didn’t get the code?{" "}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="text-blue-400 hover:text-blue-300 font-medium ml-1 transition-all"
+            >
+              {resending ? "Resending..." : "Resend OTP"}
+            </button>
+          </p>
         </form>
       </div>
     </div>
