@@ -13,7 +13,8 @@ import {
   Loader2,
 } from "lucide-react";
 
-const sanitizeInput = (value) => value.replace(/[<>/'"`;(){}$]/g, "").trim();
+// ✅ Safe sanitization (no trim — allows spaces)
+const sanitizeInput = (value) => value.replace(/[<>/'"`;(){}$]/g, "");
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -27,23 +28,25 @@ export default function Signup() {
   });
   const [loading, setLoading] = useState(false);
 
+  // ✅ Clean handleChange (allows spaces)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: sanitizeInput(value) }));
   };
 
+  // ✅ Handles form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log(form)
 
     try {
-      await signup({name: form.name,
-                    email: form.email, 
-                    password: form.password, 
-                    role: form.role,
-                   });
-      
+      await signup({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        role: form.role,
+      });
+
       toast.success("✅ OTP sent to your email");
 
       navigate("/verify-otp", {
@@ -91,6 +94,7 @@ export default function Signup() {
               value={form.name}
               onChange={handleChange}
               required
+              autoComplete="name"
               className="w-full pl-9 py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
@@ -105,6 +109,7 @@ export default function Signup() {
               value={form.email}
               onChange={handleChange}
               required
+              autoComplete="email"
               className="w-full pl-9 py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
@@ -119,6 +124,8 @@ export default function Signup() {
               value={form.password}
               onChange={handleChange}
               required
+              minLength={6}
+              autoComplete="new-password"
               className="w-full pl-9 py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
