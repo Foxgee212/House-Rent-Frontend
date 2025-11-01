@@ -12,7 +12,7 @@ import Profile from "./pages/Profile";
 import DashBoard from "./pages/Dashbord";
 import AdminDashboard from "./adminDashboard/AdminDashboard";
 import VerifyLandlord from "./pages/VerifyLandlord";
-import VerifyOtp from "./pages/OTPpage"; // ✅ renamed to match actual component
+import VerifyOtp from "./pages/OTPPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
