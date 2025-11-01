@@ -154,7 +154,10 @@ export default function Profile() {
             ></div>
 
             <img
-              src={preview || "/default-profile.png"}
+              src={preview ||
+                  user?.avatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=0D8ABC&color=fff`
+              }
               alt="Profile"
               className={`w-32 h-32 rounded-full object-cover border-4 ${
                 verificationStatus === "verified"
