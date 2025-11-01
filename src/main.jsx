@@ -7,6 +7,8 @@ import App from './App.jsx'
 import { HouseProvider } from './context/HouseContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { Toaster } from 'react-hot-toast';
+import "./pwa";
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

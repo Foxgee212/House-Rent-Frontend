@@ -47,6 +47,9 @@ export function AuthProvider({ children }) {
      🧭 Fetch user info if token exists but user missing
   ============================================================ */
   useEffect(() => {
+    // If there's a token but no user in memory (and not in sessionStorage), fetch
+    const StoredUser = sessionStorage.getItem("user")
+    
     if (token && !user) fetchUser();
   }, [token]);
 
