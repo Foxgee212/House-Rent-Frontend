@@ -15,6 +15,7 @@ import VerifyLandlord from "./pages/VerifyLandlord";
 import VerifyOtp from "./pages/OTPPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerificationDetails from "./pages/VerificationDetails";
 
 // Components
 import PrivateRoute from "./components/PrivateRoute";
@@ -34,7 +35,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
 
         {/* 🔐 OTP & Password Recovery */}
-        <Route path="/verify-otp" element={<VerifyOtp />} /> {/* ✅ updated */}
+        <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -55,11 +56,21 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        {/* 🛠️ Admin Routes */}
         <Route
           path="/admin"
           element={
             <PrivateRoute roles={["admin"]}>
               <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/verification/:id"
+          element={
+            <PrivateRoute roles={["admin"]}>
+              <VerificationDetails />
             </PrivateRoute>
           }
         />
