@@ -14,12 +14,21 @@ export default function VerifyOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [countdown, setCountdown] = useState(0); // 👈 countdown in seconds
   const inputRefs = useRef([]);
 
   // Focus first input on mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   // ====== Handle OTP input ======
   const handleChange = (value, index) => {
@@ -64,7 +73,7 @@ export default function VerifyOtp() {
 
     setLoading(true);
     try {
-      const { data } = await API.post("/auth/verify-otp", { email, code, context });
+      const { data } = await API.post("/auth/verify-otp", { email, otp: code, context });
 
       toast.success("✅ OTP verified successfully!");
 
@@ -84,6 +93,7 @@ export default function VerifyOtp() {
     try {
       await API.post("/auth/resend-otp", { email, context });
       toast.success("📩 A new OTP has been sent to your email!");
+      setCountdown(60); // 👈 start 1 minute countdown
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to resend OTP");
     } finally {
@@ -158,10 +168,16 @@ export default function VerifyOtp() {
             <button
               type="button"
               onClick={handleResend}
-              disabled={resending}
-              className="text-blue-400 hover:text-blue-300 font-medium ml-1 transition-all"
+              disabled={resending || countdown > 0}
+              className={`text-blue-400 hover:text-blue-300 font-medium ml-1 transition-all ${
+                (resending || countdown > 0) && "cursor-not-allowed opacity-60"
+              }`}
             >
-              {resending ? "Resending..." : "Resend OTP"}
+              {resending
+                ? "Resending..."
+                : countdown > 0
+                ? `Resend in ${countdown}s`
+                : "Resend OTP"}
             </button>
           </p>
         </form>

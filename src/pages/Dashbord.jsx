@@ -42,7 +42,7 @@ export default function DashBoard() {
       </div>
     );
   }
- console.log(user)
+
 
   // Fetch landlord houses
   useEffect(() => {

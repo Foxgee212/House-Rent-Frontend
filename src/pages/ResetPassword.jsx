@@ -16,7 +16,9 @@ export default function ResetPassword() {
   const location = useLocation();
 
   const email = location.state?.email;
-  if (!email) navigate("/login"); // redirect if accessed directly
+
+  // 🚫 Redirect if page accessed directly without email
+  if (!email) navigate("/login");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +34,12 @@ export default function ResetPassword() {
       toast.success("Password changed successfully! Redirecting...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.message || "Failed to change password. Please try again.");
+      console.error("Reset password error:", err);
+      setError(
+        err.response?.data?.msg ||
+          err.message ||
+          "Failed to change password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -41,6 +48,7 @@ export default function ResetPassword() {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
       <div className="relative bg-gray-800/60 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-700/50">
+        {/* Subtle gradient glow */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600/20 to-blue-400/10 blur-2xl -z-10"></div>
 
         <div className="text-center mb-6">
@@ -55,8 +63,9 @@ export default function ResetPassword() {
           </p>
         </div>
 
+        {/* Error message */}
         {error && (
-          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40">
+          <p className="text-red-400 text-sm text-center mb-3 bg-red-500/10 py-2 rounded-lg border border-red-700/40 animate-pulse">
             {error}
           </p>
         )}

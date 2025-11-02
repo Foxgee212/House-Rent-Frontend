@@ -47,9 +47,6 @@ export function AuthProvider({ children }) {
      🧭 Fetch user info if token exists but user missing
   ============================================================ */
   useEffect(() => {
-    // If there's a token but no user in memory (and not in sessionStorage), fetch
-    const StoredUser = sessionStorage.getItem("user")
-    
     if (token && !user) fetchUser();
   }, [token]);
 
@@ -104,8 +101,7 @@ export function AuthProvider({ children }) {
   };
 
   /* ============================================================
-     ✉️ VERIFY EMAIL
-     ➜ Called from OTP page for both signup + forgot password
+     ✉️ VERIFY EMAIL (used for signup + forgot password)
   ============================================================ */
   const verifyEmail = async (email, otp) => {
     setLoading(true);
@@ -199,13 +195,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const resetPassword = async (email, otp, newPassword) => {
+  // ✅ UPDATED resetPassword (no OTP needed here anymore)
+  const resetPassword = async (email, newPassword) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post("/auth/reset-password", {
         email,
-        otp,
         newPassword,
       });
       return res.data;
