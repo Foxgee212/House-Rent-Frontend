@@ -62,8 +62,7 @@ export default function Signup() {
   const handleGoogleSignup = () =>
     toast("Google signup coming soon ⚙️", { icon: "⚡" });
 
-  const handleFacebookSignup = () =>
-    toast("Facebook signup coming soon ⚙️", { icon: "💙" });
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
@@ -181,14 +180,7 @@ export default function Signup() {
               <Globe className="w-4 h-4 text-blue-600" />
               Continue with Google
             </button>
-            <button
-              type="button"
-              onClick={handleFacebookSignup}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition text-sm"
-            >
-              <Facebook className="w-4 h-4" />
-              Continue with Facebook
-            </button>
+            
           </div>
 
           {/* Footer */}

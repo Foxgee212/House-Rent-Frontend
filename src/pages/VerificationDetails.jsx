@@ -127,11 +127,11 @@ export default function VerificationDetails() {
         <h3 className="text-lg font-semibold text-blue-300 mb-2">
           Uploaded Documents
         </h3>
-        {idData.idImageUrl  ? (
+        {v.idImageUrl && v.selfieUrl  ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             
                 <img
-                  src={idData.idImageUrl}
+                  src={v.idImageUrl}
                   alt={idData.idNumber}
                   className="rounded-lg border border-gray-700 w-full h-40 object-cover cursor-pointer group-hover:opacity-80 transition"
                   onClick={() => window.open(imgUrl, "_blank")}
@@ -141,7 +141,7 @@ export default function VerificationDetails() {
                 </span>
 
                 <img
-                  src={idData.selfieUrl}
+                  src={v.selfieUrl}
                   alt={idData.idNumber}
                   className="rounded-lg border border-gray-700 w-full h-40 object-cover cursor-pointer group-hover:opacity-80 transition"
                   onClick={() => window.open(imgUrl, "_blank")}
