@@ -48,7 +48,7 @@ export default function Login() {
   }, [user, navigate]);
 
   const handleGoogleLogin = () => toast("Google login coming soon ⚙️", { icon: "⚡" });
-  
+  const handleFacebookLogin = () => toast("Facebook login coming soon ⚙️", { icon: "💙" });
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-3 sm:p-4">
@@ -141,18 +141,7 @@ export default function Login() {
           <span className="mx-2 sm:mx-3 text-gray-400 text-xs sm:text-sm">or</span>
           <div className="h-px w-14 sm:w-16 bg-gray-600"></div>
         </div>
-
-        {/* Social Buttons */}
-        <div className="flex flex-col gap-2 sm:gap-3 mt-2 sm:mt-3">
-          <button
-            onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2.5 sm:py-3 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition text-sm sm:text-base"
-          >
-            <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" /> Continue with Google
-          </button>
-          
-        </div>
-
+      
         <p className="mt-5 sm:mt-6 text-center text-gray-400 text-xs sm:text-sm">
           Don’t have an account?{" "}
           <Link

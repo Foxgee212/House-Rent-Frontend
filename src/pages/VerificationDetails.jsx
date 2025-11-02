@@ -134,7 +134,7 @@ export default function VerificationDetails() {
                   src={v.idImageUrl}
                   alt={idData.idNumber}
                   className="rounded-lg border border-gray-700 w-full h-40 object-cover cursor-pointer group-hover:opacity-80 transition"
-                  onClick={() => window.open(imgUrl, "_blank")}
+                  onClick={() => window.open(v.idImageUrl, "_blank")}
                 />
                 <span className="absolute bottom-1 right-1 bg-black/60 text-xs px-2 py-0.5 rounded">
                   View
@@ -144,7 +144,7 @@ export default function VerificationDetails() {
                   src={v.selfieUrl}
                   alt={idData.idNumber}
                   className="rounded-lg border border-gray-700 w-full h-40 object-cover cursor-pointer group-hover:opacity-80 transition"
-                  onClick={() => window.open(imgUrl, "_blank")}
+                  onClick={() => window.open(v.selfieUrl, "_blank")}
                 />
                 <span className="absolute bottom-1 right-1 bg-black/60 text-xs px-2 py-0.5 rounded">
                   View
