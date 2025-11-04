@@ -115,46 +115,131 @@ export default function UsersTable({ onDataChange }) {
         <p className="text-center text-gray-400 py-10">No users found.</p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-          {filtered.map((u) => (
-            <div
-              key={u._id}
-              className="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-blue-600 transition-all flex flex-col items-center text-center"
-            >
-              {u.profilePic ? (
-                <img
-                  src={u.profilePic}
-                  alt={u.name || "User"}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover mb-3 border border-gray-600"
-                />
-              ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-700 flex items-center justify-center mb-3">
-                  <UserCircle className="text-gray-400" size={42} />
-                </div>
-              )}
+          {filtered.map((u) => {
+            // Define badge colors and icons based on verification status
+            const getStatusBadge = (status) => {
+              switch (status) {
+                case "verified":
+                  return (
+                    <span className="flex items-center gap-1 px-2 py-1 text-[11px] sm:text-xs font-medium rounded-full bg-blue-600/20 text-blue-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 10-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Verified
+                    </span>
+                  );
 
-              <h3 className="font-semibold text-gray-100 truncate w-full">
-                {u.name || "Unnamed User"}
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-400 truncate w-full">
-                {u.email}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1 truncate w-full">
-                📞 {u.phone || "No phone"}
-              </p>
+                case "pending":
+                  return (
+                    <span className="flex items-center gap-1 px-2 py-1 text-[11px] sm:text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-12a.75.75 0 00-1.5 0v5.25a.75.75 0 001.5 0V6zm-.75 8.25a.75.75 0 100 1.5.75.75 0 000-1.5z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Pending
+                    </span>
+                  );
 
-              <span className="mt-2 inline-block px-3 py-1 text-[11px] sm:text-xs font-medium bg-blue-600/20 text-blue-400 rounded-full capitalize">
-                {u.role}
-              </span>
+                case "rejected":
+                  return (
+                    <span className="flex items-center gap-1 px-2 py-1 text-[11px] sm:text-xs font-medium rounded-full bg-red-600/20 text-red-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.414-9.414a1 1 0 011.414 0L10 9.586l1.414-1.414a1 1 0 011.414 1.414L11.414 11l1.414 1.414a1 1 0 01-1.414 1.414L10 12.414l-1.414 1.414a1 1 0 01-1.414-1.414L8.586 11 7.172 9.586a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Rejected
+                    </span>
+                  );
 
-              <button
-                onClick={() => deleteUser(u._id)}
-                className="mt-4 text-red-400 hover:text-red-500 flex items-center gap-1 transition text-sm"
+                default:
+                  return (
+                    <span className="flex items-center gap-1 px-2 py-1 text-[11px] sm:text-xs font-medium rounded-full bg-gray-600/20 text-gray-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        className="w-4 h-4"
+                      >
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 5h2v6H9V5zm0 8h2v2H9v-2z" />
+                      </svg>
+                      Unverified
+                    </span>
+                  );
+              }
+            };
+
+            return (
+              <div
+                key={u._id}
+                className="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-blue-600 transition-all flex flex-col items-center text-center"
               >
-                <Trash2 size={15} />
-                <span>Delete</span>
-              </button>
-            </div>
-          ))}
+                {u.profilePic ? (
+                  <img
+                    src={u.profilePic}
+                    alt={u.name || "User"}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover mb-3 border border-gray-600"
+                  />
+                ) : (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-700 flex items-center justify-center mb-3">
+                    <UserCircle className="text-gray-400" size={42} />
+                  </div>
+                )}
+
+                {/* User Name */}
+                <h3 className="font-semibold text-gray-100 truncate w-full">
+                  {u.name || "Unnamed User"}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-400 truncate w-full">
+                  {u.email}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 truncate w-full">
+                  📞 {u.phone || "No phone"}
+                </p>
+
+                {/* Verification Badge */}
+                <div className="mt-2">{getStatusBadge(u.verification.status)}</div>
+
+                {/* Role */}
+                <span className="mt-2 inline-block px-3 py-1 text-[11px] sm:text-xs font-medium bg-blue-600/20 text-blue-400 rounded-full capitalize">
+                  {u.role}
+                </span>
+
+                {/* Delete Button */}
+                <button
+                  onClick={() => deleteUser(u._id)}
+                  className="mt-4 text-red-400 hover:text-red-500 flex items-center gap-1 transition text-sm"
+                >
+                  <Trash2 size={15} />
+                  <span>Delete</span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
