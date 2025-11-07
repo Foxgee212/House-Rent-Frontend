@@ -21,6 +21,7 @@ export default function SellerDashboard() {
   const navigate = useNavigate();
 
   const allowed = user?.role === "seller" || user?.role === "agent";
+
   const [form, setForm] = useState({
     title: "",
     location: "",
@@ -36,7 +37,7 @@ export default function SellerDashboard() {
 
   useEffect(() => {
     if (allowed && token) fetchMySales(token);
-  }, [allowed, token]);
+  }, [allowed, token, fetchMySales]);
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -81,8 +82,11 @@ export default function SellerDashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!editing && images.length === 0)
-      return toast.error("Please select at least one image");
+
+    if (!editing && images.length === 0) {
+      toast.error("Please select at least one image");
+      return;
+    }
 
     if (user?.verification?.status !== "verified") {
       toast.error("You must verify your identity before posting properties");
@@ -105,6 +109,7 @@ export default function SellerDashboard() {
         toast.success("🏡 Property listed for sale");
       }
       resetForm();
+      fetchMySales(token); // Refresh listings after add/update
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to process request";
       toast.error(msg);
@@ -323,10 +328,7 @@ export default function SellerDashboard() {
                 className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all"
               >
                 <img
-                  src={
-                    h.images?.[0] ||
-                    "https://placehold.co/600x400?text=No+Image"
-                  }
+                  src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"}
                   alt={h.title}
                   className="w-full h-48 object-cover cursor-pointer"
                 />
@@ -343,9 +345,7 @@ export default function SellerDashboard() {
                       </span>
                     )}
                   </p>
-                  <p className="text-sm text-gray-400 line-clamp-2">
-                    {h.description}
-                  </p>
+                  <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
 
                   <div className="flex gap-2 mt-4">
                     <button
