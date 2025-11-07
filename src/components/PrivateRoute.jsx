@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 
 export default function PrivateRoute({ children, roles }) {
-  const { user, loading } = useAuth();
+  const { user, loading, checkingAuth } = useAuth();
 
-  // 🌀 While checking authentication, show loading animation
-  if (loading) {
+  // 🌀 While checking authentication (initial load), show loading animation
+  if (checkingAuth || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-950">
         <motion.div

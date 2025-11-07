@@ -12,12 +12,12 @@ export function AuthProvider({ children }) {
   // ✅ Token in localStorage (persists across sessions)
   const [token, setToken] = useState(localStorage.getItem("token") || null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // API call loading
+  const [checkingAuth, setCheckingAuth] = useState(true); // initial auth check
   const [error, setError] = useState(null);
 
-  /* ============================================================
-     🧩 Automatically attach Authorization header
-  ============================================================ */
+  // ============================================================
+  // Automatically attach Authorization header
   useEffect(() => {
     if (token) {
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -26,33 +26,50 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  /* ============================================================
-     💾 Keep user synced with sessionStorage
-  ============================================================ */
+  // ============================================================
+  // Keep user synced with sessionStorage
   useEffect(() => {
     if (user) sessionStorage.setItem("user", JSON.stringify(user));
     else sessionStorage.removeItem("user");
   }, [user]);
 
-  /* ============================================================
-     🧹 Clear session on tab close
-  ============================================================ */
+  // ============================================================
+  // Clear session on tab close
   useEffect(() => {
     const handleUnload = () => sessionStorage.removeItem("user");
     window.addEventListener("beforeunload", handleUnload);
     return () => window.removeEventListener("beforeunload", handleUnload);
   }, []);
 
-  /* ============================================================
-     🧭 Fetch user info if token exists but user missing
-  ============================================================ */
-  useEffect(() => {
-    if (token && !user) fetchUser();
-  }, [token]);
+  // ============================================================
+  // Fetch user info if token exists but user missing
+  const fetchUser = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await API.get("/auth/me");
+      setUser(res.data.user);
+      sessionStorage.setItem("user", JSON.stringify(res.data.user));
+    } catch {
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  /* ============================================================
-     🔐 LOGIN
-  ============================================================ */
+  // Initial auth check
+  useEffect(() => {
+    const initializeUser = async () => {
+      if (token && !user) {
+        await fetchUser();
+      }
+      setCheckingAuth(false); // ✅ done checking
+    };
+    initializeUser();
+  }, []);
+
+  // ============================================================
+  // LOGIN
   const login = async (email, password) => {
     setLoading(true);
     setError(null);
@@ -78,18 +95,14 @@ export function AuthProvider({ children }) {
     }
   };
 
-  /* ============================================================
-     📝 SIGNUP
-     ➜ Returns success message, user will be redirected to OTP page
-  ============================================================ */
+  // ============================================================
+  // SIGNUP
   const signup = async (formData) => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Signup form data:", formData);
       const res = await API.post("/auth/register", formData);
-
-      return res.data; // Don’t set user/token yet — wait for verification
+      return res.data; // wait for verification before setting user/token
     } catch (err) {
       const message =
         err.response?.data?.msg ||
@@ -102,9 +115,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  /* ============================================================
-     ✉️ VERIFY EMAIL (used for signup + forgot password)
-  ============================================================ */
+  // ============================================================
+  // VERIFY EMAIL
   const verifyEmail = async (email, otp) => {
     setLoading(true);
     setError(null);
@@ -130,9 +142,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  /* ============================================================
-     🚪 LOGOUT
-  ============================================================ */
+  // ============================================================
+  // LOGOUT
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -141,32 +152,14 @@ export function AuthProvider({ children }) {
     delete API.defaults.headers.common["Authorization"];
   };
 
-  /* ============================================================
-     👤 FETCH CURRENT USER
-  ============================================================ */
-  const fetchUser = async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const res = await API.get("/auth/me");
-      setUser(res.data.user);
-      sessionStorage.setItem("user", JSON.stringify(res.data.user));
-    } catch {
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ============================================================
-     🔄 PASSWORD FLOWS
-  ============================================================ */
+  // ============================================================
+  // PASSWORD FLOWS
   const forgotPassword = async (email) => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.post("/auth/forgot-password", { email });
-      return res.data; // Redirect to OTP page
+      return res.data;
     } catch (err) {
       const message =
         err.response?.data?.msg ||
@@ -197,7 +190,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ✅ UPDATED resetPassword (no OTP needed here anymore)
   const resetPassword = async (email, newPassword) => {
     setLoading(true);
     setError(null);
@@ -219,15 +211,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  /* ============================================================
-     🌍 PROVIDER
-  ============================================================ */
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
         loading,
+        checkingAuth,
         error,
         login,
         signup,
