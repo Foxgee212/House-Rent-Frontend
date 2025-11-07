@@ -12,7 +12,13 @@ export function HouseProvider({ children }) {
   const [error, setError] = useState(null);
   const didFetch = useRef(false);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  // Remove trailing slash from API_URL
+  const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+
+  // ===============================
+  // ✅ Helper to build full URLs
+  // ===============================
+  const buildUrl = (path) => `${API_URL}${path.startsWith("/") ? "" : "/"}${path}`;
 
   // ===============================
   // ✅ FETCHING FUNCTIONS
@@ -21,7 +27,7 @@ export function HouseProvider({ children }) {
   const fetchApprovedHouses = async () => {
     setLoading(true);
     try {
-      const res = await API.get("/houses/approved");
+      const res = await API.get(buildUrl("/houses/approved"));
       const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
       setHouses(fetched);
       localStorage.setItem("houses", JSON.stringify(fetched));
@@ -40,7 +46,7 @@ export function HouseProvider({ children }) {
   const fetchApprovedSales = async () => {
     setLoading(true);
     try {
-      const res = await API.get("/houses/approved-sales");
+      const res = await API.get(buildUrl("/houses/approved-sales"));
       const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
       setHousesForSale(fetched);
       localStorage.setItem("housesForSale", JSON.stringify(fetched));
@@ -59,7 +65,7 @@ export function HouseProvider({ children }) {
   const fetchMySales = async (token) => {
     setLoading(true);
     try {
-      const res = await API.get(`${API_URL}/houses/my-sales`, {
+      const res = await API.get(buildUrl("/houses/my-sales"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMySales(res.data.houses || []);
@@ -78,7 +84,7 @@ export function HouseProvider({ children }) {
 
   const addHouse = async (formData, token) => {
     try {
-      const res = await API.post(`${API_URL}/houses`, formData, {
+      const res = await API.post(buildUrl("/houses"), formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -96,7 +102,7 @@ export function HouseProvider({ children }) {
 
   const addSale = async (formData, token) => {
     try {
-      const res = await API.post(`${API_URL}/houses/sales`, formData, {
+      const res = await API.post(buildUrl("/houses/sales"), formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -104,10 +110,8 @@ export function HouseProvider({ children }) {
       });
 
       const newSale = res.data.house;
-      // Auto-sync state
       setHousesForSale((prev) => [...prev, newSale]);
       setMySales((prev) => [...prev, newSale]);
-
       toast.success("House listed for sale!");
       return newSale;
     } catch (err) {
@@ -120,7 +124,7 @@ export function HouseProvider({ children }) {
 
   const updateSale = async (id, formData, token) => {
     try {
-      const res = await API.put(`${API_URL}/houses/sales/${id}`, formData, {
+      const res = await API.put(buildUrl(`/houses/sales/${id}`), formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -128,13 +132,8 @@ export function HouseProvider({ children }) {
       });
 
       const updated = res.data.house;
-
-      // Update both lists reactively
-      setHousesForSale((prev) =>
-        prev.map((h) => (h._id === id ? updated : h))
-      );
+      setHousesForSale((prev) => prev.map((h) => (h._id === id ? updated : h)));
       setMySales((prev) => prev.map((h) => (h._id === id ? updated : h)));
-
       toast.success("House updated successfully!");
       return updated;
     } catch (err) {
@@ -147,14 +146,12 @@ export function HouseProvider({ children }) {
 
   const deleteHouse = async (id, token) => {
     try {
-      await API.delete(`${API_URL}/houses/${id}`, {
+      await API.delete(buildUrl(`/houses/${id}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Remove from all relevant state arrays
       setHouses((prev) => prev.filter((h) => h._id !== id));
       setHousesForSale((prev) => prev.filter((h) => h._id !== id));
       setMySales((prev) => prev.filter((h) => h._id !== id));
-
       toast.success("House deleted successfully!");
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to delete house";
