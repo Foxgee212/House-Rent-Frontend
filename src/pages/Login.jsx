@@ -44,6 +44,7 @@ export default function Login() {
       if (user.role === "landlord") navigate("/dashboard");
       else if (user.role === "tenant") navigate("/");
       else if (user.role === "admin") navigate("/admin");
+      else if (user.role === "agent") navigate("/agent");
     }
   }, [user, navigate]);
 

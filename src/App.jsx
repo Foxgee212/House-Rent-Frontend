@@ -20,6 +20,7 @@ import Layout from "./pages/Layout"
 import BuyPage from "./Buy/Buy";
 import BuyDetail from "./Buy/BuyDetails";
 import SellerDashboard from "./Buy/SellerDashboard";
+import AgentListings from "./Buy/SellerListing";
 // Components
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -31,6 +32,7 @@ function App() {
           {/* 🌍 Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/listings" element={<Listings />} />
+          <Route path="/agent/listings" element={<AgentListings />} />
           <Route path="/listings/:id" element={<HouseDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
-import HouseCard from "../components/HouseCard";
+import SaleCard from "./SaleCard"
 import LoadingBar from "react-top-loading-bar";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -133,7 +133,7 @@ export default function BuyPage() {
           </div>
 
           <Link
-            to="/buy"
+            to="/agent/listings"
             className="mt-4 inline-block bg-white text-blue-600 font-semibold px-6 py-2 rounded-full hover:bg-gray-100 transition text-sm sm:text-base"
           >
             Browse All Homes
@@ -162,7 +162,7 @@ export default function BuyPage() {
                 to={`/buy/${house._id}`}
                 className="transition-transform duration-300 hover:scale-[1.02]"
               >
-                <HouseCard house={house} className="scale-[0.95] sm:scale-100" />
+                <SaleCard house={house} className="scale-[0.95] sm:scale-100" />
               </Link>
             ))}
           </div>

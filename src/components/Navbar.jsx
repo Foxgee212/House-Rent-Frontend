@@ -2,14 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
-  Search,
   User,
-  LogIn,
   LogOut,
   LayoutDashboard,
   Building2,
   PlusCircle,
   House,
+  Search,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -54,6 +53,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
 
   const toggleProfile = () => setProfileOpen(!profileOpen);
+
   const onLogout = () => {
     logout();
     setProfileOpen(false);
@@ -85,50 +85,52 @@ export default function Navbar() {
   };
 
   const navLinkClass = ({ isActive }) =>
-    `flex items-center gap-1 hover:text-blue-500 transition ${
+    `flex items-center gap-1 px-2 py-1 rounded transition-colors ${
       isActive
-        ? "text-blue-500 font-semibold border-b-2 border-blue-500 pb-1"
-        : "text-gray-200"
+        ? "text-blue-500 font-semibold border-b-2 border-blue-500"
+        : "text-gray-200 hover:text-blue-500 hover:bg-gray-800"
     }`;
-
-  // Base tabs for mobile
-  const baseTabs = [
-    { to: "/", label: "Home", icon: Home },
-    { to: "/listings", label: "Rent", icon: House },
-    { to: "/buy", label: "Buy", icon: Building2 },
-  ];
-
-  if (user?.role === "landlord") {
-    baseTabs.push({ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard });
-  }
-  if (user?.role === "agent") {
-    baseTabs.push({ to: "/agent", label: "Agent", icon: LayoutDashboard });
-  }
-  if (user?.role === "admin") {
-    baseTabs.push({ to: "/admin", label: "Admin", icon: LayoutDashboard });
-  }
-
-  baseTabs.push(
-    user
-      ? { to: "/profile", label: "Profile", icon: User }
-      : { to: "/login", label: "Login", icon: LogIn }
-  );
 
   const isRentActive = location.pathname.startsWith("/listings");
   const isBuyActive = location.pathname.startsWith("/buy");
+
+  // Mobile bottom bar icons
+  const mobileTabs = user
+    ? [
+        { to: "/", label: "Home", icon: Home, action: () => navigate("/") },
+        {
+          to: isBuyActive ? "/buy" : "/listings",
+          label: "Search",
+          icon: Search,
+          action: () => navigate(isBuyActive ? "/buy" : "/listings"),
+        },
+        ...(user.role === "landlord"
+          ? [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, action: () => navigate("/dashboard") }]
+          : user.role === "agent"
+          ? [{ to: "/agent", label: "Agent Panel", icon: LayoutDashboard, action: () => navigate("/agent") }]
+          : user.role === "admin"
+          ? [{ to: "/admin", label: "Admin Panel", icon: LayoutDashboard, action: () => navigate("/admin") }]
+          : []),
+        { to: "/profile", label: "Profile", icon: User, action: () => navigate("/profile") },
+        { to: "/logout", label: "Logout", icon: LogOut, action: onLogout, isLogout: true },
+      ]
+    : [
+        { to: "/", label: "Home", icon: Home, action: () => navigate("/") },
+        { to: "/listings", label: "Search", icon: Search, action: () => navigate("/listings") },
+        { to: "/login", label: "Login", icon: User, action: () => navigate("/login") },
+      ];
 
   return (
     <>
       {/* Desktop Navbar */}
       <nav className="bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
-          {/* Logo */}
           <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer">
             <NaijahomeLogoSVG />
           </div>
 
-          {/* RENT & BUY Buttons on Mobile */}
-          <div className="flex md:hidden items-center gap-3">
+          {/* Top Rent & Buy Buttons for Mobile */}
+          <div className="flex md:hidden items-center gap-3 mb-2 px-4">
             <button
               onClick={() => navigate("/listings")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
@@ -151,37 +153,36 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Desktop Links */}
-          <ul className="hidden md:flex items-center gap-8 text-white font-medium">
+          {/* Desktop Links with icons and hover/active effect */}
+          <ul className="hidden md:flex items-center gap-6 text-white font-medium">
             <li>
               <NavLink to="/" className={navLinkClass}>
-                Home
+                <Home size={16} /> <span className="hidden lg:inline">Home</span>
               </NavLink>
             </li>
             <li>
               <NavLink to="/listings" className={navLinkClass}>
-                For Rent
+                <House size={16} /> <span className="hidden lg:inline">For Rent</span>
               </NavLink>
             </li>
             <li>
               <NavLink to="/buy" className={navLinkClass}>
-                For Sale
+                <Building2 size={16} /> <span className="hidden lg:inline">For Sale</span>
               </NavLink>
             </li>
 
-            {/* Role-Specific */}
             {user && (
               <>
                 {user.role === "landlord" && (
                   <>
                     <li>
                       <NavLink to="/add-rent" className={navLinkClass}>
-                        <PlusCircle size={18} /> List Rental
+                        <PlusCircle size={16} /> <span className="hidden lg:inline">List Rental</span>
                       </NavLink>
                     </li>
                     <li>
                       <NavLink to="/dashboard" className={navLinkClass}>
-                        Dashboard
+                        <LayoutDashboard size={16} /> <span className="hidden lg:inline">Dashboard</span>
                       </NavLink>
                     </li>
                   </>
@@ -190,12 +191,12 @@ export default function Navbar() {
                   <>
                     <li>
                       <NavLink to="/add-sale" className={navLinkClass}>
-                        <PlusCircle size={18} /> List Property
+                        <PlusCircle size={16} /> <span className="hidden lg:inline">List Property</span>
                       </NavLink>
                     </li>
                     <li>
                       <NavLink to="/agent" className={navLinkClass}>
-                        Agent Panel
+                        <LayoutDashboard size={16} /> <span className="hidden lg:inline">Agent Panel</span>
                       </NavLink>
                     </li>
                   </>
@@ -203,19 +204,19 @@ export default function Navbar() {
                 {user.role === "tenant" && (
                   <li>
                     <NavLink to="/favorites" className={navLinkClass}>
-                      Saved Homes
+                      <User size={16} /> <span className="hidden lg:inline">Saved Homes</span>
                     </NavLink>
                   </li>
                 )}
                 {user.role === "admin" && (
                   <li>
                     <NavLink to="/admin" className={navLinkClass}>
-                      Admin Panel
+                      <LayoutDashboard size={16} /> <span className="hidden lg:inline">Admin Panel</span>
                     </NavLink>
                   </li>
                 )}
 
-                {/* Profile */}
+                {/* Profile dropdown */}
                 <li className="relative" ref={profileRef}>
                   <button
                     onClick={toggleProfile}
@@ -261,12 +262,12 @@ export default function Navbar() {
               <>
                 <li>
                   <NavLink to="/login" className={navLinkClass}>
-                    Login
+                    <User size={16} /> <span className="hidden lg:inline">Login</span>
                   </NavLink>
                 </li>
                 <li>
                   <NavLink to="/signup" className={navLinkClass}>
-                    Signup
+                    <User size={16} /> <span className="hidden lg:inline">Signup</span>
                   </NavLink>
                 </li>
               </>
@@ -282,16 +283,22 @@ export default function Navbar() {
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 flex justify-around items-center py-2 z-50 md:hidden"
       >
-        {baseTabs.map(({ to, label, icon: Icon }) => {
-          const isActive = location.pathname.startsWith(to);
+        {mobileTabs.map(({ label, icon: Icon, action, isLogout }) => {
+          const isActive =
+            label === "Dashboard" || label === "Agent Panel" || label === "Admin Panel"
+              ? location.pathname.includes("dashboard") ||
+                location.pathname.includes("agent") ||
+                location.pathname.includes("admin")
+              : location.pathname.startsWith("/" + label.toLowerCase());
+
           return (
             <button
-              key={to}
+              key={label}
               onClick={() => {
                 triggerHaptic();
-                navigate(to);
+                action();
               }}
-              className="flex flex-col items-center justify-center text-gray-400 hover:text-blue-400 transition"
+              className="flex flex-col items-center justify-center transition"
             >
               <motion.div
                 animate={isActive ? { scale: 1.2 } : { scale: 1 }}
@@ -299,12 +306,18 @@ export default function Navbar() {
               >
                 <Icon
                   size={22}
-                  className={`${isActive ? "text-blue-500" : "text-gray-400"} transition-colors`}
+                  className={`transition-colors ${
+                    isLogout ? "text-red-500" : isActive ? "text-blue-500" : "text-gray-400"
+                  }`}
                 />
               </motion.div>
               <span
                 className={`text-xs mt-1 ${
-                  isActive ? "text-blue-500 font-medium" : "text-gray-400"
+                  isLogout
+                    ? "text-red-500 font-medium"
+                    : isActive
+                    ? "text-blue-500 font-medium"
+                    : "text-gray-400"
                 }`}
               >
                 {label}
@@ -316,5 +329,3 @@ export default function Navbar() {
     </>
   );
 }
-
-/* Tailwind animation helper */
