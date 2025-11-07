@@ -1,5 +1,5 @@
 // context/HouseContext.js
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import API from "../api/axios";
 import { toast } from "react-hot-toast";
 
@@ -13,18 +13,14 @@ export function HouseProvider({ children }) {
   const [error, setError] = useState(null);
   const didFetch = useRef(false);
 
-  // Remove trailing slash from API_URL
   const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
-
-  // ✅ Helper to build full URLs safely
   const buildUrl = (path) => `${API_URL}/${path.replace(/^\//, "")}`;
 
   // ===============================
   // ✅ FETCHING FUNCTIONS
   // ===============================
 
-  // Approved rental houses
-  const fetchApprovedHouses = async () => {
+  const fetchApprovedHouses = useCallback(async () => {
     setLoading(true);
     try {
       const res = await API.get(buildUrl("/houses/approved"));
@@ -41,10 +37,9 @@ export function HouseProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
-  // Approved houses for sale
-  const fetchApprovedSales = async () => {
+  const fetchApprovedSales = useCallback(async () => {
     setLoading(true);
     try {
       const res = await API.get(buildUrl("/houses/approved-sales"));
@@ -61,10 +56,9 @@ export function HouseProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
-  // Logged-in seller/agent's own sales
-  const fetchMySales = async (token) => {
+  const fetchMySales = useCallback(async (token) => {
     setLoading(true);
     try {
       const res = await API.get(buildUrl("/houses/my-sales"), {
@@ -78,14 +72,13 @@ export function HouseProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
   // ===============================
   // 🏗️ CRUD OPERATIONS
   // ===============================
 
-  // Add rental house (Landlord)
-  const addHouse = async (formData, token) => {
+  const addHouse = useCallback(async (formData, token) => {
     try {
       const res = await API.post(buildUrl("/houses"), formData, {
         headers: {
@@ -101,10 +94,9 @@ export function HouseProvider({ children }) {
       setError(msg);
       throw err;
     }
-  };
+  }, [API_URL]);
 
-  // Add house for sale (Seller/Agent)
-  const addSale = async (formData, token) => {
+  const addSale = useCallback(async (formData, token) => {
     try {
       const res = await API.post(buildUrl("/houses/sales"), formData, {
         headers: {
@@ -123,10 +115,9 @@ export function HouseProvider({ children }) {
       toast.error(msg);
       throw err;
     }
-  };
+  }, [API_URL]);
 
-  // Update a sale house
-  const updateSale = async (id, formData, token) => {
+  const updateSale = useCallback(async (id, formData, token) => {
     try {
       const res = await API.put(buildUrl(`/houses/sales/${id}`), formData, {
         headers: {
@@ -145,10 +136,9 @@ export function HouseProvider({ children }) {
       toast.error(msg);
       throw err;
     }
-  };
+  }, [API_URL]);
 
-  // Delete house (rental or sale)
-  const deleteHouseById = async (id, token) => {
+  const deleteHouseById = useCallback(async (id, token) => {
     try {
       await API.delete(buildUrl(`/houses/${id}`), {
         headers: { Authorization: `Bearer ${token}` },
@@ -163,7 +153,7 @@ export function HouseProvider({ children }) {
       toast.error(msg);
       throw err;
     }
-  };
+  }, [API_URL]);
 
   // ===============================
   // 🧠 AUTO LOAD DATA
@@ -173,7 +163,7 @@ export function HouseProvider({ children }) {
     didFetch.current = true;
     fetchApprovedHouses();
     fetchApprovedSales();
-  }, []);
+  }, [fetchApprovedHouses, fetchApprovedSales]);
 
   // ===============================
   // 🧩 PROVIDER EXPORT
