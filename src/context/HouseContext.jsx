@@ -1,3 +1,4 @@
+// context/HouseContext.js
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import API from "../api/axios";
 import { toast } from "react-hot-toast";
@@ -15,15 +16,14 @@ export function HouseProvider({ children }) {
   // Remove trailing slash from API_URL
   const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
-  // ===============================
-  // ✅ Helper to build full URLs
-  // ===============================
-  const buildUrl = (path) => `${API_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+  // ✅ Helper to build full URLs safely
+  const buildUrl = (path) => `${API_URL}/${path.replace(/^\//, "")}`;
 
   // ===============================
   // ✅ FETCHING FUNCTIONS
   // ===============================
 
+  // Approved rental houses
   const fetchApprovedHouses = async () => {
     setLoading(true);
     try {
@@ -43,6 +43,7 @@ export function HouseProvider({ children }) {
     }
   };
 
+  // Approved houses for sale
   const fetchApprovedSales = async () => {
     setLoading(true);
     try {
@@ -62,6 +63,7 @@ export function HouseProvider({ children }) {
     }
   };
 
+  // Logged-in seller/agent's own sales
   const fetchMySales = async (token) => {
     setLoading(true);
     try {
@@ -82,6 +84,7 @@ export function HouseProvider({ children }) {
   // 🏗️ CRUD OPERATIONS
   // ===============================
 
+  // Add rental house (Landlord)
   const addHouse = async (formData, token) => {
     try {
       const res = await API.post(buildUrl("/houses"), formData, {
@@ -100,6 +103,7 @@ export function HouseProvider({ children }) {
     }
   };
 
+  // Add house for sale (Seller/Agent)
   const addSale = async (formData, token) => {
     try {
       const res = await API.post(buildUrl("/houses/sales"), formData, {
@@ -108,7 +112,6 @@ export function HouseProvider({ children }) {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const newSale = res.data.house;
       setHousesForSale((prev) => [...prev, newSale]);
       setMySales((prev) => [...prev, newSale]);
@@ -122,6 +125,7 @@ export function HouseProvider({ children }) {
     }
   };
 
+  // Update a sale house
   const updateSale = async (id, formData, token) => {
     try {
       const res = await API.put(buildUrl(`/houses/sales/${id}`), formData, {
@@ -130,7 +134,6 @@ export function HouseProvider({ children }) {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const updated = res.data.house;
       setHousesForSale((prev) => prev.map((h) => (h._id === id ? updated : h)));
       setMySales((prev) => prev.map((h) => (h._id === id ? updated : h)));
@@ -144,7 +147,8 @@ export function HouseProvider({ children }) {
     }
   };
 
-  const deleteHouse = async (id, token) => {
+  // Delete house (rental or sale)
+  const deleteHouseById = async (id, token) => {
     try {
       await API.delete(buildUrl(`/houses/${id}`), {
         headers: { Authorization: `Bearer ${token}` },
@@ -188,7 +192,7 @@ export function HouseProvider({ children }) {
         addHouse,
         addSale,
         updateSale,
-        deleteHouse,
+        deleteHouse: deleteHouseById,
       }}
     >
       {children}
