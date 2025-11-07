@@ -19,6 +19,7 @@ import VerificationDetails from "./pages/VerificationDetails";
 import Layout from "./pages/Layout"
 import BuyPage from "./Buy/Buy";
 import BuyDetail from "./Buy/BuyDetails";
+import SellerDashboard from "./Buy/SellerDashboard";
 // Components
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -48,15 +49,24 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <PrivateRoute roles={["landlord", "tenant"]}>
+              <PrivateRoute roles={["landlord"]}>
                 <DashBoard />
               </PrivateRoute>
             }
           />
           <Route
+            path="/agent"
+            element={
+              <PrivateRoute roles={["agent"]}>
+                <SellerDashboard />
+              </PrivateRoute>
+            }
+          />
+          
+          <Route
             path="/verify"
             element={
-              <PrivateRoute roles={["landlord"]}>
+              <PrivateRoute roles={["landlord", "agent"]}>
                 <VerifyLandlord />
               </PrivateRoute>
             }

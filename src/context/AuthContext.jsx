@@ -86,7 +86,9 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
+      console.log("Signup form data:", formData);
       const res = await API.post("/auth/register", formData);
+
       return res.data; // Don’t set user/token yet — wait for verification
     } catch (err) {
       const message =

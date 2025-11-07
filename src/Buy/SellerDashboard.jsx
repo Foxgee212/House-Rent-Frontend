@@ -38,7 +38,6 @@ export default function SellerDashboard() {
     if (allowed && token) fetchMySales(token);
   }, [allowed, token]);
 
-  // 🧩 Handlers
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -63,10 +62,7 @@ export default function SellerDashboard() {
 
     const valid = compressed.filter(Boolean);
     setImages((p) => [...p, ...valid]);
-    setPreviewUrls((p) => [
-      ...p,
-      ...valid.map((f) => URL.createObjectURL(f)),
-    ]);
+    setPreviewUrls((p) => [...p, ...valid.map((f) => URL.createObjectURL(f))]);
     if (fileInputRef.current) fileInputRef.current.value = null;
   };
 
@@ -148,7 +144,7 @@ export default function SellerDashboard() {
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 sm:px-8 py-10">
       {/* Header */}
       <div className="flex items-center justify-center gap-3 mb-10">
-        <Home size={34} className="text-green-400 drop-shadow-md" />
+        <Home size={34} className="text-blue-500 drop-shadow-md" />
         <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
           Seller Dashboard
         </h1>
@@ -163,7 +159,7 @@ export default function SellerDashboard() {
           </p>
           <button
             onClick={() => navigate("/verify")}
-            className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
           >
             Verify Identity
           </button>
@@ -179,7 +175,7 @@ export default function SellerDashboard() {
             : ""
         }`}
       >
-        <h2 className="text-xl font-semibold text-green-400 flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
           {editing ? (
             <>
               <Edit3 size={20} /> Edit Listing
@@ -199,7 +195,7 @@ export default function SellerDashboard() {
             value={form.title}
             onChange={handleChange}
             required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
           />
           <input
             type="text"
@@ -208,7 +204,7 @@ export default function SellerDashboard() {
             value={form.location}
             onChange={handleChange}
             required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
           />
           <input
             type="number"
@@ -217,11 +213,11 @@ export default function SellerDashboard() {
             value={form.price}
             onChange={handleChange}
             required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
           />
           {!editing && (
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
-              <Upload size={18} className="text-green-400" />
+              <Upload size={18} className="text-blue-400" />
               <span className="text-gray-300">
                 {images.length > 0
                   ? `${images.length} image${images.length > 1 ? "s" : ""} selected`
@@ -245,7 +241,7 @@ export default function SellerDashboard() {
             checked={form.negotiable}
             onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))}
             className={`${
-              form.negotiable ? "bg-green-600" : "bg-gray-600"
+              form.negotiable ? "bg-blue-600" : "bg-gray-600"
             } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
           >
             <span
@@ -264,11 +260,7 @@ export default function SellerDashboard() {
                 key={i}
                 className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700"
               >
-                <img
-                  src={url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+                <img src={url} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={() =>
                     setPreviewUrls((p) => p.filter((_, idx) => idx !== i))
@@ -289,14 +281,14 @@ export default function SellerDashboard() {
           onChange={handleChange}
           rows="3"
           required
-          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
+          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
         />
 
         <div className="flex gap-3 flex-wrap">
           <button
             type="submit"
             disabled={uploading}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-green-700/30"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30"
           >
             {uploading
               ? "Processing..."
@@ -309,7 +301,7 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={resetForm}
-              className="flex items-center gap-2 text-gray-400 hover:text-green-400"
+              className="flex items-center gap-2 text-gray-400 hover:text-blue-400"
             >
               <XCircle size={18} /> Cancel
             </button>
@@ -339,16 +331,14 @@ export default function SellerDashboard() {
                   className="w-full h-48 object-cover cursor-pointer"
                 />
                 <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-semibold text-white">
-                    {h.title}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-white">{h.title}</h3>
                   <p className="text-gray-400 text-sm flex items-center gap-1">
                     <MapPin size={14} /> {h.location}
                   </p>
-                  <p className="text-green-400 font-semibold mt-2">
+                  <p className="text-blue-400 font-semibold mt-2">
                     ₦{Number(h.price).toLocaleString()}
                     {h.negotiable && (
-                      <span className="ml-2 text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full">
+                      <span className="ml-2 text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
                         Negotiable
                       </span>
                     )}

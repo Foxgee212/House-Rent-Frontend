@@ -13,9 +13,9 @@ export default function BuyDetail() {
   if (!house) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-        <Home className="w-10 h-10 text-green-400 animate-pulse" />
+        <Home className="w-10 h-10 text-blue-400 animate-pulse" />
         <p className="mt-3 text-gray-400">Property not found.</p>
-        <Link to="/buy" className="mt-4 text-green-500 hover:text-green-400">
+        <Link to="/buy" className="mt-4 text-blue-500 hover:text-blue-400">
           Go Back
         </Link>
       </div>
@@ -35,7 +35,6 @@ export default function BuyDetail() {
   } = house;
 
   const firstImage = images?.[0] || "/default-house.jpg";
-
   const message = `Hello, I'm interested in purchasing your property located in ${location}. Is it still available?`;
 
   return (
@@ -77,7 +76,7 @@ export default function BuyDetail() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <MapPin size={18} className="text-green-400" />
+            <MapPin size={18} className="text-blue-400" />
             {location}
           </motion.p>
         </div>
@@ -93,7 +92,7 @@ export default function BuyDetail() {
         >
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-2xl sm:text-3xl font-semibold">{title}</h2>
-            <span className="text-green-400 text-xl sm:text-2xl font-bold">
+            <span className="text-blue-400 text-xl sm:text-2xl font-bold">
               ₦{price?.toLocaleString()}{" "}
               <span className="text-gray-400 text-sm font-medium">Asking Price</span>
             </span>
@@ -101,11 +100,11 @@ export default function BuyDetail() {
 
           <div className="mt-5 flex flex-wrap items-center gap-4 text-gray-300 text-sm sm:text-base">
             <span className="flex items-center gap-2">
-              <BedDouble size={18} className="text-green-400" />
+              <BedDouble size={18} className="text-blue-400" />
               {bedrooms || "—"} Bedrooms
             </span>
             <span className="flex items-center gap-2">
-              <Bath size={18} className="text-green-400" />
+              <Bath size={18} className="text-blue-400" />
               {bathrooms || "—"} Bathrooms
             </span>
           </div>
@@ -118,20 +117,20 @@ export default function BuyDetail() {
 
         {/* Contact Section */}
         <motion.div
-          className="bg-gradient-to-r from-green-600 to-emerald-500 p-6 sm:p-8 rounded-3xl shadow-lg text-center text-white"
+          className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 sm:p-8 rounded-3xl shadow-lg text-center text-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <h3 className="text-2xl font-semibold mb-2">Contact Seller</h3>
-          <p className="text-green-100 mb-4">
+          <p className="text-blue-100 mb-4">
             Interested in this property? Reach out to the seller directly.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             {sellerPhone && (
               <a
                 href={`tel:${sellerPhone}`}
-                className="flex items-center gap-2 bg-white text-green-700 px-5 py-3 rounded-full font-semibold hover:bg-gray-100 transition"
+                className="flex items-center gap-2 bg-white text-blue-700 px-5 py-3 rounded-full font-semibold hover:bg-gray-100 transition"
               >
                 <Phone size={18} /> Call Seller
               </a>
@@ -141,14 +140,14 @@ export default function BuyDetail() {
                 href={`https://wa.me/${sellerPhone}?text=${encodeURIComponent(message)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-green-700 px-5 py-3 rounded-full font-semibold hover:bg-green-800 transition"
+                className="flex items-center gap-2 bg-blue-700 px-5 py-3 rounded-full font-semibold hover:bg-blue-800 transition"
               >
                 <FaWhatsapp size={18} /> WhatsApp
               </a>
             )}
           </div>
           {sellerName && (
-            <p className="text-sm text-green-100 mt-4">
+            <p className="text-sm text-blue-100 mt-4">
               Seller: {sellerName}
             </p>
           )}
@@ -178,7 +177,7 @@ export default function BuyDetail() {
                 <p className="text-sm sm:text-base font-medium text-white truncate">
                   {rec.title}
                 </p>
-                <p className="text-green-400 text-xs sm:text-sm">
+                <p className="text-blue-400 text-xs sm:text-sm">
                   ₦{rec.price?.toLocaleString()}
                 </p>
               </Link>

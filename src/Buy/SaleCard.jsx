@@ -47,14 +47,14 @@ export default function SaleCard({ house }) {
         />
 
         {/* Sale Badge */}
-        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-green-600/90 text-white text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md flex items-center gap-1">
+        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-blue-600/90 text-white text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md flex items-center gap-1">
           <BadgeDollarSign size={12} /> For Sale
         </div>
 
         {/* Availability */}
         <div
           className={`absolute top-2 sm:top-3 right-2 sm:right-3 text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md
-          ${house.available ? "bg-green-600/90 text-white" : "bg-red-600/90 text-white"}`}
+          ${house.available ? "bg-blue-600/90 text-white" : "bg-red-600/90 text-white"}`}
         >
           {house.available ? "Available" : "Sold"}
         </div>
@@ -65,7 +65,7 @@ export default function SaleCard({ house }) {
             className={`absolute bottom-2 sm:bottom-3 right-2 sm:right-3 text-xs sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md border
               ${
                 house.negotiable
-                  ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                  ? "bg-blue-100 text-blue-800 border-blue-300"
                   : "bg-gray-200 text-gray-700 border-gray-300"
               }`}
           >
@@ -77,16 +77,16 @@ export default function SaleCard({ house }) {
       {/* House Details */}
       <div className="p-3 sm:p-5">
         <h3 className="text-base sm:text-lg font-semibold text-gray-100 flex items-center gap-2">
-          <Info size={16} className="text-green-500" />{" "}
+          <Info size={16} className="text-blue-500" />{" "}
           {house.title || "Untitled Property"}
         </h3>
 
         <div className="flex items-center gap-1 sm:gap-2 mt-1 text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
-          <MapPin size={14} className="text-green-400" />
+          <MapPin size={14} className="text-blue-400" />
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
 
-        <p className="text-green-400 font-bold mt-2 sm:mt-3 flex items-center gap-1 text-sm sm:text-base">
+        <p className="text-blue-400 font-bold mt-2 sm:mt-3 flex items-center gap-1 text-sm sm:text-base">
           <Wallet size={16} /> {formatPrice(house.price)}
         </p>
       </div>
@@ -105,10 +105,7 @@ export default function SaleCard({ house }) {
           </button>
 
           <img
-            src={
-              images[activeIndex] ||
-              "https://via.placeholder.com/800x500?text=No+Image"
-            }
+            src={images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
             alt={house.title || "Zoomed house image"}
             className="max-w-[90%] max-h-[70vh] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300 mb-4"
             onClick={(e) => e.stopPropagation()}
@@ -126,7 +123,7 @@ export default function SaleCard({ house }) {
                 onClick={() => setActiveIndex(index)}
                 className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
                   activeIndex === index
-                    ? "border-green-500 scale-105"
+                    ? "border-blue-500 scale-105"
                     : "border-transparent hover:opacity-80"
                 }`}
               />
