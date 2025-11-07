@@ -17,7 +17,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerificationDetails from "./pages/VerificationDetails";
 import Layout from "./pages/Layout"
-
+import BuyPage from "./Buy/Buy";
+import BuyDetail from "./Buy/BuyDetails";
 // Components
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -33,6 +34,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/buy/:id" element={<BuyDetail />} />
+          <Route path="/buy" element={<BuyPage />} />
+
+
 
           {/* 🔐 OTP & Password Recovery */}
           <Route path="/verify-otp" element={<VerifyOtp />} />

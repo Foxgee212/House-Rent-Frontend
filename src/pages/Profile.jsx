@@ -23,11 +23,10 @@ export default function Profile() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  // ✅ Real-time verification state
   const [verificationStatus, setVerificationStatus] = useState(
-    user?.verification?.status || user?.verified ? "verified" : "unverified"
+    user?.verification?.status || (user?.verified ? "verified" : "unverified")
   );
+
   const pollingRef = useRef(null);
 
   // Pre-fill user data
@@ -49,7 +48,7 @@ export default function Profile() {
     }
   }, [user]);
 
-  // ✅ Poll backend for verification status
+  // Poll backend for verification status
   useEffect(() => {
     if (user?.role !== "landlord" || !token) return;
     const startPolling = () => {
@@ -123,7 +122,6 @@ export default function Profile() {
     ? nigeriaStatesAndLgas[form.state]?.map((lga) => ({ value: lga, label: lga }))
     : [];
 
-  // ✅ Helper for badge color/text
   const getBadge = (status) => {
     switch (status) {
       case "verified":
@@ -146,7 +144,6 @@ export default function Profile() {
         {/* Profile Picture + Badge */}
         <div className="flex flex-col items-center mb-8 relative">
           <div className="relative">
-            {/* ✅ Pulse ring for pending */}
             <div
               className={`absolute inset-0 rounded-full ${
                 verificationStatus === "pending_review" ? "animate-ping bg-yellow-500/30" : ""
@@ -154,9 +151,12 @@ export default function Profile() {
             ></div>
 
             <img
-              src={preview ||
-                  user?.avatar ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=0D8ABC&color=fff`
+              src={
+                preview ||
+                user?.avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  user?.name || "User"
+                )}&background=0D8ABC&color=fff`
               }
               alt="Profile"
               className={`w-32 h-32 rounded-full object-cover border-4 ${
@@ -183,7 +183,6 @@ export default function Profile() {
             />
           </div>
 
-          {/* ✅ Visible Badge Below Image */}
           {user?.role === "landlord" && (
             <div
               onClick={() =>
@@ -252,6 +251,7 @@ export default function Profile() {
             />
           </div>
 
+          {/* State */}
           <div>
             <label className="block text-sm font-medium mb-1">State</label>
             <Select
@@ -260,22 +260,29 @@ export default function Profile() {
               onChange={(option) => handleSelectChange("state", option.value)}
               placeholder="Select State"
               className="text-gray-200"
-              styles={selectStyles}
+              styles={animatedSelectStyles}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
             />
           </div>
 
+          {/* Local Government */}
           <div>
             <label className="block text-sm font-medium mb-1">Local Government</label>
             <Select
               options={lgaOptions}
               value={
-                form.localGovernment ? { value: form.localGovernment, label: form.localGovernment } : null
+                form.localGovernment
+                  ? { value: form.localGovernment, label: form.localGovernment }
+                  : null
               }
               onChange={(option) => handleSelectChange("localGovernment", option.value)}
               placeholder="Select LGA"
               isDisabled={!form.state}
               className="text-gray-200"
-              styles={selectStyles}
+              styles={animatedSelectStyles}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
             />
           </div>
 
@@ -311,8 +318,8 @@ function InputField({ icon, ...props }) {
   );
 }
 
-// Select Styles
-const selectStyles = {
+// Animated Select Styles
+const animatedSelectStyles = {
   control: (base, state) => ({
     ...base,
     backgroundColor: "#374151",
@@ -323,7 +330,15 @@ const selectStyles = {
     opacity: state.isDisabled ? 0.5 : 1,
     cursor: state.isDisabled ? "not-allowed" : "pointer",
   }),
-  menu: (base) => ({ ...base, backgroundColor: "#1f2937", color: "#f9fafb" }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: "#1f2937",
+    color: "#f9fafb",
+    zIndex: 9999,
+    transition: "opacity 0.2s ease, transform 0.2s ease",
+    opacity: 1,
+    transform: "translateY(0px)",
+  }),
   option: (base, state) => ({
     ...base,
     backgroundColor: state.isFocused ? "#4b5563" : "#1f2937",

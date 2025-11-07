@@ -5,14 +5,19 @@ import { toast } from "react-hot-toast";
 const HouseContext = createContext();
 
 export function HouseProvider({ children }) {
-  const [houses, setHouses] = useState([]);
+  const [houses, setHouses] = useState([]); // 🏠 Rentals
+  const [housesForSale, setHousesForSale] = useState([]); // 🏡 Sales
+  const [mySales, setMySales] = useState([]); // 👤 Seller's own listings
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const didFetch = useRef(false); // 👈 guard to stop double fetch
+  const didFetch = useRef(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // ✅ Fetch Approved houses
+  // ===============================
+  // ✅ FETCHING FUNCTIONS
+  // ===============================
+
   const fetchApprovedHouses = async () => {
     setLoading(true);
     try {
@@ -25,13 +30,51 @@ export function HouseProvider({ children }) {
       const msg = err.response?.data?.error || "Failed to fetch houses";
       setError(msg);
       toast.error(msg);
-
       const stored = localStorage.getItem("houses");
       if (stored) setHouses(JSON.parse(stored));
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchApprovedSales = async () => {
+    setLoading(true);
+    try {
+      const res = await API.get("/houses/approved-sales");
+      const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
+      setHousesForSale(fetched);
+      localStorage.setItem("housesForSale", JSON.stringify(fetched));
+      setError(null);
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to fetch homes for sale";
+      setError(msg);
+      toast.error(msg);
+      const stored = localStorage.getItem("housesForSale");
+      if (stored) setHousesForSale(JSON.parse(stored));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMySales = async (token) => {
+    setLoading(true);
+    try {
+      const res = await API.get(`${API_URL}/houses/my-sales`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMySales(res.data.houses || []);
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to load your sales";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===============================
+  // 🏗️ CRUD OPERATIONS
+  // ===============================
 
   const addHouse = async (formData, token) => {
     try {
@@ -42,10 +85,62 @@ export function HouseProvider({ children }) {
         },
       });
       setHouses((prev) => [...prev, res.data.house]);
+      toast.success("Rental house added!");
       return res.data.house;
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to add house";
       setError(msg);
+      throw err;
+    }
+  };
+
+  const addSale = async (formData, token) => {
+    try {
+      const res = await API.post(`${API_URL}/houses/sales`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const newSale = res.data.house;
+      // Auto-sync state
+      setHousesForSale((prev) => [...prev, newSale]);
+      setMySales((prev) => [...prev, newSale]);
+
+      toast.success("House listed for sale!");
+      return newSale;
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to add sale house";
+      setError(msg);
+      toast.error(msg);
+      throw err;
+    }
+  };
+
+  const updateSale = async (id, formData, token) => {
+    try {
+      const res = await API.put(`${API_URL}/houses/sales/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const updated = res.data.house;
+
+      // Update both lists reactively
+      setHousesForSale((prev) =>
+        prev.map((h) => (h._id === id ? updated : h))
+      );
+      setMySales((prev) => prev.map((h) => (h._id === id ? updated : h)));
+
+      toast.success("House updated successfully!");
+      return updated;
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to update sale";
+      setError(msg);
+      toast.error(msg);
       throw err;
     }
   };
@@ -55,28 +150,47 @@ export function HouseProvider({ children }) {
       await API.delete(`${API_URL}/houses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      // Remove from all relevant state arrays
       setHouses((prev) => prev.filter((h) => h._id !== id));
+      setHousesForSale((prev) => prev.filter((h) => h._id !== id));
+      setMySales((prev) => prev.filter((h) => h._id !== id));
+
+      toast.success("House deleted successfully!");
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to delete house";
       setError(msg);
+      toast.error(msg);
       throw err;
     }
   };
 
+  // ===============================
+  // 🧠 AUTO LOAD DATA
+  // ===============================
   useEffect(() => {
-    if (didFetch.current) return; // 👈 prevent double-run
+    if (didFetch.current) return;
     didFetch.current = true;
     fetchApprovedHouses();
+    fetchApprovedSales();
   }, []);
 
+  // ===============================
+  // 🧩 PROVIDER EXPORT
+  // ===============================
   return (
     <HouseContext.Provider
       value={{
         houses,
+        housesForSale,
+        mySales,
         loading,
         error,
         fetchApprovedHouses,
+        fetchApprovedSales,
+        fetchMySales,
         addHouse,
+        addSale,
+        updateSale,
         deleteHouse,
       }}
     >

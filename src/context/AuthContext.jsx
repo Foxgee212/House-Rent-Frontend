@@ -107,7 +107,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.post("/auth/verify-email", { email, otp });
+      const res = await API.post("/auth/verify-otp", { email, otp });
       const { user, token } = res.data;
 
       setUser(user);

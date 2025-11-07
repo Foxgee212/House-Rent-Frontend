@@ -13,11 +13,19 @@ export default function StatsCards({ setActiveTab, activeTab }) {
   });
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
 
-  // ✅ Fetch stats (auto refresh)
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fetch stats (auto refresh)
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -38,7 +46,7 @@ export default function StatsCards({ setActiveTab, activeTab }) {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Hide on scroll down, show on scroll up (optimized)
+  // Hide on scroll down, show on scroll up
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -61,7 +69,7 @@ export default function StatsCards({ setActiveTab, activeTab }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Updated cards list (added Verifications)
+  // Stats cards configuration
   const cards = [
     {
       label: "Total Houses",
@@ -95,18 +103,17 @@ export default function StatsCards({ setActiveTab, activeTab }) {
     },
   ];
 
+  // Determine hidden offset for mobile vs desktop
+  const hiddenOffset = isMobile ? -70 : -90;
+
   return (
     <motion.div
       animate={{
-        y: hidden ? -90 : 0,
+        y: hidden ? hiddenOffset : 0,
         opacity: hidden ? 0 : 1,
       }}
-      transition={{
-        type: "spring",
-        stiffness: 220,
-        damping: 26,
-      }}
-      className="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700 px-3 py-3 sm:px-5 sm:py-4 shadow-md"
+      transition={{ type: "spring", stiffness: 220, damping: 26 }}
+      className="sticky top-16 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700 px-3 py-3 sm:px-5 sm:py-4 shadow-md"
     >
       <div
         className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 ${

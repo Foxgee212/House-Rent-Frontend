@@ -73,7 +73,7 @@ export default function Listings() {
     setSortOrder("");
   };
 
-  // ✅ Modern Loading UI
+  // ✅ Loading screen
   if (loading)
     return (
       <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-900 text-blue-400">
@@ -88,7 +88,6 @@ export default function Listings() {
           <h2 className="text-lg font-medium text-gray-100">Loading available houses...</h2>
         </div>
 
-        {/* Slide animation */}
         <style>
           {`
             @keyframes slide {
@@ -106,14 +105,18 @@ export default function Listings() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-6 sm:p-8 transition-colors duration-300">
+    <div
+      className={`min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-6 sm:p-8 transition-colors duration-300 ${
+        isMobile ? "pt-28" : ""
+      }`}
+    >
       <h1 className="text-3xl font-bold mb-6 text-gray-100">Available Houses</h1>
 
       {/* Filter bar */}
       <div
         className={`${
           isMobile
-            ? `fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] bg-gray-900/80 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl 
+            ? `fixed top-20 left-1/2 -translate-x-1/2 z-40 w-[95%] bg-gray-900/85 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl 
                transition-all duration-400 ease-in-out ${showFullFilter ? "p-4 scale-100 opacity-100" : "p-2 scale-[0.98] opacity-90"}`
             : `bg-gray-800/90 backdrop-blur-lg border border-gray-700/60 rounded-2xl shadow-lg p-4 mb-8`
         }`}

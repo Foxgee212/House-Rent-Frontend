@@ -20,9 +20,7 @@ export default function VerificationTable() {
   const perPage = 6;
   const navigate = useNavigate();
 
-  /* ============================================================
-     🚀 Fetch Verifications
-  ============================================================ */
+  // Fetch verifications
   const fetchVerifications = async (showToast = false) => {
     try {
       setLoading(true);
@@ -33,7 +31,7 @@ export default function VerificationTable() {
       setVerifications(res.data || []);
       if (showToast) toast.success("Data refreshed");
     } catch (err) {
-      console.error("❌ Fetch error:", err);
+      console.error("Fetch error:", err);
       toast.error(err.response?.data?.msg || "Failed to load verifications");
     } finally {
       setLoading(false);
@@ -46,9 +44,7 @@ export default function VerificationTable() {
     return () => clearInterval(interval);
   }, []);
 
-  /* ============================================================
-     ✅ Handle Admin Actions
-  ============================================================ */
+  // Admin actions
   const handleAction = async (id, action) => {
     const confirmMsg =
       action === "approve"
@@ -66,21 +62,20 @@ export default function VerificationTable() {
       toast.success(res.data.msg || "Action successful");
       fetchVerifications();
     } catch (err) {
-      console.error("❌ Action error:", err);
+      console.error("Action error:", err);
       toast.error(err.response?.data?.msg || "Action failed");
     }
   };
 
-  /* ============================================================
-     📤 Export CSV
-  ============================================================ */
+  // Export CSV
   const exportToCSV = () => {
-    const headers = ["Landlord", "Email", "ID Type", "Score", "Status"];
+    const headers = ["Name", "Email", "Role", "ID Type", "Score", "Status"];
     const rows = verifications.map((v) => [
       v.name || "N/A",
       v.email || "N/A",
+      v.role || "N/A",
       v.verification?.idData?.idType || "N/A",
-      v.verification?.score || "0",
+      v.verification?.score || 0,
       v.verification?.status || "unknown",
     ]);
 
@@ -94,9 +89,7 @@ export default function VerificationTable() {
     link.click();
   };
 
-  /* ============================================================
-     🔍 Search + Filter + Pagination
-  ============================================================ */
+  // Filter + Search + Pagination
   const filtered = useMemo(() => {
     return verifications.filter((v) => {
       const matchesFilter =
@@ -115,19 +108,16 @@ export default function VerificationTable() {
 
   const totalPages = Math.ceil(filtered.length / perPage);
 
-  /* ============================================================
-     💎 UI
-  ============================================================ */
+  // UI
   return (
     <div className="bg-gray-900 rounded-2xl p-5 shadow-xl text-gray-300 border border-gray-800">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-5 gap-3">
         <h2 className="text-xl font-semibold text-blue-400 tracking-wide">
-          Landlord Verifications
+          Verifications
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Search */}
           <div className="relative">
             <Search
               size={16}
@@ -135,14 +125,13 @@ export default function VerificationTable() {
             />
             <input
               type="text"
-              placeholder="Search landlord..."
+              placeholder="Search by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-gray-800 text-gray-200 pl-8 pr-3 py-1.5 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Filter */}
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -151,10 +140,9 @@ export default function VerificationTable() {
             <option value="all">All</option>
             <option value="verified">Verified</option>
             <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
+            <option value="rejected">Rejected</option>
           </select>
 
-          {/* Refresh */}
           <button
             onClick={() => fetchVerifications(true)}
             className="bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md flex items-center gap-1 text-sm transition"
@@ -162,7 +150,6 @@ export default function VerificationTable() {
             <RefreshCw size={14} /> Refresh
           </button>
 
-          {/* Export */}
           <button
             onClick={exportToCSV}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-md flex items-center gap-1 transition"
@@ -179,7 +166,7 @@ export default function VerificationTable() {
             <div
               key={i}
               className="h-10 bg-gray-800/40 animate-pulse rounded-md"
-            ></div>
+            />
           ))}
         </div>
       ) : (
@@ -188,8 +175,9 @@ export default function VerificationTable() {
             <table className="min-w-full text-sm text-left">
               <thead className="text-xs uppercase bg-gray-800 text-gray-400">
                 <tr>
-                  <th className="px-4 py-2">Landlord</th>
+                  <th className="px-4 py-2">Name</th>
                   <th className="px-4 py-2">Email</th>
+                  <th className="px-4 py-2">Role</th>
                   <th className="px-4 py-2">ID Type</th>
                   <th className="px-4 py-2">Score</th>
                   <th className="px-4 py-2">Status</th>
@@ -202,35 +190,40 @@ export default function VerificationTable() {
                     key={v._id}
                     className="border-b border-gray-800 hover:bg-gray-800/50 transition"
                   >
-                    <td className="px-4 py-2">{v?.name || "N/A"}</td>
-                    <td className="px-4 py-2">{v?.email || "N/A"}</td>
+                    <td className="px-4 py-2">{v.name || "N/A"}</td>
+                    <td className="px-4 py-2">{v.email || "N/A"}</td>
                     <td className="px-4 py-2">
-                      {v?.verification?.idData?.idType || "N/A"}
+                      {v.role || "N/A"}
+                      {v.role === "agent" && (
+                        <span className="ml-2 px-1.5 py-0.5 bg-purple-600 text-xs rounded text-white">
+                          Agent
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2">
-                      {v?.verification?.score || "0"}%
+                      {v.verification?.idData?.idType || "N/A"}
                     </td>
+                    <td className="px-4 py-2">{v.verification?.score || 0}%</td>
                     <td
                       className={`px-4 py-2 font-semibold ${
-                        v?.verification?.status === "verified"
+                        v.verification?.status === "verified"
                           ? "text-green-400"
-                          : v?.verification?.status === "pending"
+                          : v.verification?.status === "pending"
                           ? "text-yellow-400"
                           : "text-red-400"
                       }`}
                     >
-                      {v?.verification?.status || "unknown"}
+                      {v.verification?.status || "unknown"}
                     </td>
                     <td className="px-4 py-2 flex justify-center gap-2">
                       <button
-                        onClick={() =>
-                          navigate(`/admin/verification/${v._id}`)
-                        }
+                        onClick={() => navigate(`/admin/verification/${v._id}`)}
                         className="bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-md transition"
                         title="View Details"
                       >
                         <Eye size={16} />
                       </button>
+
                       <button
                         onClick={() => handleAction(v._id, "approve")}
                         className="bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-md transition"

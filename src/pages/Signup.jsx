@@ -8,12 +8,11 @@ import {
   Mail,
   Lock,
   Building2,
-  Globe,
-  Facebook,
+  Users,
   Loader2,
 } from "lucide-react";
 
-// ✅ Safe sanitization (no trim — allows spaces)
+// ✅ Safe sanitization
 const sanitizeInput = (value) => value.replace(/[<>/'"`;(){}$]/g, "");
 
 export default function Signup() {
@@ -28,13 +27,11 @@ export default function Signup() {
   });
   const [loading, setLoading] = useState(false);
 
-  // ✅ Clean handleChange (allows spaces)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: sanitizeInput(value) }));
   };
 
-  // ✅ Handles form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -58,12 +55,6 @@ export default function Signup() {
       setLoading(false);
     }
   };
-
-  const handleGoogleSignup = () =>
-    toast("Google signup coming soon ⚙️", { icon: "⚡" });
-
-  const handleFacebookSignup = () =>
-    toast("Facebook signup coming soon ⚙️", { icon: "💙" });
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900 p-4">
@@ -130,18 +121,40 @@ export default function Signup() {
             />
           </div>
 
-          {/* Role */}
-          <div className="relative">
-            <Building2 className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full pl-9 py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              <option value="tenant">Tenant</option>
-              <option value="landlord">Landlord</option>
-            </select>
+          {/* Role Selection - Animated Radio Buttons */}
+          <div className="flex flex-col gap-2 mt-2">
+            <p className="text-gray-400 text-sm mb-1">Select your role:</p>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { label: "Tenant", value: "tenant", icon: User },
+                { label: "Landlord", value: "landlord", icon: Building2 },
+                { label: "Agent", value: "agent", icon: Users },
+              ].map((roleOption) => {
+                const Icon = roleOption.icon;
+                const selected = form.role === roleOption.value;
+                return (
+                  <label
+                    key={roleOption.value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer border transition-all duration-200 transform ${
+                      selected
+                        ? "bg-blue-600 border-blue-500 text-white scale-105 shadow-lg"
+                        : "bg-gray-900/50 border-gray-700 text-gray-200 hover:bg-gray-900/70 hover:scale-105"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value={roleOption.value}
+                      checked={selected}
+                      onChange={handleChange}
+                      className="hidden"
+                    />
+                    <Icon className="w-5 h-5 transition-transform duration-200" />
+                    <span className="text-sm font-medium">{roleOption.label}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           {/* Submit Button */}
