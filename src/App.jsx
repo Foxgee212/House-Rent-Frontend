@@ -30,7 +30,7 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           {/* 🌍 Public Routes */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/listings" element={<Listings />} />
           <Route path="/agent/listings" element={<AgentListings />} />
           <Route path="/listings/:id" element={<HouseDetail />} />
@@ -38,7 +38,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/buy/:id" element={<BuyDetail />} />
-          <Route path="/buy" element={<BuyPage />} />
+          <Route path="/" element={<BuyPage />} />
 
 
 
