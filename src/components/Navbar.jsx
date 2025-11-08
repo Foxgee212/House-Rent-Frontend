@@ -3,9 +3,11 @@ import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
   User,
+  LogIn,
   LogOut,
   LayoutDashboard,
   Building2,
+  UserPlus,
   PlusCircle,
   House,
   Search,
@@ -117,7 +119,8 @@ export default function Navbar() {
     : [
         { to: "/", label: "Home", icon: Home, action: () => navigate("/") },
         { to: "/listings", label: "Search", icon: Search, action: () => navigate("/listings") },
-        { to: "/login", label: "Login", icon: User, action: () => navigate("/login") },
+        { to: "/login", label: "Login", icon: LogIn, action: () => navigate("/login") },
+        { to: "/signup", label: "Signup", icon: UserPlus, action: () => navigate("/signup") },
       ];
 
   return (
@@ -132,17 +135,7 @@ export default function Navbar() {
           {/* Top Rent & Buy Buttons for Mobile */}
           <div className="flex md:hidden items-center gap-3 mb-2 px-4">
             <button
-              onClick={() => navigate("/listings")}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
-                isRentActive
-                  ? "bg-blue-500 border-blue-500 text-white"
-                  : "border-blue-500 text-blue-500 hover:bg-blue-500/10"
-              }`}
-            >
-              <House size={16} /> Rent
-            </button>
-            <button
-              onClick={() => navigate("/buy")}
+              onClick={() => navigate("/")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
                 isBuyActive
                   ? "bg-blue-500 border-blue-500 text-white"
@@ -151,23 +144,32 @@ export default function Navbar() {
             >
               <Building2 size={16} /> Buy
             </button>
+            <button
+              onClick={() => navigate("/home")}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
+                isRentActive
+                  ? "bg-blue-500 border-blue-500 text-white"
+                  : "border-blue-500 text-blue-500 hover:bg-blue-500/10"
+              }`}
+            >
+              <House size={16} /> Rent
+            </button>
           </div>
+            
+            
 
           {/* Desktop Links with icons and hover/active effect */}
           <ul className="hidden md:flex items-center gap-6 text-white font-medium">
+           
+            
             <li>
               <NavLink to="/" className={navLinkClass}>
-                <Home size={16} /> <span className="hidden lg:inline">Home</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/listings" className={navLinkClass}>
-                <House size={16} /> <span className="hidden lg:inline">For Rent</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/buy" className={navLinkClass}>
                 <Building2 size={16} /> <span className="hidden lg:inline">For Sale</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/home" className={navLinkClass}>
+                <House size={16} /> <span className="hidden lg:inline">For Rent</span>
               </NavLink>
             </li>
 
@@ -252,12 +254,12 @@ export default function Navbar() {
               <>
                 <li>
                   <NavLink to="/login" className={navLinkClass}>
-                    <User size={16} /> <span className="hidden lg:inline">Login</span>
+                    <LogIn size={16} /> <span className="hidden lg:inline">Login</span>
                   </NavLink>
                 </li>
                 <li>
                   <NavLink to="/signup" className={navLinkClass}>
-                    <User size={16} /> <span className="hidden lg:inline">Signup</span>
+                    <UserPlus size={16} /> <span className="hidden lg:inline">Signup</span>
                   </NavLink>
                 </li>
               </>
