@@ -93,18 +93,18 @@ export default function Navbar() {
         : "text-gray-200 hover:text-blue-500 hover:bg-gray-800"
     }`;
 
-  const isRentActive = location.pathname.startsWith("/listings");
-  const isBuyActive = location.pathname.startsWith("/buy");
+  const isRentActive = location.pathname.startsWith("/rent");
+  const isBuyActive = location.pathname.startsWith("/");
 
   // Mobile bottom bar icons
   const mobileTabs = user
     ? [
         { to: "/", label: "Home", icon: Home, action: () => navigate("/") },
         {
-          to: isBuyActive ? "/buy" : "/listings",
+          to: isBuyActive ? "/" : "/rent",
           label: "Search",
           icon: Search,
-          action: () => navigate(isBuyActive ? "/buy" : "/listings"),
+          action: () => navigate(isBuyActive ? "/" : "/rent"),
         },
         ...(user.role === "landlord"
           ? [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, action: () => navigate("/dashboard") }]
@@ -118,7 +118,7 @@ export default function Navbar() {
       ]
     : [
         { to: "/", label: "Home", icon: Home, action: () => navigate("/") },
-        { to: "/listings", label: "Search", icon: Search, action: () => navigate("/listings") },
+        { to: "/rent", label: "Search", icon: Search, action: () => navigate("/rent") },
         { to: "/login", label: "Login", icon: LogIn, action: () => navigate("/login") },
         { to: "/signup", label: "Signup", icon: UserPlus, action: () => navigate("/signup") },
       ];
@@ -145,7 +145,7 @@ export default function Navbar() {
               <Building2 size={16} /> Buy
             </button>
             <button
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/rent")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
                 isRentActive
                   ? "bg-blue-500 border-blue-500 text-white"
@@ -168,7 +168,7 @@ export default function Navbar() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/home" className={navLinkClass}>
+              <NavLink to="/rent" className={navLinkClass}>
                 <House size={16} /> <span className="hidden lg:inline">For Rent</span>
               </NavLink>
             </li>

@@ -30,7 +30,7 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           {/* 🌍 Public Routes */}
-          <Route path="/home" element={<HomePage />} />
+          <Route path="/rent" element={<HomePage />} />
           <Route path="/listings" element={<Listings />} />
           <Route path="/agent/listings" element={<AgentListings />} />
           <Route path="/listings/:id" element={<HouseDetail />} />
