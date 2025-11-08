@@ -1,32 +1,28 @@
-import React, { useState, useEffect } from "react";
-import {
-  MapPin,
-  Home,
-  Info,
-  Wallet,
-  Ruler,
-  X,
-  BadgeDollarSign,
-} from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { MapPin, Info, Wallet, X, BadgeDollarSign } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SaleCard({ house }) {
   const [zoomed, setZoomed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("en-NG", {
+  const images = Array.isArray(house.images) ? house.images : [];
+
+  // Memoized formatted price for performance
+  const formattedPrice = useMemo(() => {
+    return new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
       minimumFractionDigits: 0,
-    }).format(price || 0);
+    }).format(house.price || 0);
+  }, [house.price]);
 
+  // Close zoom on Escape
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && setZoomed(false);
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
-
-  const images = Array.isArray(house.images) ? house.images : [];
 
   return (
     <div
@@ -37,13 +33,14 @@ export default function SaleCard({ house }) {
       <div className="relative">
         <img
           src={images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
-          alt={house.title || "House image"}
+          alt={house.title ? `Image of ${house.title}` : "House image"}
           onClick={(e) => {
             e.stopPropagation();
             setZoomed(true);
             setActiveIndex(0);
           }}
           className="w-full h-40 sm:h-52 object-cover rounded-t-2xl transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
         />
 
         {/* Sale Badge */}
@@ -87,50 +84,65 @@ export default function SaleCard({ house }) {
         </div>
 
         <p className="text-blue-400 font-bold mt-2 sm:mt-3 flex items-center gap-1 text-sm sm:text-base">
-          <Wallet size={16} /> {formatPrice(house.price)}
+          <Wallet size={16} /> {formattedPrice}
         </p>
       </div>
 
-      {/* Zoom Modal */}
-      {zoomed && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4 overflow-auto"
-          onClick={() => setZoomed(false)}
-        >
-          <button
+      {/* Zoom Modal with Framer Motion */}
+      <AnimatePresence>
+        {zoomed && (
+          <motion.div
+            key="zoom"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4 overflow-auto"
             onClick={() => setZoomed(false)}
-            className="absolute top-5 right-5 bg-white/80 text-black rounded-full p-2 shadow-md hover:bg-white transition"
           >
-            <X size={20} />
-          </button>
+            <motion.button
+              onClick={() => setZoomed(false)}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              className="absolute top-5 right-5 bg-white/80 text-black rounded-full p-2 shadow-md hover:bg-white transition"
+            >
+              <X size={20} />
+            </motion.button>
 
-          <img
-            src={images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
-            alt={house.title || "Zoomed house image"}
-            className="max-w-[90%] max-h-[70vh] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300 mb-4"
-            onClick={(e) => e.stopPropagation()}
-          />
+            <motion.img
+              src={images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
+              alt={house.title ? `Zoomed image of ${house.title}` : "Zoomed house image"}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="max-w-[90%] max-h-[70vh] rounded-2xl shadow-2xl border-4 border-white/20 transition-transform duration-300 mb-4"
+              onClick={(e) => e.stopPropagation()}
+            />
 
-          <div
-            className="flex gap-2 flex-wrap justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {images.map((img, index) => (
-              <img
-                key={index}
-                src={img}
-                alt={`House ${index + 1}`}
-                onClick={() => setActiveIndex(index)}
-                className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
-                  activeIndex === index
-                    ? "border-blue-500 scale-105"
-                    : "border-transparent hover:opacity-80"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+            <div
+              className="flex gap-2 flex-wrap justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {images.map((img, index) => (
+                <motion.img
+                  key={index}
+                  src={img}
+                  alt={`House ${index + 1}`}
+                  onClick={() => setActiveIndex(index)}
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: activeIndex === index ? 1.05 : 0.9 }}
+                  transition={{ duration: 0.2 }}
+                  className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 ${
+                    activeIndex === index
+                      ? "border-blue-500"
+                      : "border-transparent hover:opacity-80"
+                  }`}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

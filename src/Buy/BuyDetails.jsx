@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
 import { motion } from "framer-motion";
@@ -9,6 +9,17 @@ export default function BuyDetail() {
   const { id } = useParams();
   const { housesForSale } = useHouses();
   const house = housesForSale.find((h) => h._id === id);
+
+  const firstImage = useMemo(
+    () => house?.images?.[0] || "/default-house.jpg",
+    [house]
+  );
+
+  const message = useMemo(
+    () =>
+      `Hello, I'm interested in purchasing your property located in ${house?.location}. Is it still available?`,
+    [house?.location]
+  );
 
   if (!house) {
     return (
@@ -29,13 +40,9 @@ export default function BuyDetail() {
     price,
     bedrooms,
     bathrooms,
-    images,
     sellerName,
     sellerPhone,
   } = house;
-
-  const firstImage = images?.[0] || "/default-house.jpg";
-  const message = `Hello, I'm interested in purchasing your property located in ${location}. Is it still available?`;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -48,7 +55,8 @@ export default function BuyDetail() {
       >
         <img
           src={firstImage}
-          alt={title}
+          alt={title || "Property Image"}
+          loading="lazy"
           className="object-cover w-full h-full brightness-75"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
@@ -77,7 +85,7 @@ export default function BuyDetail() {
             transition={{ delay: 0.3 }}
           >
             <MapPin size={18} className="text-blue-400" />
-            {location}
+            {location || "Unknown location"}
           </motion.p>
         </div>
       </motion.div>
@@ -93,7 +101,7 @@ export default function BuyDetail() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-2xl sm:text-3xl font-semibold">{title}</h2>
             <span className="text-blue-400 text-xl sm:text-2xl font-bold">
-              ₦{price?.toLocaleString()}{" "}
+              ₦{price?.toLocaleString() || "N/A"}{" "}
               <span className="text-gray-400 text-sm font-medium">Asking Price</span>
             </span>
           </div>
@@ -146,11 +154,7 @@ export default function BuyDetail() {
               </a>
             )}
           </div>
-          {sellerName && (
-            <p className="text-sm text-blue-100 mt-4">
-              Seller: {sellerName}
-            </p>
-          )}
+          {sellerName && <p className="text-sm text-blue-100 mt-4">Seller: {sellerName}</p>}
         </motion.div>
       </section>
 
@@ -172,13 +176,14 @@ export default function BuyDetail() {
                 <img
                   src={rec.images?.[0] || "/default-house.jpg"}
                   alt={rec.title}
+                  loading="lazy"
                   className="w-full h-32 sm:h-40 object-cover rounded-xl mb-3"
                 />
                 <p className="text-sm sm:text-base font-medium text-white truncate">
                   {rec.title}
                 </p>
                 <p className="text-blue-400 text-xs sm:text-sm">
-                  ₦{rec.price?.toLocaleString()}
+                  ₦{rec.price?.toLocaleString() || "N/A"}
                 </p>
               </Link>
             ))}

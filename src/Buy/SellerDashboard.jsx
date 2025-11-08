@@ -29,8 +29,9 @@ export default function SellerDashboard() {
     description: "",
     negotiable: false,
   });
-  const [images, setImages] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
+  const [images, setImages] = useState([]); // New uploads
+  const [existingImages, setExistingImages] = useState([]); // Existing images from listing
+  const [previewUrls, setPreviewUrls] = useState([]); // Previews of new uploads
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(null);
   const fileInputRef = useRef(null);
@@ -76,6 +77,7 @@ export default function SellerDashboard() {
       negotiable: false,
     });
     setImages([]);
+    setExistingImages([]);
     setPreviewUrls([]);
     setEditing(null);
   };
@@ -96,20 +98,32 @@ export default function SellerDashboard() {
 
     setUploading(true);
     try {
+      const formData = new FormData();
+      Object.entries(form).forEach(([k, v]) =>
+        formData.append(k, typeof v === "boolean" ? String(v) : v)
+      );
+
+      // Include new uploads
+      images.forEach((img) => formData.append("images", img));
+
+      // Include existing images (URLs/paths) to retain
       if (editing) {
-        await updateSale(editing._id, form, token);
+        formData.append(
+          "existingImages",
+          JSON.stringify(existingImages) // send as JSON array
+        );
+      }
+
+      if (editing) {
+        await updateSale(editing._id, formData, token);
         toast.success("Listing updated");
       } else {
-        const formData = new FormData();
-        Object.entries(form).forEach(([k, v]) =>
-          formData.append(k, typeof v === "boolean" ? String(v) : v)
-        );
-        images.forEach((img) => formData.append("images", img));
         await addSale(formData, token);
         toast.success("🏡 Property listed for sale");
       }
+
       resetForm();
-      fetchMySales(token); // Refresh listings after add/update
+      fetchMySales(token); // Refresh listings
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to process request";
       toast.error(msg);
@@ -127,9 +141,19 @@ export default function SellerDashboard() {
       description: sale.description,
       negotiable: sale.negotiable || false,
     });
+    setExistingImages(sale.images || []);
     setImages([]);
     setPreviewUrls([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const removeExistingImage = (url) => {
+    setExistingImages((prev) => prev.filter((img) => img !== url));
+  };
+
+  const removeNewImage = (index) => {
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDelete = async (id) => {
@@ -258,18 +282,31 @@ export default function SellerDashboard() {
           <span className="text-sm text-gray-300">Price negotiable</span>
         </div>
 
-        {previewUrls.length > 0 && (
+        {/* Image Previews */}
+        {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
-            {previewUrls.map((url, i) => (
+            {existingImages.map((url, i) => (
               <div
-                key={i}
+                key={`existing-${i}`}
                 className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700"
               >
                 <img src={url} alt="" className="w-full h-full object-cover" />
                 <button
-                  onClick={() =>
-                    setPreviewUrls((p) => p.filter((_, idx) => idx !== i))
-                  }
+                  onClick={() => removeExistingImage(url)}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
+                >
+                  <XCircle size={14} />
+                </button>
+              </div>
+            ))}
+            {previewUrls.map((url, i) => (
+              <div
+                key={`new-${i}`}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700"
+              >
+                <img src={url} alt="" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => removeNewImage(i)}
                   className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
                 >
                   <XCircle size={14} />

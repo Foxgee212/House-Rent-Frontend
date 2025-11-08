@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import HouseCard from "../components/HouseCard";
 import { useHouses } from "../context/HouseContext";
@@ -7,14 +7,16 @@ import { useAuth } from "../context/AuthContext";
 
 export default function AgentListings() {
   const { user } = useAuth();
-  const { mySales, fetchMySales, loading } = useHouses();
+  const { mySales, fetchMySales, loading, hasMore, fetchMoreSales } = useHouses();
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [showFullFilter, setShowFullFilter] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const observer = useRef();
 
   // Handle window resize
   useEffect(() => {
@@ -23,25 +25,21 @@ export default function AgentListings() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch agent listings on mount
+  // Fetch listings on mount
   useEffect(() => {
-    if (user?.token) fetchMySales(user.token);
-  }, [user]);
+    if (user?.token) fetchMySales(user.token, 1); // fetch first page
+  }, [user, fetchMySales]);
 
   // Mobile scroll detection to hide/show filter bar
   useEffect(() => {
     if (!isMobile) return;
-
     let lastScrollY = window.scrollY;
     let ticking = false;
 
     const update = () => {
       const currentScroll = window.scrollY;
-      if (currentScroll > lastScrollY + 10) {
-        setShowFullFilter(false); // hide on scroll down
-      } else if (currentScroll < lastScrollY - 10) {
-        setShowFullFilter(true); // show on scroll up
-      }
+      if (currentScroll > lastScrollY + 10) setShowFullFilter(false);
+      else if (currentScroll < lastScrollY - 10) setShowFullFilter(true);
       lastScrollY = currentScroll;
       ticking = false;
     };
@@ -57,17 +55,40 @@ export default function AgentListings() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isMobile]);
 
-  // Filtering and sorting
-  let filtered = mySales.filter((house) => {
-    const titleMatch = house.title?.toLowerCase().includes(search.toLowerCase());
-    const descMatch = house.description?.toLowerCase().includes(search.toLowerCase());
-    const locationMatch = house.location?.toLowerCase().includes(location.toLowerCase());
-    const priceMatch = maxPrice === "" || house.price <= Number(maxPrice);
-    return (search === "" || titleMatch || descMatch) && (location === "" || locationMatch) && priceMatch;
-  });
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
-  if (sortOrder === "asc") filtered.sort((a, b) => a.price - b.price);
-  if (sortOrder === "desc") filtered.sort((a, b) => b.price - a.price);
+  // Infinite scroll
+  const lastHouseRef = useRef();
+  const lastHouseElementRef = (node) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore) fetchMoreSales(user.token);
+    });
+    if (node) observer.current.observe(node);
+  };
+
+  // Filtered and sorted listings
+  const filteredListings = useMemo(() => {
+    let filtered = mySales.filter((house) => {
+      const titleMatch = house.title?.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const descMatch = house.description?.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const locationMatch = house.location?.toLowerCase().includes(location.toLowerCase());
+      const priceMatch = maxPrice === "" || Number(house.price) <= Number(maxPrice);
+      return (debouncedSearch === "" || titleMatch || descMatch) &&
+             (location === "" || locationMatch) &&
+             priceMatch;
+    });
+
+    if (sortOrder === "asc") filtered.sort((a, b) => Number(a.price) - Number(b.price));
+    if (sortOrder === "desc") filtered.sort((a, b) => Number(b.price) - Number(a.price));
+
+    return filtered;
+  }, [mySales, debouncedSearch, location, maxPrice, sortOrder]);
 
   const clearFilters = () => {
     setSearch("");
@@ -76,55 +97,25 @@ export default function AgentListings() {
     setSortOrder("");
   };
 
-  // ✅ Loading screen
-  if (loading)
-    return (
-      <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-900 text-blue-400">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gray-800 overflow-hidden">
-          <div className="h-full w-1/2 bg-blue-500 animate-slide" />
-        </div>
-        <div className="flex flex-col items-center mt-6">
-          <MapPin size={36} className="text-blue-400 animate-pulse mb-4" />
-          <h2 className="text-lg font-medium text-gray-100">Loading your listings...</h2>
-        </div>
-        <style>
-          {`
-            @keyframes slide {
-              0% { transform: translateX(-100%); }
-              50% { transform: translateX(50%); }
-              100% { transform: translateX(100%); }
-            }
-            .animate-slide {
-              animation: slide 1.2s ease-in-out infinite;
-              box-shadow: 0 0 12px rgba(59,130,246,0.7);
-            }
-          `}
-        </style>
+  // Skeleton loader component
+  const SkeletonCard = () => (
+    <div className="bg-gray-800 rounded-2xl overflow-hidden animate-pulse">
+      <div className="h-48 bg-gray-700" />
+      <div className="p-4 space-y-2">
+        <div className="h-4 bg-gray-600 rounded w-3/4" />
+        <div className="h-4 bg-gray-600 rounded w-1/2" />
+        <div className="h-3 bg-gray-600 rounded w-1/3 mt-2" />
       </div>
-    );
+    </div>
+  );
 
   return (
-    <div
-      className={`min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-6 sm:p-8 transition-colors duration-300 ${
-        isMobile ? "pt-28" : ""
-      }`}
-    >
+    <div className={`min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 p-6 sm:p-8 ${isMobile ? "pt-28" : ""}`}>
       <h1 className="text-3xl font-bold mb-6 text-gray-100">My Listings</h1>
 
       {/* Filter bar */}
-      <div
-        className={`${
-          isMobile
-            ? `fixed top-20 left-1/2 -translate-x-1/2 z-40 w-[95%] bg-gray-900/85 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl 
-               transition-all duration-400 ease-in-out ${showFullFilter ? "p-4 scale-100 opacity-100" : "p-2 scale-[0.98] opacity-90"}`
-            : `bg-gray-800/90 backdrop-blur-lg border border-gray-700/60 rounded-2xl shadow-lg p-4 mb-8`
-        }`}
-      >
-        <div
-          className={`flex flex-col sm:flex-row items-center gap-4 transition-all duration-500 overflow-hidden ${
-            isMobile ? (showFullFilter ? "max-h-[500px]" : "max-h-[70px]") : "max-h-none"
-          }`}
-        >
+      <div className={`${isMobile ? "fixed top-20 left-1/2 -translate-x-1/2 z-40 w-[95%] bg-gray-900/85 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl transition-all duration-400 ease-in-out" : "bg-gray-800/90 backdrop-blur-lg border border-gray-700/60 rounded-2xl shadow-lg p-4 mb-8"}`}>
+        <div className={`flex flex-col sm:flex-row items-center gap-4 transition-all duration-500 overflow-hidden ${isMobile ? (showFullFilter ? "max-h-[500px] p-4 scale-100 opacity-100" : "max-h-[70px] p-2 scale-[0.98] opacity-90") : "max-h-none"}`}>
           <div className="relative w-full sm:w-1/4">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
             <input
@@ -184,21 +175,35 @@ export default function AgentListings() {
         </div>
       </div>
 
-      {/* Spacer for mobile filter */}
       {isMobile && <div className="h-28"></div>}
 
-      {/* Agent house listings */}
+      {/* Listings */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
-        {filtered.length === 0 ? (
+        {filteredListings.length === 0 && !loading ? (
           <p className="col-span-full text-center text-gray-400">
-            No listings found for "{search || "any keyword"}" in "{location || "any location"}"
+            No listings found for "{debouncedSearch || "any keyword"}" in "{location || "any location"}"
           </p>
         ) : (
-          filtered.map((h) => (
-            <Link key={h._id} to={`/agent/listings/${h._id}`}>
-              <HouseCard house={h} />
-            </Link>
-          ))
+          <>
+            {filteredListings.map((h, idx) => {
+              if (filteredListings.length === idx + 1) {
+                return (
+                  <Link key={h._id} to={`/agent/listings/${h._id}`} ref={lastHouseElementRef}>
+                    <HouseCard house={h} />
+                  </Link>
+                );
+              } else {
+                return (
+                  <Link key={h._id} to={`/agent/listings/${h._id}`}>
+                    <HouseCard house={h} />
+                  </Link>
+                );
+              }
+            })}
+
+            {/* Skeletons while loading more */}
+            {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </>
         )}
       </div>
     </div>

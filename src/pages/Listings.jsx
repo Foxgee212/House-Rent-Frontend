@@ -6,12 +6,20 @@ import { Search, MapPin, DollarSign, ArrowUpDown, XCircle } from "lucide-react";
 
 export default function Listings() {
   const { houses, fetchApprovedHouses, loading } = useHouses();
+
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [showFullFilter, setShowFullFilter] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [paginatedHouses, setPaginatedHouses] = useState([]);
+
+  const limit = 9; // Houses per page
 
   // Handle window resize
   useEffect(() => {
@@ -20,10 +28,26 @@ export default function Listings() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch data on mount
+  // Fetch houses on mount or page change
+  const loadHouses = async (pageNum = 1, append = false) => {
+    const res = await fetchApprovedHouses({ page: pageNum, limit });
+    const fetched = res?.houses || [];
+    const total = res?.totalPages || 1;
+
+    setPaginatedHouses((prev) => (append ? [...prev, ...fetched] : fetched));
+    setPage(pageNum);
+    setTotalPages(total);
+  };
+
   useEffect(() => {
-    fetchApprovedHouses();
+    loadHouses();
   }, []);
+
+  const loadMoreHouses = () => {
+    if (page < totalPages) {
+      loadHouses(page + 1, true);
+    }
+  };
 
   // Mobile scroll detection to hide/show filter bar
   useEffect(() => {
@@ -35,9 +59,9 @@ export default function Listings() {
     const update = () => {
       const currentScroll = window.scrollY;
       if (currentScroll > lastScrollY + 10) {
-        setShowFullFilter(false); // hide on scroll down
+        setShowFullFilter(false);
       } else if (currentScroll < lastScrollY - 10) {
-        setShowFullFilter(true); // show on scroll up
+        setShowFullFilter(true);
       }
       lastScrollY = currentScroll;
       ticking = false;
@@ -55,7 +79,7 @@ export default function Listings() {
   }, [isMobile]);
 
   // Filtering and sorting
-  let filtered = houses.filter((house) => {
+  let filtered = paginatedHouses.filter((house) => {
     const titleMatch = house.title?.toLowerCase().includes(search.toLowerCase());
     const descMatch = house.description?.toLowerCase().includes(search.toLowerCase());
     const locationMatch = house.location?.toLowerCase().includes(location.toLowerCase());
@@ -73,21 +97,16 @@ export default function Listings() {
     setSortOrder("");
   };
 
-  // ✅ Loading screen
   if (loading)
     return (
       <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-900 text-blue-400">
-        {/* Top sliding blue loading bar */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gray-800 overflow-hidden">
           <div className="h-full w-1/2 bg-blue-500 animate-slide" />
         </div>
-
-        {/* Centered Icon + Loading Text */}
         <div className="flex flex-col items-center mt-6">
           <MapPin size={36} className="text-blue-400 animate-pulse mb-4" />
           <h2 className="text-lg font-medium text-gray-100">Loading available houses...</h2>
         </div>
-
         <style>
           {`
             @keyframes slide {
@@ -138,7 +157,6 @@ export default function Listings() {
             />
           </div>
 
-          {/* Other filters */}
           {(!isMobile || showFullFilter) && (
             <>
               <div className="relative w-full sm:w-1/4">
@@ -204,6 +222,18 @@ export default function Listings() {
           ))
         )}
       </div>
+
+      {/* Load More */}
+      {page < totalPages && filtered.length > 0 && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={loadMoreHouses}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition"
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </div>
   );
 }

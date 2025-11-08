@@ -176,11 +176,6 @@ export default function Navbar() {
                 {user.role === "landlord" && (
                   <>
                     <li>
-                      <NavLink to="/add-rent" className={navLinkClass}>
-                        <PlusCircle size={16} /> <span className="hidden lg:inline">List Rental</span>
-                      </NavLink>
-                    </li>
-                    <li>
                       <NavLink to="/dashboard" className={navLinkClass}>
                         <LayoutDashboard size={16} /> <span className="hidden lg:inline">Dashboard</span>
                       </NavLink>
@@ -189,11 +184,6 @@ export default function Navbar() {
                 )}
                 {user.role === "agent" && (
                   <>
-                    <li>
-                      <NavLink to="/add-sale" className={navLinkClass}>
-                        <PlusCircle size={16} /> <span className="hidden lg:inline">List Property</span>
-                      </NavLink>
-                    </li>
                     <li>
                       <NavLink to="/agent" className={navLinkClass}>
                         <LayoutDashboard size={16} /> <span className="hidden lg:inline">Agent Panel</span>

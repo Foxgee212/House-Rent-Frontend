@@ -1,46 +1,57 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
-import SaleCard from "./SaleCard"
+import SaleCard from "./SaleCard";
 import LoadingBar from "react-top-loading-bar";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function BuyPage() {
-  const { housesForSale, fetchApprovedSales, loading } = useHouses();
+  const { fetchApprovedSales, loading } = useHouses();
+  const [houses, setHouses] = useState([]);
   const [search, setSearch] = useState("");
-  const [filtered, setFiltered] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const loadingBarRef = useRef(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      loadingBarRef.current?.continuousStart();
-      await fetchApprovedSales();
+  // Fetch houses for sale with pagination
+  const loadSales = async (pageNumber = 1) => {
+    loadingBarRef.current?.continuousStart();
+    try {
+      const data = await fetchApprovedSales(pageNumber, 12);
+
+      // Safely ensure data structure
+      const housesData = data?.houses ?? [];
+      const pages = data?.totalPages ?? 1;
+
+      setHouses(housesData);
+      setTotalPages(pages);
+    } catch (err) {
+      console.error("Error fetching sales:", err);
+      setHouses([]);
+      setTotalPages(1);
+    } finally {
       loadingBarRef.current?.complete();
-    };
-    fetchData();
-  }, []);
+    }
+  };
 
   useEffect(() => {
-    if (!Array.isArray(housesForSale)) return;
-    if (!search.trim()) {
-      setFiltered(housesForSale);
-      return;
-    }
-    const filteredSales = housesForSale.filter((house) =>
-      house.location?.toLowerCase().includes(search.toLowerCase())
-    );
-    setFiltered(filteredSales);
-  }, [search, housesForSale]);
+    loadSales(page);
+  }, [page]);
 
-  // 💙 Loading State (Blue-Themed Building Loader)
+  // Filter by search
+  const filtered = houses.filter(
+    (house) =>
+      !search.trim() ||
+      house.location?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // 💙 Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center overflow-hidden">
         <LoadingBar color="#3b82f6" height={3} ref={loadingBarRef} />
-
         <div className="relative flex items-center justify-center">
-          {/* Rotating gradient ring */}
           <motion.div
             className="absolute w-28 h-28 rounded-full border-4 border-transparent"
             style={{
@@ -56,15 +67,11 @@ export default function BuyPage() {
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
-
-          {/* Glowing blur */}
           <motion.div
             className="absolute w-20 h-20 rounded-full bg-blue-500 blur-2xl opacity-50"
             animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0.25, 0.5] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
-
-          {/* Central icon */}
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.8, 1, 0.8] }}
@@ -74,7 +81,6 @@ export default function BuyPage() {
             <Building2 size={62} strokeWidth={2.5} color="#3b82f6" />
           </motion.div>
         </div>
-
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 1, 0] }}
@@ -94,14 +100,16 @@ export default function BuyPage() {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-blue-600 to-blue-500 text-center text-white overflow-hidden py-16 sm:py-24 md:py-32">
         <div className="relative z-10 flex flex-col items-center justify-center space-y-3 sm:space-y-4 px-4 max-w-4xl mx-auto">
-          {/* Icon + Title */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center">
             <motion.div
               initial={{ y: 0 }}
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Building2 size={48} className="text-white drop-shadow-2xl sm:text-[56px]" />
+              <Building2
+                size={48}
+                className="text-white drop-shadow-2xl sm:text-[56px]"
+              />
             </motion.div>
 
             <motion.h1
@@ -115,10 +123,10 @@ export default function BuyPage() {
           </div>
 
           <p className="text-blue-100 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Explore verified homes available for sale across Abuja and nearby cities
+            Explore verified homes available for sale across Abuja and nearby
+            cities
           </p>
 
-          {/* Search Bar */}
           <div className="mt-6 flex justify-center w-full">
             <div className="relative w-full max-w-md backdrop-blur-md bg-white/20 rounded-2xl shadow-lg border border-white/30">
               <Search className="absolute left-4 top-3 text-white/70" size={20} />
@@ -167,6 +175,29 @@ export default function BuyPage() {
             ))}
           </div>
         )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-8 space-x-3">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-white px-2 py-2">
+              {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Footer */}
@@ -175,11 +206,17 @@ export default function BuyPage() {
           © {new Date().getFullYear()} NaijaHome — Own your dream home today.
         </p>
         <p className="text-xs sm:text-sm opacity-80">
-          <Link to="/about" className="underline hover:text-white/80 mx-1">
+          <Link
+            to="/about"
+            className="underline hover:text-white/80 mx-1"
+          >
             About
           </Link>
           |
-          <Link to="/contact" className="underline hover:text-white/80 mx-1">
+          <Link
+            to="/contact"
+            className="underline hover:text-white/80 mx-1"
+          >
             Contact
           </Link>
           |

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAsyncError, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
@@ -18,6 +18,7 @@ import imageCompression from "browser-image-compression";
 export default function DashBoard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
     title: "",
     location: "",
@@ -28,11 +29,16 @@ export default function DashBoard() {
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  // Houses + Pagination
   const [landlordHouses, setLandlordHouses] = useState([]);
   const [zoomedHouse, setZoomedHouse] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [editing, setEditing] = useState(null);
   const [loadingHouses, setLoadingHouses] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 6; // Houses per page
 
   // Restrict non-landlords
   if (user?.role !== "landlord") {
@@ -43,31 +49,39 @@ export default function DashBoard() {
     );
   }
 
+  // Fetch landlord houses with pagination
+  const fetchMyHouses = async (pageNum = 1, append = false) => {
+    setLoadingHouses(true);
+    try {
+      const res = await API.get(`/rentals/my?page=${pageNum}&limit=${limit}`);
+      const fetched = res.data?.houses || res.data || [];
+      const total = res.data?.totalPages || 1;
 
-  // Fetch landlord houses
-  useEffect(() => {
-    const fetchMyHouses = async () => {
-  setLoadingHouses(true);
-  try {
-    const res = await API.get("/houses/my");
-    setLandlordHouses(res.data?.houses || res.data || []);
-  } catch (err) {
-    // Extract backend error message
-    const message =
-      err.response?.data?.error || err.response?.data?.msg || err.message;
-
-    if (message?.toLowerCase().includes("identity verification required")) {
-      toast.error("Please verify your identity to view your houses");
-    } else {
-      toast.error("Failed to load your listings");
+      setLandlordHouses((prev) => (append ? [...prev, ...fetched] : fetched));
+      setPage(pageNum);
+      setTotalPages(total);
+    } catch (err) {
+      const message =
+        err.response?.data?.error || err.response?.data?.msg || err.message;
+      if (message?.toLowerCase().includes("identity verification required")) {
+        toast.error("Please verify your identity to view your houses");
+      } else {
+        toast.error("Failed to load your listings");
+      }
+    } finally {
+      setLoadingHouses(false);
     }
-  } finally {
-    setLoadingHouses(false);
-  }
-};
+  };
 
-fetchMyHouses()
+  useEffect(() => {
+    fetchMyHouses();
   }, []);
+
+  const loadMoreHouses = () => {
+    if (page < totalPages) {
+      fetchMyHouses(page + 1, true);
+    }
+  };
 
   // Form changes
   const handleChange = (e) =>
@@ -101,7 +115,6 @@ fetchMyHouses()
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!editing && images.length === 0)
@@ -122,17 +135,17 @@ fetchMyHouses()
       images.forEach((img) => formData.append("images", img));
 
       const res = editing
-        ? await API.put(`/houses/${editing._id}`, form)
-        : await API.post("/houses", formData, {
+        ? await API.put(`/rentals/${editing._id}`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+        : await API.post("/rentals", formData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
 
       setLandlordHouses((prev) =>
         editing
-          ? prev.map((h) =>
-              h._id === editing._id ? res.data.house || res.data : h
-            )
-          : [...prev, res.data.house]
+          ? prev.map((h) => (h._id === editing._id ? res.data.house || res.data : h))
+          : [res.data.house, ...prev]
       );
 
       toast.success(editing ? "✅ House updated!" : "🏠 House added!");
@@ -151,7 +164,7 @@ fetchMyHouses()
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     try {
-      await API.delete(`/houses/${id}`);
+      await API.delete(`/rentals/${id}`);
       setLandlordHouses((prev) => prev.filter((h) => h._id !== id));
       toast.success("🗑️ House deleted!");
     } catch {
@@ -174,7 +187,7 @@ fetchMyHouses()
   const toggleAvailability = async (id, currentStatus) => {
     try {
       await API.patch(
-        `/houses/${id}/availability`,
+        `/rentals/${id}/availability`,
         { available: !currentStatus },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -336,66 +349,80 @@ fetchMyHouses()
         ) : landlordHouses.length === 0 ? (
           <p className="text-center text-gray-400">No houses posted yet</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {landlordHouses.map((h) => (
-              <div
-                key={h._id}
-                className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
-              >
-                <img
-                  src={h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
-                  alt={h.title}
-                  onClick={() => { setZoomedHouse(h); setActiveIndex(0); }}
-                  className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition"
-                />
-                <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-semibold text-white">{h.title}</h3>
-                  <p className="text-gray-400 text-sm flex items-center gap-1">
-                    <MapPin size={14} /> {h.location}
-                  </p>
-                  <p className="text-blue-400 font-semibold mt-2">
-                    ₦{Number(h.price).toLocaleString()}
-                    {h.negotiable && (
-                      <span className="ml-2 text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
-                        Negotiable
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {landlordHouses.map((h) => (
+                <div
+                  key={h._id}
+                  className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
+                >
+                  <img
+                    src={h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
+                    alt={h.title}
+                    onClick={() => { setZoomedHouse(h); setActiveIndex(0); }}
+                    className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition"
+                  />
+                  <div className="p-5 space-y-2">
+                    <h3 className="text-lg font-semibold text-white">{h.title}</h3>
+                    <p className="text-gray-400 text-sm flex items-center gap-1">
+                      <MapPin size={14} /> {h.location}
+                    </p>
+                    <p className="text-blue-400 font-semibold mt-2">
+                      ₦{Number(h.price).toLocaleString()}
+                      {h.negotiable && (
+                        <span className="ml-2 text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
+                          Negotiable
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
+
+                    <div className="flex items-center justify-between mt-3">
+                      <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>
+                        {h.available ? "Available" : "Occupied"}
                       </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
+                      <Switch
+                        checked={h.available}
+                        onChange={() => toggleAvailability(h._id, h.available)}
+                        className={`${h.available ? "bg-green-500" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                      >
+                        <span
+                          className={`${h.available ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </Switch>
+                    </div>
 
-                  <div className="flex items-center justify-between mt-3">
-                    <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>
-                      {h.available ? "Available" : "Occupied"}
-                    </span>
-                    <Switch
-                      checked={h.available}
-                      onChange={() => toggleAvailability(h._id, h.available)}
-                      className={`${h.available ? "bg-green-500" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
-                    >
-                      <span
-                        className={`${h.available ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </Switch>
-                  </div>
-
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => startEditing(h)}
-                      className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
-                    >
-                      <Edit3 size={14} /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(h._id)}
-                      className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
-                    >
-                      <Trash2 size={14} /> Delete
-                    </button>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => startEditing(h)}
+                        className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
+                      >
+                        <Edit3 size={14} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(h._id)}
+                        className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Load More */}
+            {page < totalPages && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={loadMoreHouses}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition"
+                >
+                  Load More
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
