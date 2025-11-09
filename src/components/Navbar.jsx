@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Building2,
   UserPlus,
-  PlusCircle,
   House,
   Search,
 } from "lucide-react";
@@ -94,7 +93,7 @@ export default function Navbar() {
     }`;
 
   const isRentActive = location.pathname.startsWith("/rent");
-  const isBuyActive = location.pathname.startsWith("/");
+  const isBuyActive = location.pathname === "/";
 
   // Mobile bottom bar icons
   const mobileTabs = user
@@ -127,16 +126,20 @@ export default function Navbar() {
     <>
       {/* Desktop Navbar */}
       <nav className="bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
-          <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer  ">
-            <NaijahomeLogoSVG />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center h-16 overflow-hidden">
+          {/* Logo */}
+          <div
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 cursor-pointer translate-x-[-8px] sm:translate-x-0"
+          >
+            <NaijahomeLogoSVG width={150} height={50} />
           </div>
 
           {/* Top Rent & Buy Buttons for Mobile */}
-          <div className="flex md:hidden items-center gap-3 mb-2 px-4 mr-2">
+          <div className="flex md:hidden items-center justify-center gap-2 px-2 sm:px-4 mr-1 sm:mr-2 shrink-0">
             <button
               onClick={() => navigate("/")}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
+              className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
                 isBuyActive
                   ? "bg-blue-500 border-blue-500 text-white"
                   : "border-blue-500 text-blue-500 hover:bg-blue-500/10"
@@ -146,7 +149,7 @@ export default function Navbar() {
             </button>
             <button
               onClick={() => navigate("/rent")}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
+              className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
                 isRentActive
                   ? "bg-blue-500 border-blue-500 text-white"
                   : "border-blue-500 text-blue-500 hover:bg-blue-500/10"
@@ -155,13 +158,9 @@ export default function Navbar() {
               <House size={16} /> Rent
             </button>
           </div>
-            
-            
 
-          {/* Desktop Links with icons and hover/active effect */}
+          {/* Desktop Links */}
           <ul className="hidden md:flex items-center gap-6 text-white font-medium">
-           
-            
             <li>
               <NavLink to="/" className={navLinkClass}>
                 <Building2 size={16} /> <span className="hidden lg:inline">For Sale</span>
@@ -176,22 +175,18 @@ export default function Navbar() {
             {user && (
               <>
                 {user.role === "landlord" && (
-                  <>
-                    <li>
-                      <NavLink to="/dashboard" className={navLinkClass}>
-                        <LayoutDashboard size={16} /> <span className="hidden lg:inline">Dashboard</span>
-                      </NavLink>
-                    </li>
-                  </>
+                  <li>
+                    <NavLink to="/dashboard" className={navLinkClass}>
+                      <LayoutDashboard size={16} /> <span className="hidden lg:inline">Dashboard</span>
+                    </NavLink>
+                  </li>
                 )}
                 {user.role === "agent" && (
-                  <>
-                    <li>
-                      <NavLink to="/agent" className={navLinkClass}>
-                        <LayoutDashboard size={16} /> <span className="hidden lg:inline">Agent Panel</span>
-                      </NavLink>
-                    </li>
-                  </>
+                  <li>
+                    <NavLink to="/agent" className={navLinkClass}>
+                      <LayoutDashboard size={16} /> <span className="hidden lg:inline">Agent Panel</span>
+                    </NavLink>
+                  </li>
                 )}
                 {user.role === "tenant" && (
                   <li>
