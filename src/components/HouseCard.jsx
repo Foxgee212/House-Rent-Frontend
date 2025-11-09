@@ -138,32 +138,6 @@ export default function HouseCard({ house }) {
             </span>
           )}
         </p>
-
-        {/* Meta Info */}
-        <div className="mt-3 flex items-center justify-between text-xs sm:text-sm text-gray-400">
-          <div className="flex items-center gap-3">
-            {house.rooms && (
-              <span className="flex items-center gap-1">
-                <BedDouble size={14} /> {house.rooms}
-              </span>
-            )}
-            {house.baths && (
-              <span className="flex items-center gap-1">
-                <Bath size={14} /> {house.baths}
-              </span>
-            )}
-            {house.area && (
-              <span className="flex items-center gap-1">
-                <Ruler size={14} /> {house.area} sqft
-              </span>
-            )}
-          </div>
-          {house.added && (
-            <span className="flex items-center gap-1">
-              <CalendarDays size={13} /> {house.added}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Footer Info Bar */}
