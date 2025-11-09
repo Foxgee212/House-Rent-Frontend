@@ -116,7 +116,7 @@ export default function BuyDetail() {
             </div>
             <motion.span
               className={`absolute top-5 right-5 px-4 py-1 rounded-full text-sm font-semibold shadow-sm ${
-                available
+                house.available
                   ? "bg-green-600 text-white border border-green-500"
                   : "bg-red-600 text-white border border-red-500"
               }`}
@@ -124,7 +124,7 @@ export default function BuyDetail() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              {available ? "Available" : "Sold"}
+              {house.available ? "Available" : "Sold"}
             </motion.span>
           </div>
 
@@ -190,56 +190,70 @@ export default function BuyDetail() {
               </span>
             </div>
 
-            {/* Seller Card */}
-            <motion.div className="bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-700">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
-                <Home size={20} className="text-blue-400" /> Seller Info
-              </h2>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-5">
-                <div className="relative mx-auto sm:mx-0">
-                  <img
-                    src={house.landlord?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          house.landlord?.name || "User"
-                        )}&background=0D8ABC&color=fff`}
-                    alt="Seller"
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-blue-400 shadow-md"
-                  />
-                </div>
-                <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1">
-                  <p className="text-lg font-semibold text-white">{house.landlord?.name || "Unknown Seller"}</p>
-                  <div className="mt-1 space-y-1 text-gray-300 text-sm sm:text-base">
-                    <p className="flex items-center justify-center sm:justify-start gap-2">
-                      <Mail size={15} className="text-blue-400" /> {house.landlord?.email || "No Email"}
-                    </p>
-                    <p className="flex items-center justify-center sm:justify-start gap-2">
-                      <Phone size={15} className="text-blue-400" /> {house.landlord?.phone || "No Phone"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+        {/* 🧑‍💼 Seller Card */}
+<motion.div className="bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-700">
+  <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+    <Home size={20} className="text-blue-400" /> Seller Info
+  </h2>
 
-            {/* Contact Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4">
-              {house.landlord?.phone && (
-                <a
-                  href={`tel:${house.landlord.phone}`}
-                  className="flex items-center gap-2 bg-white text-blue-700 px-5 py-3 rounded-full font-semibold hover:bg-gray-100 transition"
-                >
-                  <Phone size={18} /> Call Seller
-                </a>
-              )}
-              {house.landlord.phone && (
-                <a
-                  href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(message)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-green-500 px-5 py-3 rounded-full font-semibold hover:bg-green-600 transition"
-                >
-                  <FaWhatsapp size={18} /> WhatsApp
-                </a>
-              )}
-            </div>
+  {/* Seller Info */}
+  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-5">
+    {/* Avatar */}
+    <div className="relative mx-auto sm:mx-0 flex-shrink-0">
+      <img
+        src={
+          house.landlord?.profilePic ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            house.landlord?.name || "User"
+          )}&background=0D8ABC&color=fff`
+        }
+        alt="Seller"
+        className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-blue-400 shadow-md"
+      />
+    </div>
+
+    {/* Info */}
+    <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1">
+      <p className="text-base sm:text-lg font-semibold text-white">
+        {house.landlord?.name || "Unknown Seller"}
+      </p>
+      <div className="mt-1 space-y-1 text-gray-300 text-sm sm:text-base">
+        <p className="flex items-center justify-center sm:justify-start gap-2 truncate">
+          <Mail size={14} className="text-blue-400" />{" "}
+          {house.landlord?.email || "No Email"}
+        </p>
+        <p className="flex items-center justify-center sm:justify-start gap-2 truncate">
+          <Phone size={14} className="text-blue-400" />{" "}
+          {house.landlord?.phone || "No Phone"}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {/* Contact Buttons */}
+  <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-3 mt-5">
+    {house.landlord?.phone && (
+      <a
+        href={`tel:${house.landlord.phone}`}
+        className="flex items-center justify-center gap-2 bg-white text-blue-700 text-sm sm:text-base px-3 sm:px-5 py-2 sm:py-3 rounded-full font-semibold hover:bg-gray-100 transition min-w-[110px]"
+      >
+        <Phone size={16} className="sm:size-18" /> Call
+      </a>
+    )}
+    {house.landlord?.phone && (
+      <a
+        href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(
+          message
+        )}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 bg-green-500 text-white text-sm sm:text-base px-3 sm:px-5 py-2 sm:py-3 rounded-full font-semibold hover:bg-green-600 transition min-w-[110px]"
+      >
+        <FaWhatsapp size={16} className="sm:size-18" /> WhatsApp
+      </a>
+    )}
+  </div>
+</motion.div>
           </motion.div>
 
           {/* Recommended Section */}

@@ -61,16 +61,13 @@ export default function HouseDetail() {
     setRecommendedHouses(recs.slice(0, 5));
   }, [house, houses]);
 
-  const message = `Hello, I am interested in your ${house?.title || ""} located in ${
-    house?.location || ""
-  }. Is it still available?`;
+  const message = `Hello, I am interested in your ${house?.title || ""} located in ${house?.location || ""}. Is it still available?`;
 
   const handleWhatsAppContact = () => {
     const formattedPhone = house.landlord.phone.replace(/[^0-9]/g, "");
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
   };
-  console.log("House details loaded: ", houses, house)
 
   const handleImageClick = (img, index) => {
     setSelectedImage(img);
@@ -116,9 +113,7 @@ export default function HouseDetail() {
         <div className="w-full max-w-4xl bg-gray-900 rounded-3xl shadow-xl overflow-hidden border border-gray-700">
           {/* Header Image */}
           <div className="relative w-full">
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gray-800 animate-pulse"></div>
-            )}
+            {!imageLoaded && <div className="absolute inset-0 bg-gray-800 animate-pulse"></div>}
             <motion.img
               key={selectedImage}
               src={selectedImage || house.images?.[0]}
@@ -209,100 +204,121 @@ export default function HouseDetail() {
               </motion.p>
             )}
 
-            {/* Landlord Card */}
+            {/* 🏠 Landlord Card */}
             {house.landlord && (
               <motion.div className="bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-700">
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
                   <User size={20} className="text-blue-400" /> Landlord Info
                 </h2>
+
+                {/* Main Content */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-5">
                   {/* Profile Picture */}
-                  <div className="relative mx-auto sm:mx-0">
+                  <div className="relative mx-auto sm:mx-0 flex-shrink-0">
                     <img
-                      src={house.landlord.profilePic ||  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          house.landlord.name || "User"
-                        )}&background=0D8ABC&color=fff`}
-                      alt={house.landlord.name}
-                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-blue-400 shadow-md"
+                      src={
+                        house.landlord?.profilePic ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          house.landlord?.name || "User"
+                        )}&background=0D8ABC&color=fff`
+                      }
+                      alt="Seller"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-blue-400 shadow-md"
                     />
                     <span className="absolute bottom-2 right-2 w-3 h-3 bg-green-400 rounded-full ring-2 ring-gray-900"></span>
                   </div>
 
                   {/* Landlord Info */}
                   <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1 space-y-1">
-                    <p className="text-lg font-semibold text-white">{house.landlord.name}</p>
-                    <p className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm" title="Email">
-                      <Mail size={15} className="text-blue-400" /> {house.landlord.email}
+                    <p className="text-base sm:text-lg font-semibold text-white">
+                      {house.landlord.name}
                     </p>
-                    <p className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm" title="Phone">
-                      <Phone size={15} className="text-blue-400" /> {house.landlord.phone}
+                    <p
+                      className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm sm:text-base truncate"
+                      title="Email"
+                    >
+                      <Mail size={14} className="text-blue-400" />{" "}
+                      {house.landlord.email || "No Email"}
+                    </p>
+                    <p
+                      className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm sm:text-base truncate"
+                      title="Phone"
+                    >
+                      <Phone size={14} className="text-blue-400" />{" "}
+                      {house.landlord.phone || "No Phone"}
                     </p>
                   </div>
+                </div>
+
+                {/* 📞 Contact Buttons */}
+                <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-3 mt-5">
+                  {house.landlord?.phone && (
+                    <a
+                      href={`tel:${house.landlord.phone}`}
+                      className="flex items-center justify-center gap-2 bg-white text-blue-700 text-sm sm:text-base px-3 sm:px-5 py-2 sm:py-3 rounded-full font-semibold hover:bg-gray-100 transition min-w-[110px]"
+                    >
+                      <Phone size={16} className="sm:size-18" /> Call
+                    </a>
+                  )}
+                  {house.landlord?.phone && (
+                    <a
+                      href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(
+                        message
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 bg-green-500 text-white text-sm sm:text-base px-3 sm:px-5 py-2 sm:py-3 rounded-full font-semibold hover:bg-green-600 transition min-w-[110px]"
+                    >
+                      <FaWhatsapp size={16} className="sm:size-18" /> WhatsApp
+                    </a>
+                  )}
                 </div>
               </motion.div>
             )}
 
-           
-             {/* Contact Buttons */}
-                        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4">
-                          {house.landlord?.phone && (
-                            <a
-                              href={`tel:${house.landlord.phone}`}
-                              className="flex items-center gap-2 bg-white text-blue-700 px-5 py-3 rounded-full font-semibold hover:bg-gray-100 transition"
-                            >
-                              <Phone size={18} /> Call Seller
-                            </a>
-                          )}
-                          {house.landlord?.phone && (
-                            <a
-                              href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(message)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 bg-green-500 px-5 py-3 rounded-full font-semibold hover:bg-green-600 transition"
-                            >
-                              <FaWhatsapp size={18} /> WhatsApp
-                            </a>
-                          )}
-                        </div>
-          </motion.div>
-
-          {/* Recommended Section */}
-          {recommendedHouses.length > 0 && (
-            <motion.div className="px-6 py-5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-              <h2 className="text-lg sm:text-xl font-bold mb-3 text-white">
-                Recommended for You
-              </h2>
-              <div className="flex gap-3 overflow-x-auto pb-3">
-                {recommendedHouses.map((h) => (
-                  <motion.div
-                    key={h._id}
-                    className="min-w-[200px] bg-gray-800 shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all border border-gray-700"
-                    whileHover={{ scale: 1.03 }}
-                  >
-                    <img
-                      src={h.images?.[0]}
-                      alt={h.title}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <span
-                      className={`absolute top-2 right-2 px-3 py-0.5 text-xs rounded-full font-semibold ${
-                        h.available
-                          ? "bg-green-600 text-white border border-green-500"
-                          : "bg-red-600 text-white border border-red-500"
-                      }`}
+            {/* Recommended Section */}
+            {recommendedHouses.length > 0 && (
+              <motion.div
+                className="px-6 py-5"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <h2 className="text-lg sm:text-xl font-bold mb-3 text-white">
+                  Recommended for You
+                </h2>
+                <div className="flex gap-3 overflow-x-auto pb-3">
+                  {recommendedHouses.map((h) => (
+                    <motion.div
+                      key={h._id}
+                      className="min-w-[200px] bg-gray-800 shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all border border-gray-700"
+                      whileHover={{ scale: 1.03 }}
                     >
-                      {h.available ? "Available" : "Occupied"}
-                    </span>
-                    <h3 className="mt-2 font-semibold text-white">{h.title}</h3>
-                    <p className="text-gray-300 text-sm">{h.location}</p>
-                    <p className="mt-1 font-semibold text-green-400">
-                      ₦{h.price?.toLocaleString()}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+                      <img
+                        src={h.images?.[0]}
+                        alt={h.title}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <span
+                        className={`absolute top-2 right-2 px-3 py-0.5 text-xs rounded-full font-semibold ${
+                          h.available
+                            ? "bg-green-600 text-white border border-green-500"
+                            : "bg-red-600 text-white border border-red-500"
+                        }`}
+                      >
+                        {h.available ? "Available" : "Occupied"}
+                      </span>
+                      <h3 className="mt-2 font-semibold text-white">{h.title}</h3>
+                      <p className="text-gray-300 text-sm">{h.location}</p>
+                      <p className="mt-1 font-semibold text-green-400">
+                        ₦{h.price?.toLocaleString()}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </div>
 
@@ -325,7 +341,10 @@ export default function HouseDetail() {
             </motion.button>
 
             <div className="flex items-center justify-center w-full h-full px-6">
-              <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={prevImage}>
+              <button
+                className="text-white p-3 rounded-full hover:bg-gray-800"
+                onClick={prevImage}
+              >
                 <ChevronLeft size={32} />
               </button>
               <motion.img
@@ -338,7 +357,10 @@ export default function HouseDetail() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
               />
-              <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={nextImage}>
+              <button
+                className="text-white p-3 rounded-full hover:bg-gray-800"
+                onClick={nextImage}
+              >
                 <ChevronRight size={32} />
               </button>
             </div>

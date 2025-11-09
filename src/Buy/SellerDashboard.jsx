@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/axios"
+import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { useHouses } from "../context/HouseContext";
 import { toast } from "react-hot-toast";
@@ -12,14 +12,17 @@ import {
   MapPin,
   XCircle,
   Upload,
+  BedDouble,
+  Bath,
+  Toilet,
+  Car,
 } from "lucide-react";
 import { Switch } from "@headlessui/react";
 import imageCompression from "browser-image-compression";
-import { edit } from "@cloudinary/url-gen/actions/animated";
 
 export default function SellerDashboard() {
-  const { user, token } = useAuth();
-  const { mySales, fetchMySales, addSale, updateSale, deleteHouse } = useHouses();
+  const { user } = useAuth();
+  const { mySales, fetchMySales, deleteHouse } = useHouses();
   const navigate = useNavigate();
 
   const allowed = user?.role === "seller" || user?.role === "agent";
@@ -30,11 +33,17 @@ export default function SellerDashboard() {
     price: "",
     description: "",
     negotiable: false,
+    rooms: "",
+    baths: "",
+    toilets: "",
+    parking: "",
+    area: "",
+    period: "",
   });
-  const [images, setImages] = useState([]); // New uploads
-  const [ agentHouses, setAgentHouses ] = useState(localStorage.getItem("agentHouses") || [])
-  const [existingImages, setExistingImages] = useState([]); // Existing images from listing
-  const [previewUrls, setPreviewUrls] = useState([]); // Previews of new uploads
+
+  const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(null);
   const [page, setPage] = useState(1);
@@ -42,44 +51,41 @@ export default function SellerDashboard() {
   const limit = 6;
   const fileInputRef = useRef(null);
 
- //Fetch all agent houses with pagination
- const fetchMyHouses = async (pageNum = 1, append = false) =>{
-  setUploading(true);
-  try {
-    const res = await API.get(`/sales/my?page=${pageNum}&limit=${limit}`)
-    const  fetched = res.data?.houses || res.data || []
-    const total = res.data?.totalPages || 1;
-    
-    setAgentHouses( prev => (append ? [...prev, ...fetched] : fetched));
-    setPage(pageNum);
-    setTotalPages(total)
+  const fetchMyHousesData = async (pageNum = 1, append = false) => {
+    setUploading(true);
+    try {
+      const res = await API.get(`/sales/my?page=${pageNum}&limit=${limit}`);
+      const fetched = res.data?.houses || [];
+      const total = res.data?.totalPages || 1;
 
+      fetchMySales(append ? [...mySales, ...fetched] : fetched);
+      setPage(pageNum);
+      setTotalPages(total);
+    } catch (err) {
+      const message =
+        err.response?.data?.error ||
+        err.response?.data?.msg ||
+        err.message;
+      if (message?.toLowerCase().includes("identity verification")) {
+        toast.error("Please verify your identity to view your houses");
+      } else {
+        toast.error("Failed to load your listings");
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchMyHousesData();
+  }, []);
 
-    
-  } catch (err) {
-    const maessage = err.response?.data?.error||err.response?.data?.msg || err.maessage;
-    if (message?.toLowerCase().includes("identity verification required")) {
-            toast.error("Please verify your identity to view your houses");
-          } else {
-            toast.error("Failed to load your listings");
-          }
-  }
-  finally {
-    setUploading(false)
-  }
- }
+  const loadMoreHouses = () => {
+    if (page < totalPages) {
+      fetchMyHousesData(page + 1, true);
+    }
+  };
 
- useEffect(()=> {
-  fetchMyHouses();
- }, []);
-
- const loadMoreHouses = ()=> {
-  if(page < totalPages) {
-    fetchMyHouses(page + 1, true)
-  }
- }
- // Form changes
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -103,15 +109,18 @@ export default function SellerDashboard() {
     );
 
     const valid = compressed.filter(Boolean);
-    setImages((p) => [...p, ...valid]);
-    setPreviewUrls((p) => [...p, ...valid.map((f) => URL.createObjectURL(f))]);
+    setImages((prev) => [...prev, ...valid]);
+    setPreviewUrls((prev) => [...prev, ...valid.map((f) => URL.createObjectURL(f))]);
     if (fileInputRef.current) fileInputRef.current.value = null;
   };
 
-
-  const removeImage = (index) => {
+  const removeNewImage = (index) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (url) => {
+    setExistingImages((prev) => prev.filter((img) => img !== url));
   };
 
   const handleSubmit = async (e) => {
@@ -134,45 +143,49 @@ export default function SellerDashboard() {
       Object.entries(form).forEach(([k, v]) =>
         formData.append(k, typeof v === "boolean" ? String(v) : v)
       );
-
-      // Include new uploads
       images.forEach((img) => formData.append("images", img));
 
       const res = editing
         ? await API.put(`/sales/${editing._id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        })
+            headers: { "Content-Type": "multipart/form-data" },
+          })
         : await API.post("/sales", formData, {
-          headers: { "Content-Type": "multipart/form-data"},
-        });
+            headers: { "Content-Type": "multipart/form-data" },
+          });
 
-        setAgentHouses((prev)=> 
-          editing 
-            ? prev.map((h)=> (h._id === editing._id ? res.data.house || res.data : h))
-            : [res.data.house, ...prev]);
+      fetchMySales(
+        editing
+          ? mySales.map((h) =>
+              h._id === editing._id ? res.data.house || res.data : h
+            )
+          : [res.data.house, ...mySales]
+      );
 
-        toast.success(editing ? "✅ House updated!" : "🏠 House added!");
-        setForm({ title: "", location: "", price: "", description: "", negotiable: false });
-        setImages([]);
-        setPreviewUrls([]);
-        setEditing(null);
-    }catch (error) {
+      toast.success(editing ? "✅ House updated!" : "🏠 House added!");
+      setForm({
+        title: "",
+        location: "",
+        price: "",
+        description: "",
+        negotiable: false,
+        rooms: "",
+        baths: "",
+        toilets: "",
+        parking: "",
+        area: "",
+        period: "",
+      });
+      setImages([]);
+      setPreviewUrls([]);
+      setEditing(null);
+      setExistingImages([]);
+    } catch (error) {
       console.error("Error uploading house:", error);
       toast.error("Something went wrong while uploading");
     } finally {
       setUploading(false);
     }
   };
-          
-
-      // Include existing images (URLs/paths) to retain
-      if (editing) {
-        formData.append(
-          "existingImages",
-          JSON.stringify(existingImages) // send as JSON array
-        );
-      }
-
 
   const startEditing = (sale) => {
     setEditing(sale);
@@ -182,6 +195,12 @@ export default function SellerDashboard() {
       price: sale.price,
       description: sale.description,
       negotiable: sale.negotiable || false,
+      rooms: sale.rooms || "",
+      baths: sale.baths || "",
+      toilets: sale.toilets || "",
+      parking: sale.parking || "",
+      area: sale.area || "",
+      period: sale.period || "",
     });
     setExistingImages(sale.images || []);
     setImages([]);
@@ -189,34 +208,10 @@ export default function SellerDashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const removeExistingImage = (url) => {
-    setExistingImages((prev) => prev.filter((img) => img !== url));
-  };
-
-  const removeNewImage = (index) => {
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this listing?")) return;
-    await deleteHouse(id, token);
-  };
-
-  const toggleAvailability = async (id, currentStatus) => {
-    try {
-      await API.patch(
-        `/sales/${id}/availability`,
-        { available: !currentStatus },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      setLandlordHouses((prev) =>
-        prev.map((h) => (h._id === id ? { ...h, available: !currentStatus } : h))
-      );
-      toast.success(!currentStatus ? "🏠 House marked as available" : "🚫 House marked as occupied");
-    } catch {
-      toast.error("Failed to update availability");
-    }
+    await deleteHouse(id);
+    fetchMyHousesData();
   };
 
   if (!allowed) {
@@ -229,7 +224,6 @@ export default function SellerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 sm:px-8 py-10">
-      {/* Header */}
       <div className="flex items-center justify-center gap-3 mb-10">
         <Home size={34} className="text-blue-500 drop-shadow-md" />
         <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
@@ -237,12 +231,10 @@ export default function SellerDashboard() {
         </h1>
       </div>
 
-      {/* Verification Warning */}
       {user?.verification?.status !== "verified" && (
         <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
           <p>
-            ⚠️ Your account is not verified. Verify your identity to post
-            properties for sale.
+            ⚠️ Your account is not verified. Verify your identity to post properties.
           </p>
           <button
             onClick={() => navigate("/verify")}
@@ -257,116 +249,57 @@ export default function SellerDashboard() {
       <form
         onSubmit={handleSubmit}
         className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
-          user?.verification?.status !== "verified"
-            ? "opacity-60 pointer-events-none"
-            : ""
+          user?.verification?.status !== "verified" ? "opacity-60 pointer-events-none" : ""
         }`}
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
-          {editing ? (
-            <>
-              <Edit3 size={20} /> Edit Listing
-            </>
-          ) : (
-            <>
-              <PlusCircle size={20} /> List a Property for Sale
-            </>
-          )}
+          {editing ? <><Edit3 size={20} /> Edit Listing</> : <><PlusCircle size={20} /> List a Property for Sale</>}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <input
-            type="text"
-            name="title"
-            placeholder="Property title"
-            value={form.title}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-          <input
-            type="text"
-            name="location"
-            placeholder="Location"
-            value={form.location}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-          <input
-            type="number"
-            name="price"
-            placeholder="Asking Price (₦)"
-            value={form.price}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          <input type="text" name="title" placeholder="Property title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="text" name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+
+          <input type="number" name="rooms" placeholder="Number of Rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="baths" placeholder="Number of Bathrooms" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="toilets" placeholder="Number of Toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="parking" placeholder="Parking Spaces" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="text" name="period" placeholder="Rental Period (e.g., month, year)" value={form.period} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="price" placeholder="Asking Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+
           {!editing && (
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
               <Upload size={18} className="text-blue-400" />
               <span className="text-gray-300">
-                {images.length > 0
-                  ? `${images.length} image${images.length > 1 ? "s" : ""} selected`
-                  : "Upload property images"}
+                {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Upload property images"}
               </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleImageChange}
-                className="hidden"
-                accept="image/*"
-              />
+              <input ref={fileInputRef} type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
             </label>
           )}
         </div>
 
-        {/* Negotiable */}
         <div className="flex items-center gap-3">
-          <Switch
-            checked={form.negotiable}
-            onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))}
-            className={`${
-              form.negotiable ? "bg-blue-600" : "bg-gray-600"
-            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
-          >
-            <span
-              className={`${
-                form.negotiable ? "translate-x-6" : "translate-x-1"
-              } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-            />
+          <Switch checked={form.negotiable} onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))} className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
+            <span className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
           </Switch>
           <span className="text-sm text-gray-300">Price negotiable</span>
         </div>
 
-        {/* Image Previews */}
         {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
             {existingImages.map((url, i) => (
-              <div
-                key={`existing-${i}`}
-                className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700"
-              >
+              <div key={`existing-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700">
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removeExistingImage(url)}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
-                >
+                <button onClick={() => removeExistingImage(url)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
                   <XCircle size={14} />
                 </button>
               </div>
             ))}
             {previewUrls.map((url, i) => (
-              <div
-                key={`new-${i}`}
-                className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700"
-              >
+              <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700">
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removeNewImage(i)}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
-                >
+                <button onClick={() => removeNewImage(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
                   <XCircle size={14} />
                 </button>
               </div>
@@ -374,92 +307,61 @@ export default function SellerDashboard() {
           </div>
         )}
 
-        <textarea
-          name="description"
-          placeholder="Short description"
-          value={form.description}
-          onChange={handleChange}
-          rows="3"
-          required
-          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-        />
+        <textarea name="description" placeholder="Short description" value={form.description} onChange={handleChange} rows="3" required className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
 
         <div className="flex gap-3 flex-wrap">
-          <button
-            type="submit"
-            disabled={uploading}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30"
-          >
-            {uploading
-              ? "Processing..."
-              : editing
-              ? "Update Listing"
-              : "Add Listing"}
+          <button type="submit" disabled={uploading} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30">
+            {uploading ? "Processing..." : editing ? "Update Listing" : "Add Listing"}
           </button>
-
           {editing && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="flex items-center gap-2 text-gray-400 hover:text-blue-400"
-            >
+            <button type="button" onClick={() => window.location.reload()} className="flex items-center gap-2 text-gray-400 hover:text-blue-400">
               <XCircle size={18} /> Cancel
             </button>
           )}
         </div>
       </form>
 
-      {/* Seller listings */}
+      {/* Listings */}
       <div className="mt-10 max-w-6xl mx-auto">
-        {mySales.length === 0 ? (
+        {!mySales || mySales.length === 0 ? (
           <p className="text-center text-gray-400">
-            You have no properties listed for sale yet.
+            {mySales ? "You have no properties listed for sale yet." : "Loading your listings..."}
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mySales.map((h) => (
-              <div
-                key={h._id}
-                className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all"
-              >
-                <img
-                  src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"}
-                  alt={h.title}
-                  className="w-full h-48 object-cover cursor-pointer"
-                />
-                <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-semibold text-white">{h.title}</h3>
-                  <p className="text-gray-400 text-sm flex items-center gap-1">
-                    <MapPin size={14} /> {h.location}
-                  </p>
-                  <p className="text-blue-400 font-semibold mt-2">
-                    ₦{Number(h.price).toLocaleString()}
-                    {h.negotiable && (
-                      <span className="ml-2 text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
-                        Negotiable
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {mySales.map((h) => (
+                <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
+                  <img src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
+                  <div className="p-4 space-y-2">
+                    <h3 className="font-semibold text-lg text-white">{h.title}</h3>
+                    <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
+                    <p className="text-blue-400 font-semibold text-sm">₦{h.price?.toLocaleString()}</p>
 
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => startEditing(h)}
-                      className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
-                    >
-                      <Edit3 size={14} /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(h._id)}
-                      className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
-                    >
-                      <Trash2 size={14} /> Delete
-                    </button>
+                    <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
+                      <div className="flex items-center gap-1"><BedDouble size={14} /> {h.rooms || 0}</div>
+                      <div className="flex items-center gap-1"><Bath size={14} /> {h.baths || 0}</div>
+                      <div className="flex items-center gap-1"><Toilet size={14} /> {h.toilets || 0}</div>
+                      <div className="flex items-center gap-1"><Car size={14} /> {h.parking || 0}</div>
+                    </div>
+
+                    <div className="flex justify-between mt-4">
+                      <button onClick={() => startEditing(h)} className="text-blue-400 hover:text-blue-500 flex items-center gap-1 text-sm"><Edit3 size={14} /> Edit</button>
+                      <button onClick={() => handleDelete(h._id)} className="text-red-400 hover:text-red-500 flex items-center gap-1 text-sm"><Trash2 size={14} /> Delete</button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {totalPages > 1 && page < totalPages && (
+              <div className="text-center mt-8">
+                <button onClick={loadMoreHouses} className="bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 px-6 py-2 rounded-xl transition">
+                  Load More
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
