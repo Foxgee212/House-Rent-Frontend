@@ -108,7 +108,7 @@ export default function BuyDetail() {
             />
             <div className="absolute top-5 left-5 z-20">
               <Link
-                to="/buy"
+                to="/"
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-sm sm:text-base text-white backdrop-blur-md border border-white/20"
               >
                 <ArrowLeft size={16} /> Back
