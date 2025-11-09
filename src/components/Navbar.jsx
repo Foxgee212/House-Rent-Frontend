@@ -128,12 +128,12 @@ export default function Navbar() {
       {/* Desktop Navbar */}
       <nav className="bg-gray-900 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
-          <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer">
+          <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer  ">
             <NaijahomeLogoSVG />
           </div>
 
           {/* Top Rent & Buy Buttons for Mobile */}
-          <div className="flex md:hidden items-center gap-3 mb-2 px-4">
+          <div className="flex md:hidden items-center gap-3 mb-2 px-4 mr-2">
             <button
               onClick={() => navigate("/")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
