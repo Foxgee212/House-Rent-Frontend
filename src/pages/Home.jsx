@@ -163,7 +163,7 @@ if (loading) {
             No houses found for “{search || "all locations"}”
           </p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((house) => (
               <Link
                 key={house._id}
