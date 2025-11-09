@@ -1,6 +1,6 @@
 import { useState } from "react";
 import StatsCards from "./StatsCards";
-import AdminHouses from "../pages/AdminHouses";
+import AdminHouses from "./AdminHouses";
 import ApprovedHouses from "./Approvedhouses";
 import PendingHouses from "./PendingHouses";
 import UsersTable from "./UsersTable";

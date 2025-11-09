@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Clock } from "lucide-react";
 import API from "../api/axios";
-import AdminHouseCard from "../components/AdminHouseCard";
+import AdminHouseCard from "./AdminHouseCard";
 
 export default function PendingHouses() {
   const [houses, setHouses] = useState([]);

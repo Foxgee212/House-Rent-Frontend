@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import API from "../api/axios";
-import AdminHouseCard from "../components/AdminHouseCard";
+import AdminHouseCard from "./AdminHouseCard";
 
 export default function ApprovedHouses() {
   const [houses, setHouses] = useState([]);

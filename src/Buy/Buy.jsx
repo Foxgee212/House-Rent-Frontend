@@ -19,8 +19,7 @@ export default function BuyPage() {
     loadingBarRef.current?.continuousStart();
     try {
       const data = await fetchApprovedSales(pageNumber, 12);
-      console.log("Fetched sales data:", data);
-
+ 
       // Safely ensure data structure
       const housesData = data?.houses ?? [];
       const pages = data?.totalPages ?? 1;

@@ -64,8 +64,7 @@ export function HouseProvider({ children }) {
       console.log("Fetching from:", url);
 
       const res = await API.get(url);
-      console.log("API response:", res);
-
+  
       // Safety check
       if (!res || !res.data) {
         throw new Error("Empty response from server");
