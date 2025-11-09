@@ -55,27 +55,50 @@ export function HouseProvider({ children }) {
     [API_URL, houses]
   );
 
+ 
   const fetchApprovedSales = useCallback(
-    async (page = 1, limit = 12) => {
-      setLoading(true);
-      try {
-        const res = await API.get(buildUrl(`sales/approved?page=${page}&limit=${limit}`));
-        const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
-        setHousesForSale(fetched);
-        localStorage.setItem("housesForSale", JSON.stringify(fetched));
-        setError(null);
-      } catch (err) {
-        const msg = err.response?.data?.error || "Failed to fetch homes for sale";
-        setError(msg);
-        toast.error(msg);
-        const stored = localStorage.getItem("housesForSale");
-        if (stored) setHousesForSale(JSON.parse(stored));
-      } finally {
-        setLoading(false);
+  async (page = 1, limit = 12) => {
+    setLoading(true);
+    try {
+      const url = buildUrl(`sales/approved?page=${page}&limit=${limit}`);
+      console.log("Fetching from:", url);
+
+      const res = await API.get(url);
+      console.log("API response:", res);
+
+      // Safety check
+      if (!res || !res.data) {
+        throw new Error("Empty response from server");
       }
-    },
-    [API_URL]
-  );
+
+      const fetched = Array.isArray(res.data.houses) ? res.data.houses : [];
+      setHousesForSale(fetched);
+localStorage.setItem("housesForSale", JSON.stringify(fetched));
+setError(null);
+
+// ✅ return full data for pages & houses
+return {
+  houses: fetched,
+  totalPages: res.data.totalPages || 1,
+  total: res.data.total || fetched.length,
+  page: res.data.page || 1,
+};
+
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || "Failed to fetch homes for sale";
+      console.error("Fetch approved sales error:", msg);
+      setError(msg);
+      toast.error(msg);
+
+      const stored = localStorage.getItem("housesForSale");
+      if (stored) setHousesForSale(JSON.parse(stored));
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL]
+);
+
 
   const fetchMySales = useCallback(
     async (token) => {

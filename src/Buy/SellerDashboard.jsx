@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../api/axios"
 import { useAuth } from "../context/AuthContext";
 import { useHouses } from "../context/HouseContext";
 import { toast } from "react-hot-toast";
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@headlessui/react";
 import imageCompression from "browser-image-compression";
+import { edit } from "@cloudinary/url-gen/actions/animated";
 
 export default function SellerDashboard() {
   const { user, token } = useAuth();
@@ -30,16 +32,54 @@ export default function SellerDashboard() {
     negotiable: false,
   });
   const [images, setImages] = useState([]); // New uploads
+  const [ agentHouses, setAgentHouses ] = useState(localStorage.getItem("agentHouses") || [])
   const [existingImages, setExistingImages] = useState([]); // Existing images from listing
   const [previewUrls, setPreviewUrls] = useState([]); // Previews of new uploads
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 6;
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (allowed && token) fetchMySales(token);
-  }, [allowed, token, fetchMySales]);
+ //Fetch all agent houses with pagination
+ const fetchMyHouses = async (pageNum = 1, append = false) =>{
+  setUploading(true);
+  try {
+    const res = await API.get(`/sales/my?page=${pageNum}&limit=${limit}`)
+    const  fetched = res.data?.houses || res.data || []
+    const total = res.data?.totalPages || 1;
+    
+    setAgentHouses( prev => (append ? [...prev, ...fetched] : fetched));
+    setPage(pageNum);
+    setTotalPages(total)
 
+
+
+    
+  } catch (err) {
+    const maessage = err.response?.data?.error||err.response?.data?.msg || err.maessage;
+    if (message?.toLowerCase().includes("identity verification required")) {
+            toast.error("Please verify your identity to view your houses");
+          } else {
+            toast.error("Failed to load your listings");
+          }
+  }
+  finally {
+    setUploading(false)
+  }
+ }
+
+ useEffect(()=> {
+  fetchMyHouses();
+ }, []);
+
+ const loadMoreHouses = ()=> {
+  if(page < totalPages) {
+    fetchMyHouses(page + 1, true)
+  }
+ }
+ // Form changes
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -68,18 +108,10 @@ export default function SellerDashboard() {
     if (fileInputRef.current) fileInputRef.current.value = null;
   };
 
-  const resetForm = () => {
-    setForm({
-      title: "",
-      location: "",
-      price: "",
-      description: "",
-      negotiable: false,
-    });
-    setImages([]);
-    setExistingImages([]);
-    setPreviewUrls([]);
-    setEditing(null);
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -106,6 +138,33 @@ export default function SellerDashboard() {
       // Include new uploads
       images.forEach((img) => formData.append("images", img));
 
+      const res = editing
+        ? await API.put(`/sales/${editing._id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+        : await API.post("/sales", formData, {
+          headers: { "Content-Type": "multipart/form-data"},
+        });
+
+        setAgentHouses((prev)=> 
+          editing 
+            ? prev.map((h)=> (h._id === editing._id ? res.data.house || res.data : h))
+            : [res.data.house, ...prev]);
+
+        toast.success(editing ? "✅ House updated!" : "🏠 House added!");
+        setForm({ title: "", location: "", price: "", description: "", negotiable: false });
+        setImages([]);
+        setPreviewUrls([]);
+        setEditing(null);
+    }catch (error) {
+      console.error("Error uploading house:", error);
+      toast.error("Something went wrong while uploading");
+    } finally {
+      setUploading(false);
+    }
+  };
+          
+
       // Include existing images (URLs/paths) to retain
       if (editing) {
         formData.append(
@@ -114,23 +173,6 @@ export default function SellerDashboard() {
         );
       }
 
-      if (editing) {
-        await updateSale(editing._id, formData, token);
-        toast.success("Listing updated");
-      } else {
-        await addSale(formData, token);
-        toast.success("🏡 Property listed for sale");
-      }
-
-      resetForm();
-      fetchMySales(token); // Refresh listings
-    } catch (err) {
-      const msg = err.response?.data?.error || "Failed to process request";
-      toast.error(msg);
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const startEditing = (sale) => {
     setEditing(sale);
@@ -159,6 +201,22 @@ export default function SellerDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this listing?")) return;
     await deleteHouse(id, token);
+  };
+
+  const toggleAvailability = async (id, currentStatus) => {
+    try {
+      await API.patch(
+        `/sales/${id}/availability`,
+        { available: !currentStatus },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      setLandlordHouses((prev) =>
+        prev.map((h) => (h._id === id ? { ...h, available: !currentStatus } : h))
+      );
+      toast.success(!currentStatus ? "🏠 House marked as available" : "🚫 House marked as occupied");
+    } catch {
+      toast.error("Failed to update availability");
+    }
   };
 
   if (!allowed) {

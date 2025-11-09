@@ -12,7 +12,12 @@ import {
   ChevronRight,
   Mail,
   Phone,
+  BedDouble,
+  Bath,
+  Toilet,
+  Car,
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useHouses } from "../context/HouseContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -65,6 +70,7 @@ export default function HouseDetail() {
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
   };
+  console.log("House details loaded: ", houses, house)
 
   const handleImageClick = (img, index) => {
     setSelectedImage(img);
@@ -180,6 +186,22 @@ export default function HouseDetail() {
               </p>
             </div>
 
+            {/* Property Stats Footer */}
+            <div className="mt-4 flex items-center justify-between text-gray-300 text-sm">
+              <span className="flex items-center gap-1" title="Rooms">
+                <BedDouble size={14} className="text-blue-400" /> {house.rooms || 0}
+              </span>
+              <span className="flex items-center gap-1" title="Bathrooms">
+                <Bath size={14} className="text-blue-400" /> {house.baths || 0}
+              </span>
+              <span className="flex items-center gap-1" title="Toilets">
+                <Toilet size={14} className="text-blue-400" /> {house.toilets || 0}
+              </span>
+              <span className="flex items-center gap-1" title="Parking">
+                <Car size={14} className="text-blue-400" /> {house.parking || 0}
+              </span>
+            </div>
+
             {/* Description */}
             {house.description && (
               <motion.p className="text-gray-300 leading-relaxed text-[15px]">
@@ -194,40 +216,54 @@ export default function HouseDetail() {
                   <User size={20} className="text-blue-400" /> Landlord Info
                 </h2>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-5">
+                  {/* Profile Picture */}
                   <div className="relative mx-auto sm:mx-0">
                     <img
-                      src={house.landlord.profilePic || "/default-profile.png"}
-                      alt="Landlord"
+                      src={house.landlord.profilePic ||  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          house.landlord.name || "User"
+                        )}&background=0D8ABC&color=fff`}
+                      alt={house.landlord.name}
                       className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-blue-400 shadow-md"
                     />
                     <span className="absolute bottom-2 right-2 w-3 h-3 bg-green-400 rounded-full ring-2 ring-gray-900"></span>
                   </div>
-                  <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1">
+
+                  {/* Landlord Info */}
+                  <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1 space-y-1">
                     <p className="text-lg font-semibold text-white">{house.landlord.name}</p>
-                    <div className="mt-1 space-y-1 text-gray-300 text-sm sm:text-base">
-                      <p className="flex items-center justify-center sm:justify-start gap-2">
-                        <Mail size={15} className="text-blue-400" />
-                        {house.landlord.email}
-                      </p>
-                      <p className="flex items-center justify-center sm:justify-start gap-2">
-                        <Phone size={15} className="text-blue-400" />
-                        {house.landlord.phone}
-                      </p>
-                    </div>
+                    <p className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm" title="Email">
+                      <Mail size={15} className="text-blue-400" /> {house.landlord.email}
+                    </p>
+                    <p className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm" title="Phone">
+                      <Phone size={15} className="text-blue-400" /> {house.landlord.phone}
+                    </p>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Contact Button */}
-            <motion.button
-              className="w-full sm:w-auto px-6 py-3 bg-blue-400 hover:bg-blue-500 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95"
-              onClick={handleWhatsAppContact}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <MessageCircle size={18} /> Contact Landlord
-            </motion.button>
+           
+             {/* Contact Buttons */}
+                        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4">
+                          {house.landlord?.phone && (
+                            <a
+                              href={`tel:${house.landlord.phone}`}
+                              className="flex items-center gap-2 bg-white text-blue-700 px-5 py-3 rounded-full font-semibold hover:bg-gray-100 transition"
+                            >
+                              <Phone size={18} /> Call Seller
+                            </a>
+                          )}
+                          {house.landlord?.phone && (
+                            <a
+                              href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(message)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 bg-green-500 px-5 py-3 rounded-full font-semibold hover:bg-green-600 transition"
+                            >
+                              <FaWhatsapp size={18} /> WhatsApp
+                            </a>
+                          )}
+                        </div>
           </motion.div>
 
           {/* Recommended Section */}
