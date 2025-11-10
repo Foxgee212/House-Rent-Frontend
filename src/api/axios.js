@@ -4,7 +4,7 @@ import axios from "axios";
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
   withCredentials: true, // allows cookies / auth headers across domains
-  timeout: 60000, // ⏳ prevents hanging requests
+  timeout: 600000, // ⏳ prevents hanging requests
 });
 
 // ✅ Automatically attach JWT token to every request
