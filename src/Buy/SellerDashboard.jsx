@@ -331,6 +331,10 @@ export default function SellerDashboard() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {mySales.map((h) => (
+                <Link 
+                  key={h._id}
+                  to={`/buy/${h._id}`}
+                  className="transition-transform duration-300 hover:scale-[1.02]">
                 <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
                   <img src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
                   <div className="p-4 space-y-2">
@@ -351,6 +355,7 @@ export default function SellerDashboard() {
                     </div>
                   </div>
                 </div>
+                </Link>
               ))}
             </div>
 

@@ -58,7 +58,7 @@ export default function DashBoard() {
     );
   }
 
-  const fetchMyHouses = async (pageNum = 1, append = false) => {
+  const fetchMyHouses = async (pageNum = 1, append = false, limit = 12) => {
     setLoadingHouses(true);
     try {
       const res = await API.get(`/rentals/my?page=${pageNum}&limit=${limit}`);
@@ -355,6 +355,10 @@ export default function DashBoard() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
              {landlordHouses.map((h) => (
+              <Link 
+                key={h._id}
+                to={`/listings/${h._id}`}
+                className="transition-transform duration-300 hover:scale-[1.02]">
               <div
                 key={h._id}
                 className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
@@ -427,7 +431,9 @@ export default function DashBoard() {
                   </div>
                 </div>
               </div>
-            ))}
+              </Link>
+            )
+            )}
 
             </div>
 

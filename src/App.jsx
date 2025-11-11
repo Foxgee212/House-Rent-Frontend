@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 
 
 // Pages
+import Navbar from "./components/Navbar";
 import HomePage from "./pages/Home";
 import Listings from "./pages/Listings";
 import HouseDetail from "./pages/HouseDetails";
@@ -16,7 +17,6 @@ import VerifyOtp from "./pages/OTPPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerificationDetails from "./pages/VerificationDetails";
-import Layout from "./pages/Layout"
 import BuyPage from "./Buy/Buy";
 import BuyDetail from "./Buy/BuyDetails";
 import SellerDashboard from "./Buy/SellerDashboard";
@@ -27,8 +27,9 @@ import PrivateRoute from "./components/PrivateRoute";
 function App() {
   return (
     <>
+      <Navbar />
       <Routes>
-        <Route element={<Layout />}>
+      
           {/* 🌍 Public Routes */}
           <Route path="/rent" element={<HomePage />} />
           <Route path="/listings" element={<Listings />} />
@@ -91,7 +92,6 @@ function App() {
               </PrivateRoute>
             }
           />
-        </Route>
       </Routes>
     </>
   );

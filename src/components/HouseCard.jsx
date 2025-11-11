@@ -123,12 +123,6 @@ export default function HouseCard({ house }) {
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
 
-        {house.description && (
-          <p className="text-gray-300 text-sm line-clamp-2 mb-3">
-            {house.description}
-          </p>
-        )}
-
         {/* Price */}
         <p className="text-blue-400 font-bold flex items-center gap-1 text-base sm:text-lg">
           <Wallet size={16} /> {formatPrice(house.price)}
