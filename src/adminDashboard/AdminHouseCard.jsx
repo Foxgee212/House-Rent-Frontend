@@ -92,7 +92,7 @@ export default function AdminHouseCard({ house, onApprove, onDelete }) {
 
         <p className="text-blue-700 dark:text-blue-400 font-bold mt-3 flex items-center gap-1">
           <Wallet size={18} /> {formatPrice(house.price)}
-          <span className="text-gray-500 text-sm">/month</span>
+          {house.period && (<span className="text-gray-500 dark:text-gray-400 text-sm font-medium">/{house.period}</span>)}
         </p>
 
         {/* Status */}
