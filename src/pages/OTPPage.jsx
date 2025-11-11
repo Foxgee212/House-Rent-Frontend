@@ -73,6 +73,7 @@ export default function VerifyOtp() {
 
     setLoading(true);
     try {
+      console.log("Verifying OTP for:", { email, code, context });
       const { data } = await API.post("/auth/verify-otp", { email, otp: code, context });
 
       toast.success("✅ OTP verified successfully!");
@@ -95,7 +96,7 @@ export default function VerifyOtp() {
       toast.success("📩 A new OTP has been sent to your email!");
       setCountdown(60); // 👈 start 1 minute countdown
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to resend OTP");
+      toast.error(err.response?.data?.msg || "Failed to resend OTP");
     } finally {
       setResending(false);
     }

@@ -237,39 +237,35 @@ export default function HouseDetail() {
                       className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm sm:text-base truncate"
                       title="Email"
                     >
-                      <Mail size={14} className="text-blue-400" />{" "}
-                      {house.landlord.email || "No Email"}
+                      <Mail size={14} className="text-blue-400" /> {house.landlord.email || "No Email"}
                     </p>
                     <p
                       className="flex items-center justify-center sm:justify-start gap-2 text-gray-300 text-sm sm:text-base truncate"
                       title="Phone"
                     >
-                      <Phone size={14} className="text-blue-400" />{" "}
-                      {house.landlord.phone || "No Phone"}
+                      <Phone size={14} className="text-blue-400" /> {house.landlord.phone || "No Phone"}
                     </p>
                   </div>
                 </div>
 
                 {/* 📞 Contact Buttons */}
-                <div className="flex flex-row flex-wrap justify-center sm:justify-start gap-3 mt-5">
+                <div className="flex flex-col sm:flex-row justify-center sm:justify-start gap-3 mt-5">
                   {house.landlord?.phone && (
                     <a
                       href={`tel:${house.landlord.phone}`}
-                      className="flex items-center justify-center gap-2 bg-white text-blue-700 text-sm sm:text-base px-3 sm:px-5 py-2 sm:py-3 rounded-full font-semibold hover:bg-gray-100 transition min-w-[110px]"
+                      className="flex items-center justify-center gap-2 bg-white text-blue-700 text-sm sm:text-sm px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition min-w-[120px]"
                     >
-                      <Phone size={16} className="sm:size-18" /> Call
+                      <Phone size={16} /> Call
                     </a>
                   )}
                   {house.landlord?.phone && (
                     <a
-                      href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(
-                        message
-                      )}`}
+                      href={`https://wa.me/${house.landlord.phone}?text=${encodeURIComponent(message)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 bg-green-500 text-white text-sm sm:text-base px-3 sm:px-5 py-2 sm:py-3 rounded-full font-semibold hover:bg-green-600 transition min-w-[110px]"
+                      className="flex items-center justify-center gap-2 bg-green-500 text-white text-sm sm:text-sm px-4 py-2 rounded-full font-semibold hover:bg-green-600 transition min-w-[120px]"
                     >
-                      <FaWhatsapp size={16} className="sm:size-18" /> WhatsApp
+                      <FaWhatsapp size={16} /> WhatsApp
                     </a>
                   )}
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { useHouses } from "../context/HouseContext";
@@ -33,12 +33,11 @@ export default function SellerDashboard() {
     price: "",
     description: "",
     negotiable: false,
-    rooms: "",
-    baths: "",
-    toilets: "",
-    parking: "",
+    rooms: "0",
+    baths: "0",
+    toilets: "0",
+    parking: "0",
     area: "",
-    period: "",
   });
 
   const [images, setImages] = useState([]);
@@ -67,7 +66,7 @@ export default function SellerDashboard() {
         err.response?.data?.msg ||
         err.message;
       if (message?.toLowerCase().includes("identity verification")) {
-        toast.error("Please verify your identity to view your houses");
+        toast.error("Please verify your identity to view your properties");
       } else {
         toast.error("Failed to load your listings");
       }
@@ -161,26 +160,25 @@ export default function SellerDashboard() {
           : [res.data.house, ...mySales]
       );
 
-      toast.success(editing ? "✅ House updated!" : "🏠 House added!");
+      toast.success(editing ? "✅ Property updated!" : "🏠 Property added!");
       setForm({
         title: "",
         location: "",
         price: "",
         description: "",
         negotiable: false,
-        rooms: "",
-        baths: "",
-        toilets: "",
-        parking: "",
+        rooms: "0",
+        baths: "0",
+        toilets: "0",
+        parking: "0",
         area: "",
-        period: "",
       });
       setImages([]);
       setPreviewUrls([]);
       setEditing(null);
       setExistingImages([]);
     } catch (error) {
-      console.error("Error uploading house:", error);
+      console.error("Error uploading property:", error);
       toast.error("Something went wrong while uploading");
     } finally {
       setUploading(false);
@@ -195,12 +193,11 @@ export default function SellerDashboard() {
       price: sale.price,
       description: sale.description,
       negotiable: sale.negotiable || false,
-      rooms: sale.rooms || "",
-      baths: sale.baths || "",
-      toilets: sale.toilets || "",
-      parking: sale.parking || "",
+      rooms: sale.rooms || "0",
+      baths: sale.baths || "0",
+      toilets: sale.toilets || "0",
+      parking: sale.parking || "0",
       area: sale.area || "",
-      period: sale.period || "",
     });
     setExistingImages(sale.images || []);
     setImages([]);
@@ -259,15 +256,22 @@ export default function SellerDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <input type="text" name="title" placeholder="Property title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
           <input type="text" name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-
-          <input type="number" name="rooms" placeholder="Number of Rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="baths" placeholder="Number of Bathrooms" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="toilets" placeholder="Number of Toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="parking" placeholder="Parking Spaces" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="text" name="period" placeholder="Rental Period (e.g., month, year)" value={form.period} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
           <input type="number" name="price" placeholder="Asking Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
 
+          {/* Dropdowns */}
+          <select name="rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 7 }, (_, i) => <option key={i} value={i}>{i} Room{i !== 1 ? "s" : ""}</option>)}
+          </select>
+          <select name="baths" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 7 }, (_, i) => <option key={i} value={i}>{i} Bath{i !== 1 ? "s" : ""}</option>)}
+          </select>
+          <select name="toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 7 }, (_, i) => <option key={i} value={i}>{i} Toilet{i !== 1 ? "s" : ""}</option>)}
+          </select>
+          <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 7 }, (_, i) => <option key={i} value={i}>{i} Parking{i !== 1 ? "s" : ""}</option>)}
+          </select>
           {!editing && (
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
               <Upload size={18} className="text-blue-400" />
@@ -334,27 +338,28 @@ export default function SellerDashboard() {
                 <Link 
                   key={h._id}
                   to={`/buy/${h._id}`}
-                  className="transition-transform duration-300 hover:scale-[1.02]">
-                <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
-                  <img src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
-                  <div className="p-4 space-y-2">
-                    <h3 className="font-semibold text-lg text-white">{h.title}</h3>
-                    <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
-                    <p className="text-blue-400 font-semibold text-sm">₦{h.price?.toLocaleString()}</p>
+                  className="transition-transform duration-300 hover:scale-[1.02]"
+                >
+                  <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
+                    <img src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
+                    <div className="p-4 space-y-2">
+                      <h3 className="font-semibold text-lg text-white">{h.title}</h3>
+                      <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
+                      <p className="text-blue-400 font-semibold text-sm">₦{h.price?.toLocaleString()}</p>
 
-                    <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
-                      <div className="flex items-center gap-1"><BedDouble size={14} /> {h.rooms || 0}</div>
-                      <div className="flex items-center gap-1"><Bath size={14} /> {h.baths || 0}</div>
-                      <div className="flex items-center gap-1"><Toilet size={14} /> {h.toilets || 0}</div>
-                      <div className="flex items-center gap-1"><Car size={14} /> {h.parking || 0}</div>
-                    </div>
+                      <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
+                        <div className="flex items-center gap-1"><BedDouble size={14} /> {h.rooms || 0}</div>
+                        <div className="flex items-center gap-1"><Bath size={14} /> {h.baths || 0}</div>
+                        <div className="flex items-center gap-1"><Toilet size={14} /> {h.toilets || 0}</div>
+                        <div className="flex items-center gap-1"><Car size={14} /> {h.parking || 0}</div>
+                      </div>
 
-                    <div className="flex justify-between mt-4">
-                      <button onClick={() => startEditing(h)} className="text-blue-400 hover:text-blue-500 flex items-center gap-1 text-sm"><Edit3 size={14} /> Edit</button>
-                      <button onClick={() => handleDelete(h._id)} className="text-red-400 hover:text-red-500 flex items-center gap-1 text-sm"><Trash2 size={14} /> Delete</button>
+                      <div className="flex justify-between mt-4">
+                        <button onClick={() => startEditing(h)} className="text-blue-400 hover:text-blue-500 flex items-center gap-1 text-sm"><Edit3 size={14} /> Edit</button>
+                        <button onClick={() => handleDelete(h._id)} className="text-red-400 hover:text-red-500 flex items-center gap-1 text-sm"><Trash2 size={14} /> Delete</button>
+                      </div>
                     </div>
                   </div>
-                </div>
                 </Link>
               ))}
             </div>

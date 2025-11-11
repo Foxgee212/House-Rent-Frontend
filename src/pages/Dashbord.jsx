@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
@@ -29,14 +29,14 @@ export default function DashBoard() {
     price: "",
     description: "",
     negotiable: false,
-    rooms: "",
-    baths: "",
-    toilets: "",
-    parking: "",
+    rooms: 0,
+    baths: 0,
+    toilets: 0,
+    parking: 0,
     area: "",
-    period: "",
-   
+    period: "per year",
   });
+
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -160,12 +160,12 @@ export default function DashBoard() {
         price: "",
         description: "",
         negotiable: false,
-        rooms: "",
-        baths: "",
-        toilets: "",
-        parking: "",
+        rooms: 0,
+        baths: 0,
+        toilets: 0,
+        parking: 0,
         area: "",
-        period: "",
+        period: "per year",
       });
       setImages([]);
       setPreviewUrls([]);
@@ -197,12 +197,12 @@ export default function DashBoard() {
       price: house.price,
       description: house.description,
       negotiable: house.negotiable || false,
-      rooms: house.rooms || "",
-      baths: house.baths || "",
-      toilets: house.toilets || "",
-      parking: house.parking || "",
+      rooms: house.rooms || 0,
+      baths: house.baths || 0,
+      toilets: house.toilets || 0,
+      parking: house.parking || 0,
       area: house.area || "",
-      period: house.period || "",
+      period: house.period || "per year",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -222,6 +222,8 @@ export default function DashBoard() {
       toast.error("Failed to update availability");
     }
   };
+
+  const numberOptions = Array.from({ length: 7 }, (_, i) => i);
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 sm:px-8 py-10">
@@ -256,15 +258,95 @@ export default function DashBoard() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <input name="title" placeholder="House Title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="price" type="number" placeholder="Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="rooms" type="number" placeholder="Rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="baths" type="number" placeholder="Bathrooms" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="toilets" type="number" placeholder="Toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="parking" type="number" placeholder="Parking Spaces" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="period" placeholder="Payment Period (e.g. per month)" value={form.period} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
+          <input
+            name="title"
+            placeholder="House Title"
+            value={form.title}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          />
+          <input
+            name="location"
+            placeholder="Location"
+            value={form.location}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          />
+          <input
+            name="price"
+            type="number"
+            placeholder="Price (₦)"
+            value={form.price}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          />
+
+          {/* Dropdowns for numeric fields */}
+          <select
+            name="rooms"
+            value={form.rooms}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          >
+            {numberOptions.map((n) => (
+              <option key={n} value={n}>{n} Room{n !== 1 && "s"}</option>
+            ))}
+          </select>
+
+          <select
+            name="baths"
+            value={form.baths}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          >
+            {numberOptions.map((n) => (
+              <option key={n} value={n}>{n} Bath{n !== 1 && "s"}</option>
+            ))}
+          </select>
+
+          <select
+            name="toilets"
+            value={form.toilets}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          >
+            {numberOptions.map((n) => (
+              <option key={n} value={n}>{n} Toilet{n !== 1 && "s"}</option>
+            ))}
+          </select>
+
+          <select
+            name="parking"
+            value={form.parking}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          >
+            {numberOptions.map((n) => (
+              <option key={n} value={n}>{n} Parking Space{n !== 1 && "s"}</option>
+            ))}
+          </select>
+
+          <input
+            name="area"
+            placeholder="Area (sqft)"
+            value={form.area}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          />
+
+          <select
+            name="period"
+            value={form.period}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
+          >
+            <option value="per month">Per Month</option>
+            <option value="per year">Per Year</option>
+          </select>
+
           {!editing && (
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
               <Upload size={18} className="text-blue-400" />
@@ -329,12 +411,12 @@ export default function DashBoard() {
                   price: "",
                   description: "",
                   negotiable: false,
-                  rooms: "",
-                  baths: "",
-                  toilets: "",
-                  parking: "",
+                  rooms: 0,
+                  baths: 0,
+                  toilets: 0,
+                  parking: 0,
                   area: "",
-                  period: "",
+                  period: "per year",
                 });
               }}
               className="flex items-center gap-2 text-gray-400 hover:text-blue-400"
@@ -376,11 +458,7 @@ export default function DashBoard() {
                   </p>
                   <p className="text-blue-400 font-semibold mt-2">
                     ₦{Number(h.price).toLocaleString()}
-                    {h.negotiable && (
-                      <span className="ml-2 text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
-                        Negotiable
-                      </span>
-                    )}
+                    {h.period && <span className="text-gray-400 font-normal"> / {h.period}</span>}
                   </p>
                   <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
 

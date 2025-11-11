@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
-import { Mail, Lock, LogIn, Globe, Facebook } from "lucide-react";
+import { Mail, Lock, LogIn, Eye, EyeOff } from "lucide-react"; // added Eye icons
 
-const sanitizeInput = (value) => value.replace(/[<>/'"`;(){}$]/g, "").trim();
+const sanitizeInput = (value) => value.replace(/[<>/'"`;]/g, "").trim(); // allow $, (), {}
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // state for password visibility
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
@@ -95,15 +96,23 @@ export default function Login() {
           <div className="relative">
             <Lock className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
               value={form.password}
               onChange={handleChange}
               required
               autoComplete="current-password"
-              className="w-full pl-9 sm:pl-10 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500 text-sm sm:text-base"
+              className="w-full pl-9 pr-10 sm:pl-10 sm:pr-10 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500 text-sm sm:text-base"
             />
+            {/* Eye Icon */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-blue-400 transition-colors duration-300"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+            </button>
           </div>
 
           <div className="text-right">
@@ -142,7 +151,7 @@ export default function Login() {
           <span className="mx-2 sm:mx-3 text-gray-400 text-xs sm:text-sm">or</span>
           <div className="h-px w-14 sm:w-16 bg-gray-600"></div>
         </div>
-      
+
         <p className="mt-5 sm:mt-6 text-center text-gray-400 text-xs sm:text-sm">
           Don’t have an account?{" "}
           <Link

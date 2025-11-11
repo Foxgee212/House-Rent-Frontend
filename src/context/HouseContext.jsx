@@ -38,7 +38,6 @@ export function HouseProvider({ children }) {
           "houses",
           JSON.stringify(append ? [...houses, ...fetched] : fetched)
         );
-        console.log("houses coming from backend:", houses)
 
         setTotalPages(Math.max(1, Math.ceil(totalCount / limit))); // update total pages
         setPage(pageNum);
