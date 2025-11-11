@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { toast } from "react-hot-toast";
 import {
   MapPin,
   Info,
@@ -12,18 +13,107 @@ import {
   Star,
   Heart,
   Phone,
-  CalendarDays,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// NaijaHome watermark SVG
+const NaijahomeLogoSVG = ({ width = 180, height = 55 }) => (
+  <svg
+    width={width}
+    height={height}
+    viewBox="0 0 300 90"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ opacity: 0.15 }}
+  >
+    <path d="M20 40 L40 20 L60 40 V70 H20 V40 Z" fill="url(#grad1)" />
+    <path d="M40 70 V50 H50 V70 H40 Z" fill="#fff" />
+    <text
+      x="70"
+      y="55"
+      fontFamily="Poppins, sans-serif"
+      fontWeight="700"
+      fontSize="30"
+      fill="url(#grad1)"
+    >
+      Naijahome
+    </text>
+    <defs>
+      <linearGradient id="grad1" x1="0" y1="0" x2="100%" y2="0">
+        <stop offset="0%" stopColor="#3B82F6" />
+        <stop offset="100%" stopColor="#2563EB" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+// Canvas image component with watermark and right-click protection
+function ProtectedWatermarkedImage({ src, alt, className, onClick }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = src;
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      const svgData = `
+        <svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
+          <g opacity="0.15">
+            <path d="M20 40 L40 20 L60 40 V70 H20 V40 Z" fill="url(#grad1)" />
+            <path d="M40 70 V50 H50 V70 H40 Z" fill="#fff" />
+            <text x="70" y="55" font-family="Poppins, sans-serif" font-weight="700" font-size="30" fill="url(#grad1)">
+              Naijahome
+            </text>
+            <defs>
+              <linearGradient id="grad1" x1="0" y1="0" x2="100%" y2="0">
+                <stop offset="0%" stop-color="#3B82F6"/>
+                <stop offset="100%" stop-color="#2563EB"/>
+              </linearGradient>
+            </defs>
+          </g>
+        </svg>
+      `;
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      const svgImg = new Image();
+      svgImg.src = url;
+      svgImg.onload = () => {
+        ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+      };
+    };
+  }, [src]);
+
+  const handleRightClick = (e) => {
+    e.preventDefault();
+    toast.error("❌ Sorry, you can't download this image!");
+  };
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={className}
+      alt={alt}
+      onClick={onClick}
+      onContextMenu={handleRightClick}
+    />
+  );
+}
 
 export default function SaleCard({ house }) {
   const [zoomed, setZoomed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saved, setSaved] = useState(false);
-
   const images = Array.isArray(house.images) ? house.images : [];
 
-  // Memoized formatted price
   const formattedPrice = useMemo(() => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
@@ -32,7 +122,6 @@ export default function SaleCard({ house }) {
     }).format(house.price || 0);
   }, [house.price]);
 
-  // Load saved state from localStorage
   useEffect(() => {
     const savedList = JSON.parse(localStorage.getItem("savedProperties")) || [];
     if (house.id && savedList.includes(house.id)) setSaved(true);
@@ -60,14 +149,13 @@ export default function SaleCard({ house }) {
 
   return (
     <div className="relative bg-gray-900 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-transform duration-300 border border-gray-800 cursor-pointer">
-
       {/* Image Section */}
       <div className="relative group">
-        <img
+        <ProtectedWatermarkedImage
           src={images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
           alt={house.title || "House image"}
-          onClick={() => setZoomed(true)}
           className="w-full h-48 sm:h-60 object-cover transition-transform duration-500 hover:scale-105"
+          onClick={() => setZoomed(true)}
         />
 
         {/* Sale Badge */}
@@ -103,12 +191,10 @@ export default function SaleCard({ house }) {
         <h3 className="text-base sm:text-lg font-semibold mb-1 flex items-center gap-2">
           <Info size={16} className="text-blue-400" /> {house.title || "Untitled Property"}
         </h3>
-
         <div className="flex items-center gap-1 text-gray-300 text-sm mb-2">
           <MapPin size={14} className="text-blue-400" />
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
-
         <p className="text-blue-400 font-bold flex items-center gap-1 text-base sm:text-lg">
           <Wallet size={16} /> {formattedPrice}
           {house.period && (
@@ -117,7 +203,7 @@ export default function SaleCard({ house }) {
         </p>
       </div>
 
-      {/* Footer Info Bar */}
+      {/* Footer Info */}
       <div className="bg-gray-800 border-t border-gray-700 px-4 py-3 overflow-x-auto">
         <ul className="flex flex-nowrap justify-between sm:justify-around gap-4 text-xs sm:text-sm text-gray-300 min-w-max sm:min-w-0">
           {[ 
@@ -130,8 +216,6 @@ export default function SaleCard({ house }) {
               {item.icon} {item.value || 0}
             </li>
           ))}
-
-          {/* Save / Favorite */}
           <li
             className="flex items-center gap-1 cursor-pointer"
             onClick={(e) => toggleSave(e)}
@@ -139,9 +223,7 @@ export default function SaleCard({ house }) {
           >
             <Heart
               size={14}
-              className={`transition ${
-                saved ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"
-              }`}
+              className={`transition ${saved ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`}
             />
           </li>
         </ul>
@@ -159,7 +241,7 @@ export default function SaleCard({ house }) {
         )}
       </div>
 
-      {/* Zoom Modal */}
+      {/* Zoom Modal with Slider */}
       <AnimatePresence>
         {zoomed && (
           <motion.div
@@ -177,29 +259,51 @@ export default function SaleCard({ house }) {
               <X size={20} />
             </motion.button>
 
-            <motion.img
-              src={images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
-              alt={house.title ? `Zoomed image of ${house.title}` : "Zoomed house image"}
-              className="max-w-[90%] max-h-[70vh] rounded-2xl shadow-2xl border-4 border-gray-700 transition-transform duration-300 mb-4"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="relative max-w-[90%] max-h-[70vh]">
+              <ProtectedWatermarkedImage
+                src={images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
+                alt={`House ${activeIndex + 1}`}
+                className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-gray-700 transition-transform duration-300"
+                onClick={(e) => e.stopPropagation()}
+              />
 
-            <div
-              className="flex gap-2 flex-wrap justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {images.map((img, index) => (
-                <img
-                  key={index}
-                  src={img}
-                  alt={`House ${index + 1}`}
-                  onClick={() => setActiveIndex(index)}
-                  className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
-                    activeIndex === index ? "border-blue-400 scale-105" : "border-transparent hover:opacity-80"
-                  }`}
-                />
-              ))}
+              {/* Prev Arrow */}
+              {images.length > 1 && activeIndex > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
+                  className="absolute top-1/2 left-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
+                >
+                  ◀
+                </button>
+              )}
+
+              {/* Next Arrow */}
+              {images.length > 1 && activeIndex < images.length - 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
+                >
+                  ▶
+                </button>
+              )}
             </div>
+
+            {/* Thumbnail Selector */}
+            {images.length > 1 && (
+              <div className="flex gap-2 flex-wrap justify-center mt-4" onClick={e => e.stopPropagation()}>
+                {images.map((img, index) => (
+                  <ProtectedWatermarkedImage
+                    key={index}
+                    src={img}
+                    alt={`House ${index + 1}`}
+                    className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
+                      activeIndex === index ? "border-blue-400 scale-105" : "border-transparent hover:opacity-80"
+                    }`}
+                    onClick={() => setActiveIndex(index)}
+                  />
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

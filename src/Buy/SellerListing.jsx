@@ -16,6 +16,7 @@ export default function AgentListings() {
   const [sortOrder, setSortOrder] = useState("");
   const [showFullFilter, setShowFullFilter] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
   const observer = useRef();
 
   // Handle window resize
@@ -27,7 +28,7 @@ export default function AgentListings() {
 
   // Fetch listings on mount
   useEffect(() => {
-    if (user?.token) fetchMySales(user.token, 1); // fetch first page
+    if (user?.token) fetchMySales(user.token, 1);
   }, [user, fetchMySales]);
 
   // Mobile scroll detection to hide/show filter bar
@@ -55,14 +56,13 @@ export default function AgentListings() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isMobile]);
 
-  // Debounce search
+  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(handler);
   }, [search]);
 
   // Infinite scroll
-  const lastHouseRef = useRef();
   const lastHouseElementRef = (node) => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
@@ -72,7 +72,7 @@ export default function AgentListings() {
     if (node) observer.current.observe(node);
   };
 
-  // Filtered and sorted listings
+  // Filter and sort listings
   const filteredListings = useMemo(() => {
     let filtered = mySales.filter((house) => {
       const titleMatch = house.title?.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -97,7 +97,7 @@ export default function AgentListings() {
     setSortOrder("");
   };
 
-  // Skeleton loader component
+  // Skeleton loader
   const SkeletonCard = () => (
     <div className="bg-gray-800 rounded-2xl overflow-hidden animate-pulse">
       <div className="h-48 bg-gray-700" />
@@ -116,6 +116,8 @@ export default function AgentListings() {
       {/* Filter bar */}
       <div className={`${isMobile ? "fixed top-20 left-1/2 -translate-x-1/2 z-40 w-[95%] bg-gray-900/85 backdrop-blur-xl border border-gray-700/60 rounded-2xl shadow-2xl transition-all duration-400 ease-in-out" : "bg-gray-800/90 backdrop-blur-lg border border-gray-700/60 rounded-2xl shadow-lg p-4 mb-8"}`}>
         <div className={`flex flex-col sm:flex-row items-center gap-4 transition-all duration-500 overflow-hidden ${isMobile ? (showFullFilter ? "max-h-[500px] p-4 scale-100 opacity-100" : "max-h-[70px] p-2 scale-[0.98] opacity-90") : "max-h-none"}`}>
+          
+          {/* Search input */}
           <div className="relative w-full sm:w-1/4">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
             <input
@@ -129,6 +131,7 @@ export default function AgentListings() {
 
           {(!isMobile || showFullFilter) && (
             <>
+              {/* Location */}
               <div className="relative w-full sm:w-1/4">
                 <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-green-400" />
                 <input
@@ -140,6 +143,7 @@ export default function AgentListings() {
                 />
               </div>
 
+              {/* Max price */}
               <div className="relative w-full sm:w-1/4">
                 <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" />
                 <input
@@ -151,6 +155,7 @@ export default function AgentListings() {
                 />
               </div>
 
+              {/* Sort order */}
               <div className="relative w-full sm:w-1/4">
                 <ArrowUpDown size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
                 <select
@@ -164,6 +169,7 @@ export default function AgentListings() {
                 </select>
               </div>
 
+              {/* Clear filters */}
               <button
                 onClick={clearFilters}
                 className="flex items-center gap-1 bg-red-600/80 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-red-500/20"
@@ -186,22 +192,14 @@ export default function AgentListings() {
         ) : (
           <>
             {filteredListings.map((h, idx) => {
-              if (filteredListings.length === idx + 1) {
-                return (
-                  <Link key={h._id} to={`/agent/listings/${h._id}`} ref={lastHouseElementRef}>
-                    <HouseCard house={h} />
-                  </Link>
-                );
-              } else {
-                return (
-                  <Link key={h._id} to={`/agent/listings/${h._id}`}>
-                    <HouseCard house={h} />
-                  </Link>
-                );
-              }
+              const ref = idx === filteredListings.length - 1 ? lastHouseElementRef : null;
+              return (
+                <Link key={h._id} to={`/agent/listings/${h._id}`} ref={ref}>
+                  <HouseCard house={h} />
+                </Link>
+              );
             })}
 
-            {/* Skeletons while loading more */}
             {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </>
         )}
