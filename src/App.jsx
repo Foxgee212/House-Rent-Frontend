@@ -21,6 +21,7 @@ import BuyPage from "./Buy/Buy";
 import BuyDetail from "./Buy/BuyDetails";
 import SellerDashboard from "./Buy/SellerDashboard";
 import AgentListings from "./Buy/SellerListing";
+import NotFound from "./pages/NotFound";
 // Components
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -37,9 +38,18 @@ function App() {
           <Route path="/listings/:id" element={<HouseDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/profile" element={<Profile />} />
           <Route path="/buy/:id" element={<BuyDetail />} />
           <Route path="/" element={<BuyPage />} />
+          <Route path="*" element={<NotFound />} />
+      
+          <Route
+            path="/profile"
+            element={
+                  <PrivateRoute roles={["tenant", "landlord", "agent", "admin"]}>
+                    <Profile />
+                  </PrivateRoute>
+                  }
+          />
 
 
 
