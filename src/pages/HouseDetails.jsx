@@ -155,7 +155,9 @@ export default function HouseDetail() {
               </p>
               <p className="text-green-400 font-bold text-xl mt-3 flex items-center gap-2">
                 <Wallet size={18} /> ₦{house.price?.toLocaleString()}
-                <span className="text-gray-300 text-base font-medium">/month</span>
+                {h.period && (
+                          <span className="text-gray-400 text-sm font-medium">/{h.period}</span>
+                        )}
               </p>
             </div>
 
