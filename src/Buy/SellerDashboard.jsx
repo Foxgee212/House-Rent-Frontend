@@ -281,7 +281,7 @@ export default function SellerDashboard() {
             {Array.from({ length: 7 }, (_, i) => <option key={i} value={i}>{i} Parking{i !== 1 ? "s" : ""}</option>)}
           </select>
 
-          {!editing && (
+        
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
               <Upload size={18} className="text-blue-400" />
               <span className="text-gray-300">
@@ -289,7 +289,6 @@ export default function SellerDashboard() {
               </span>
               <input ref={fileInputRef} type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
             </label>
-          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -346,11 +345,6 @@ export default function SellerDashboard() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {mySales.map((h) => (
-                <Link 
-                  key={h._id}
-                  to={`/buy/${h._id}`}
-                  className="transition-transform duration-300 hover:scale-[1.02]"
-                >
                   <div className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
                     <img src={h.primaryImage || h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
                     <div className="p-4 space-y-2">
@@ -371,7 +365,7 @@ export default function SellerDashboard() {
                       </div>
                     </div>
                   </div>
-                </Link>
+              
               ))}
             </div>
 

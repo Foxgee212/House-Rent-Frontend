@@ -39,6 +39,7 @@ export default function DashBoard() {
 
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [primaryImageIndex, setPrimaryImageIndex] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -77,13 +78,6 @@ export default function DashBoard() {
     fetchMyHouses();
   }, []);
 
-  const loadMoreHouses = () => {
-    if (page < totalPages) fetchMyHouses(page + 1, true);
-  };
-
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -109,10 +103,13 @@ export default function DashBoard() {
     e.target.value = null;
   };
 
-  const removeImage = (index) => {
+  const removeExistingImage = (url) => {
+    setExistingImages((prev) => prev.filter((img) => img !== url));
+  };
+
+  const removeNewImage = (index) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
-    if (primaryImageIndex === index) setPrimaryImageIndex(null);
   };
 
   const handleSubmit = async (e) => {
@@ -130,10 +127,19 @@ export default function DashBoard() {
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, val]) =>
-        formData.append(key, typeof val === "boolean" ? (val ? "true" : "false") : val)
+        formData.append(
+          key,
+          typeof val === "boolean" ? (val ? "true" : "false") : val
+        )
       );
+
+      if (existingImages.length > 0) {
+        formData.append("existingImages", JSON.stringify(existingImages));
+      }
+
       images.forEach((img) => formData.append("images", img));
-      if (primaryImageIndex !== null) formData.append("primaryImageIndex", primaryImageIndex);
+      if (primaryImageIndex !== null)
+        formData.append("primaryImageIndex", primaryImageIndex);
 
       const res = editing
         ? await API.put(`/rentals/${editing._id}`, formData, {
@@ -150,23 +156,7 @@ export default function DashBoard() {
       );
 
       toast.success(editing ? "✅ House updated!" : "🏠 House added!");
-      setForm({
-        title: "",
-        location: "",
-        price: "",
-        description: "",
-        negotiable: false,
-        rooms: 0,
-        baths: 0,
-        toilets: 0,
-        parking: 0,
-        area: "",
-        period: "per year",
-      });
-      setImages([]);
-      setPreviewUrls([]);
-      setPrimaryImageIndex(null);
-      setEditing(null);
+      resetForm();
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong while uploading");
@@ -175,15 +165,25 @@ export default function DashBoard() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this listing?")) return;
-    try {
-      await API.delete(`/rentals/${id}`);
-      setLandlordHouses((prev) => prev.filter((h) => h._id !== id));
-      toast.success("🗑️ House deleted!");
-    } catch {
-      toast.error("Failed to delete");
-    }
+  const resetForm = () => {
+    setForm({
+      title: "",
+      location: "",
+      price: "",
+      description: "",
+      negotiable: false,
+      rooms: 0,
+      baths: 0,
+      toilets: 0,
+      parking: 0,
+      area: "",
+      period: "per year",
+    });
+    setImages([]);
+    setPreviewUrls([]);
+    setExistingImages([]);
+    setPrimaryImageIndex(null);
+    setEditing(null);
   };
 
   const startEditing = (house) => {
@@ -201,16 +201,23 @@ export default function DashBoard() {
       area: house.area || "",
       period: house.period || "per year",
     });
+    setExistingImages(house.images || []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const toggleAvailability = async (id, currentStatus) => {
     try {
-      await API.patch(`/rentals/${id}/availability`, { available: !currentStatus });
+      await API.patch(`/rentals/${id}/availability`, {
+        available: !currentStatus,
+      });
       setLandlordHouses((prev) =>
         prev.map((h) => (h._id === id ? { ...h, available: !currentStatus } : h))
       );
-      toast.success(!currentStatus ? "🏠 House marked as available" : "🚫 House marked as occupied");
+      toast.success(
+        !currentStatus
+          ? "🏠 House marked as available"
+          : "🚫 House marked as occupied"
+      );
     } catch {
       toast.error("Failed to update availability");
     }
@@ -220,7 +227,6 @@ export default function DashBoard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 sm:px-8 py-10">
-      {/* Header */}
       <div className="flex items-center justify-center gap-3 mb-10">
         <Home size={34} className="text-blue-500 drop-shadow-md" />
         <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
@@ -228,85 +234,76 @@ export default function DashBoard() {
         </h1>
       </div>
 
-      {/* Verification Warning */}
-      {user?.verification?.status !== "verified" && (
-        <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <p>⚠️ Your account is not verified. You must verify your identity to post houses.</p>
-          <button
-            onClick={() => navigate("/verify")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
-          >
-            Verify Identity
-          </button>
-        </div>
-      )}
-
-      {/* House Form */}
       <form
         onSubmit={handleSubmit}
-        className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
-          user?.verification?.status !== "verified" ? "opacity-60 pointer-events-none" : ""
-        }`}
+        className="bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5"
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
           {editing ? <Edit3 size={20} /> : <PlusCircle size={20} />}
           {editing ? "Edit House" : "Post a New House"}
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Inputs */}
-          <input name="title" placeholder="House Title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-          <input name="price" type="number" placeholder="Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
+        {/* Upload Label */}
+        <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
+          <Upload size={18} className="text-blue-400" />
+          <span className="text-gray-300">
+            {images.length > 0
+              ? `${images.length} new image${images.length > 1 ? "s" : ""} selected`
+              : "Upload or add more images"}
+          </span>
+          <input
+            type="file"
+            multiple
+            onChange={handleImageChange}
+            className="hidden"
+            accept="image/*"
+          />
+        </label>
 
-          {/* Dropdowns */}
-          <select name="rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
-            {numberOptions.map((n) => (<option key={n} value={n}>{n} Room{n !== 1 && "s"}</option>))}
-          </select>
-          <select name="baths" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
-            {numberOptions.map((n) => (<option key={n} value={n}>{n} Bath{n !== 1 && "s"}</option>))}
-          </select>
-          <select name="toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
-            {numberOptions.map((n) => (<option key={n} value={n}>{n} Toilet{n !== 1 && "s"}</option>))}
-          </select>
-          <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
-            {numberOptions.map((n) => (<option key={n} value={n}>{n} Parking Space{n !== 1 && "s"}</option>))}
-          </select>
-
-          <input name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
-
-          <select name="period" value={form.period} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
-            <option value="per month">Per Month</option>
-            <option value="per year">Per Year</option>
-          </select>
-
-          {!editing && (
-            <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
-              <Upload size={18} className="text-blue-400" />
-              <span className="text-gray-300">{images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Upload house images"}</span>
-              <input type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
-            </label>
-          )}
-        </div>
-
-        {/* Negotiable Switch */}
-        <div className="flex items-center gap-3">
-          <Switch checked={form.negotiable} onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))} className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
-            <span className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
-          </Switch>
-          <span className="text-sm text-gray-300">Price Negotiable</span>
-        </div>
-
-        {/* Preview Images */}
-        {previewUrls.length > 0 && (
+        {/* Image Preview */}
+        {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
-            {previewUrls.map((url, i) => (
-              <div key={i} className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 cursor-pointer transition ${primaryImageIndex === i ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"}`} onClick={() => setPrimaryImageIndex(i)} title="Click to set as primary image">
-                <img src={url} alt="" className="w-full h-full object-cover" />
-                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
+            {existingImages.map((url, i) => (
+              <div
+                key={`old-${i}`}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700"
+              >
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    removeExistingImage(url);
+                  }}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
+                >
                   <XCircle size={14} />
                 </button>
-                {primaryImageIndex === i && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">Primary</span>}
+              </div>
+            ))}
+
+            {previewUrls.map((url, i) => (
+              <div
+                key={`new-${i}`}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700"
+              >
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    removeNewImage(i);
+                  }}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
+                >
+                  <XCircle size={14} />
+                </button>
               </div>
             ))}
           </div>
