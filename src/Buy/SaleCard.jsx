@@ -185,6 +185,12 @@ export default function SaleCard({ house }) {
             {house.negotiable ? "Negotiable" : "Fixed Price"}
           </div>
         )}
+            {/* Image Count */}
+        {images.length > 0 && (
+          <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+            <i className="fal fa-camera"></i> {images.length} Photos
+          </div>
+        )}
       </div>
 
       {/* Details */}
