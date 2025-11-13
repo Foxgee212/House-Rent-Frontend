@@ -24,7 +24,6 @@ export default function SellerDashboard() {
   const { user } = useAuth();
   const { mySales, fetchMySales, deleteHouse } = useHouses();
   const navigate = useNavigate();
-
   const allowed = user?.role === "seller" || user?.role === "agent";
 
   const [form, setForm] = useState({
@@ -43,6 +42,7 @@ export default function SellerDashboard() {
   const [images, setImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [primaryImageIndex, setPrimaryImageIndex] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(null);
   const [page, setPage] = useState(1);
@@ -62,9 +62,7 @@ export default function SellerDashboard() {
       setTotalPages(total);
     } catch (err) {
       const message =
-        err.response?.data?.error ||
-        err.response?.data?.msg ||
-        err.message;
+        err.response?.data?.error || err.response?.data?.msg || err.message;
       if (message?.toLowerCase().includes("identity verification")) {
         toast.error("Please verify your identity to view your properties");
       } else {
@@ -116,6 +114,7 @@ export default function SellerDashboard() {
   const removeNewImage = (index) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    if (primaryImageIndex === index) setPrimaryImageIndex(null);
   };
 
   const removeExistingImage = (url) => {
@@ -124,7 +123,6 @@ export default function SellerDashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!editing && images.length === 0) {
       toast.error("Please select at least one image");
       return;
@@ -142,7 +140,9 @@ export default function SellerDashboard() {
       Object.entries(form).forEach(([k, v]) =>
         formData.append(k, typeof v === "boolean" ? String(v) : v)
       );
+
       images.forEach((img) => formData.append("images", img));
+      if (primaryImageIndex !== null) formData.append("primaryImageIndex", primaryImageIndex);
 
       const res = editing
         ? await API.put(`/sales/${editing._id}`, formData, {
@@ -177,6 +177,7 @@ export default function SellerDashboard() {
       setPreviewUrls([]);
       setEditing(null);
       setExistingImages([]);
+      setPrimaryImageIndex(null);
     } catch (error) {
       console.error("Error uploading property:", error);
       toast.error("Something went wrong while uploading");
@@ -202,6 +203,7 @@ export default function SellerDashboard() {
     setExistingImages(sale.images || []);
     setImages([]);
     setPreviewUrls([]);
+    setPrimaryImageIndex(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -230,9 +232,7 @@ export default function SellerDashboard() {
 
       {user?.verification?.status !== "verified" && (
         <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <p>
-            ⚠️ Your account is not verified. Verify your identity to post properties.
-          </p>
+          <p>⚠️ Your account is not verified. Verify your identity to post properties.</p>
           <button
             onClick={() => navigate("/verify")}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
@@ -250,7 +250,15 @@ export default function SellerDashboard() {
         }`}
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
-          {editing ? <><Edit3 size={20} /> Edit Listing</> : <><PlusCircle size={20} /> List a Property for Sale</>}
+          {editing ? (
+            <>
+              <Edit3 size={20} /> Edit Listing
+            </>
+          ) : (
+            <>
+              <PlusCircle size={20} /> List a Property for Sale
+            </>
+          )}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -272,6 +280,7 @@ export default function SellerDashboard() {
           <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
             {Array.from({ length: 7 }, (_, i) => <option key={i} value={i}>{i} Parking{i !== 1 ? "s" : ""}</option>)}
           </select>
+
           {!editing && (
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
               <Upload size={18} className="text-blue-400" />
@@ -293,19 +302,21 @@ export default function SellerDashboard() {
         {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
             {existingImages.map((url, i) => (
-              <div key={`existing-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700">
+              <div key={`existing-${i}`} className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 ${primaryImageIndex === i ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"}`} onClick={() => setPrimaryImageIndex(i)}>
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button onClick={() => removeExistingImage(url)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
+                <button onClick={(e) => { e.stopPropagation(); removeExistingImage(url); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
                   <XCircle size={14} />
                 </button>
+                {primaryImageIndex === i && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">Primary</span>}
               </div>
             ))}
             {previewUrls.map((url, i) => (
-              <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700">
+              <div key={`new-${i}`} className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 ${primaryImageIndex === i + existingImages.length ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"}`} onClick={() => setPrimaryImageIndex(i + existingImages.length)}>
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button onClick={() => removeNewImage(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
+                <button onClick={(e) => { e.stopPropagation(); removeNewImage(i); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
                   <XCircle size={14} />
                 </button>
+                {primaryImageIndex === i + existingImages.length && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">Primary</span>}
               </div>
             ))}
           </div>
@@ -340,8 +351,8 @@ export default function SellerDashboard() {
                   to={`/buy/${h._id}`}
                   className="transition-transform duration-300 hover:scale-[1.02]"
                 >
-                  <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
-                    <img src={h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
+                  <div className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all">
+                    <img src={h.primaryImage || h.images?.[0] || "https://placehold.co/600x400?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer" />
                     <div className="p-4 space-y-2">
                       <h3 className="font-semibold text-lg text-white">{h.title}</h3>
                       <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
@@ -366,8 +377,11 @@ export default function SellerDashboard() {
 
             {totalPages > 1 && page < totalPages && (
               <div className="text-center mt-8">
-                <button onClick={loadMoreHouses} className="bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 px-6 py-2 rounded-xl transition">
-                  Load More
+                <button
+                  onClick={loadMoreHouses}
+                  className="bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 px-6 py-2 rounded-xl transition flex items-center justify-center gap-2"
+                >
+                  {uploading ? "Loading..." : "Load More"}
                 </button>
               </div>
             )}

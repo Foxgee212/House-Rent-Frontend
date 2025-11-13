@@ -154,11 +154,12 @@ export default function HouseCard({ house }) {
       {/* Main Image */}
       <div className="relative group">
         <ProtectedWatermarkedImage
-          src={images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
+          src={house.primaryImage || images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
           alt={house.title || "House image"}
           className="w-full h-48 sm:h-60 object-cover transition-transform duration-500 group-hover:scale-105"
           onClick={() => setZoomed(true)}
         />
+
 
         {/* Rent Badge */}
         <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
@@ -269,12 +270,13 @@ export default function HouseCard({ house }) {
 
           <div className="relative max-w-[90%] max-h-[70vh]">
             {/* Main Zoomed Image */}
-            <ProtectedWatermarkedImage
-              src={images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
-              alt={`House ${activeIndex + 1}`}
-              className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-gray-700 transition-transform duration-300"
-              onClick={(e) => e.stopPropagation()}
-            />
+          <ProtectedWatermarkedImage
+            src={house.primaryImage || images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
+            alt={`House ${activeIndex + 1}`}
+            className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-gray-700 transition-transform duration-300"
+            onClick={(e) => e.stopPropagation()}
+          />
+
 
             {/* Prev Arrow */}
             {images.length > 1 && activeIndex > 0 && (

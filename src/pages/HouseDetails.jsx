@@ -155,12 +155,11 @@ export default function HouseDetail() {
               </p>
               <p className="text-green-400 font-bold text-xl mt-3 flex items-center gap-2">
                 <Wallet size={18} /> ₦{house.price?.toLocaleString()}
-                {h.period && (
-                          <span className="text-gray-400 text-sm font-medium">/{h.period}</span>
+                {house.period && (
+                          <span className="text-gray-400 text-sm font-medium">/{house.period}</span>
                         )}
               </p>
             </div>
-
             {/* Property Stats */}
             <div className="mt-4 flex items-center justify-between text-gray-300 text-sm">
               <span className="flex items-center gap-1" title="Rooms">
@@ -253,7 +252,7 @@ export default function HouseDetail() {
                       className="min-w-[200px] bg-gray-800 shadow-md rounded-xl p-3 flex-shrink-0 relative border border-gray-700"
                     >
                       <img
-                        src={h.images?.[0]}
+                        src={h.primaryImage || h.images?.[0]}
                         alt={h.title}
                         className="w-full h-32 object-cover rounded-lg"
                         onContextMenu={(e) => e.preventDefault()}

@@ -288,7 +288,7 @@ export default function BuyDetail() {
                     className="min-w-[200px] bg-gray-800 shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all border border-gray-700"
                   >
                     <ProtectedWatermarkedImage
-                      src={rec.images?.[0] || "/default-house.jpg"}
+                      src={ rec.primaryImage || rec.images?.[0] || "https://via.placeholder.com/400x250?text=🏠+No+Image"} 
                       alt={rec.title}
                       className="w-full h-32 object-cover rounded-lg"
                     />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import HouseCard from "../components/HouseCard";
+import SaleCard from "./SaleCard";
 import { useHouses } from "../context/HouseContext";
 import { Search, MapPin, DollarSign, ArrowUpDown, XCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -195,7 +195,7 @@ export default function AgentListings() {
               const ref = idx === filteredListings.length - 1 ? lastHouseElementRef : null;
               return (
                 <Link key={h._id} to={`/agent/listings/${h._id}`} ref={ref}>
-                  <HouseCard house={h} />
+                  <SaleCard sale={h} />
                 </Link>
               );
             })}

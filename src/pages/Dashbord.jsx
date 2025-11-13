@@ -39,15 +39,15 @@ export default function DashBoard() {
 
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [primaryImageIndex, setPrimaryImageIndex] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const [landlordHouses, setLandlordHouses] = useState([]);
-  const [zoomedHouse, setZoomedHouse] = useState(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [editing, setEditing] = useState(null);
   const [loadingHouses, setLoadingHouses] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [editing, setEditing] = useState(null);
+
   const limit = 6;
 
   if (user?.role !== "landlord") {
@@ -58,23 +58,16 @@ export default function DashBoard() {
     );
   }
 
-  const fetchMyHouses = async (pageNum = 1, append = false, limit = 12) => {
+  const fetchMyHouses = async (pageNum = 1, append = false) => {
     setLoadingHouses(true);
     try {
       const res = await API.get(`/rentals/my?page=${pageNum}&limit=${limit}`);
-      const fetched = res.data?.houses || res.data || [];
-      const total = res.data?.totalPages || 1;
+      const fetched = res.data?.houses || [];
       setLandlordHouses((prev) => (append ? [...prev, ...fetched] : fetched));
       setPage(pageNum);
-      setTotalPages(total);
+      setTotalPages(res.data?.totalPages || 1);
     } catch (err) {
-      const message =
-        err.response?.data?.error || err.response?.data?.msg || err.message;
-      if (message?.toLowerCase().includes("identity verification required")) {
-        toast.error("Please verify your identity to view your houses");
-      } else {
-        toast.error("Failed to load your listings");
-      }
+      toast.error("Failed to load your listings");
     } finally {
       setLoadingHouses(false);
     }
@@ -85,9 +78,7 @@ export default function DashBoard() {
   }, []);
 
   const loadMoreHouses = () => {
-    if (page < totalPages) {
-      fetchMyHouses(page + 1, true);
-    }
+    if (page < totalPages) fetchMyHouses(page + 1, true);
   };
 
   const handleChange = (e) =>
@@ -101,12 +92,15 @@ export default function DashBoard() {
     const newPreviews = [];
     for (const file of files) {
       try {
-        const options = { maxSizeMB: 1, maxWidthOrHeight: 1024, useWebWorker: true };
-        const compressedFile = await imageCompression(file, options);
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1024,
+          useWebWorker: true,
+        });
         compressedFiles.push(compressedFile);
         newPreviews.push(URL.createObjectURL(compressedFile));
-      } catch (error) {
-        console.error("Image compression error:", error);
+      } catch (err) {
+        console.error("Image compression error:", err);
       }
     }
 
@@ -118,6 +112,7 @@ export default function DashBoard() {
   const removeImage = (index) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    if (primaryImageIndex === index) setPrimaryImageIndex(null);
   };
 
   const handleSubmit = async (e) => {
@@ -138,6 +133,7 @@ export default function DashBoard() {
         formData.append(key, typeof val === "boolean" ? (val ? "true" : "false") : val)
       );
       images.forEach((img) => formData.append("images", img));
+      if (primaryImageIndex !== null) formData.append("primaryImageIndex", primaryImageIndex);
 
       const res = editing
         ? await API.put(`/rentals/${editing._id}`, formData, {
@@ -149,7 +145,7 @@ export default function DashBoard() {
 
       setLandlordHouses((prev) =>
         editing
-          ? prev.map((h) => (h._id === editing._id ? res.data.house || res.data : h))
+          ? prev.map((h) => (h._id === editing._id ? res.data.house : h))
           : [res.data.house, ...prev]
       );
 
@@ -169,9 +165,10 @@ export default function DashBoard() {
       });
       setImages([]);
       setPreviewUrls([]);
+      setPrimaryImageIndex(null);
       setEditing(null);
-    } catch (error) {
-      console.error("Error uploading house:", error);
+    } catch (err) {
+      console.error(err);
       toast.error("Something went wrong while uploading");
     } finally {
       setUploading(false);
@@ -209,11 +206,7 @@ export default function DashBoard() {
 
   const toggleAvailability = async (id, currentStatus) => {
     try {
-      await API.patch(
-        `/rentals/${id}/availability`,
-        { available: !currentStatus },
-        { headers: { "Content-Type": "application/json" } }
-      );
+      await API.patch(`/rentals/${id}/availability`, { available: !currentStatus });
       setLandlordHouses((prev) =>
         prev.map((h) => (h._id === id ? { ...h, available: !currentStatus } : h))
       );
@@ -227,6 +220,7 @@ export default function DashBoard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 sm:px-8 py-10">
+      {/* Header */}
       <div className="flex items-center justify-center gap-3 mb-10">
         <Home size={34} className="text-blue-500 drop-shadow-md" />
         <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
@@ -234,6 +228,7 @@ export default function DashBoard() {
         </h1>
       </div>
 
+      {/* Verification Warning */}
       {user?.verification?.status !== "verified" && (
         <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
           <p>⚠️ Your account is not verified. You must verify your identity to post houses.</p>
@@ -246,6 +241,7 @@ export default function DashBoard() {
         </div>
       )}
 
+      {/* House Form */}
       <form
         onSubmit={handleSubmit}
         className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
@@ -258,91 +254,28 @@ export default function DashBoard() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <input
-            name="title"
-            placeholder="House Title"
-            value={form.title}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          />
-          <input
-            name="location"
-            placeholder="Location"
-            value={form.location}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          />
-          <input
-            name="price"
-            type="number"
-            placeholder="Price (₦)"
-            value={form.price}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          />
+          {/* Inputs */}
+          <input name="title" placeholder="House Title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
+          <input name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
+          <input name="price" type="number" placeholder="Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
 
-          {/* Dropdowns for numeric fields */}
-          <select
-            name="rooms"
-            value={form.rooms}
-            onChange={handleChange}
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          >
-            {numberOptions.map((n) => (
-              <option key={n} value={n}>{n} Room{n !== 1 && "s"}</option>
-            ))}
+          {/* Dropdowns */}
+          <select name="rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
+            {numberOptions.map((n) => (<option key={n} value={n}>{n} Room{n !== 1 && "s"}</option>))}
+          </select>
+          <select name="baths" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
+            {numberOptions.map((n) => (<option key={n} value={n}>{n} Bath{n !== 1 && "s"}</option>))}
+          </select>
+          <select name="toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
+            {numberOptions.map((n) => (<option key={n} value={n}>{n} Toilet{n !== 1 && "s"}</option>))}
+          </select>
+          <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
+            {numberOptions.map((n) => (<option key={n} value={n}>{n} Parking Space{n !== 1 && "s"}</option>))}
           </select>
 
-          <select
-            name="baths"
-            value={form.baths}
-            onChange={handleChange}
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          >
-            {numberOptions.map((n) => (
-              <option key={n} value={n}>{n} Bath{n !== 1 && "s"}</option>
-            ))}
-          </select>
+          <input name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200" />
 
-          <select
-            name="toilets"
-            value={form.toilets}
-            onChange={handleChange}
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          >
-            {numberOptions.map((n) => (
-              <option key={n} value={n}>{n} Toilet{n !== 1 && "s"}</option>
-            ))}
-          </select>
-
-          <select
-            name="parking"
-            value={form.parking}
-            onChange={handleChange}
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          >
-            {numberOptions.map((n) => (
-              <option key={n} value={n}>{n} Parking Space{n !== 1 && "s"}</option>
-            ))}
-          </select>
-
-          <input
-            name="area"
-            placeholder="Area (sqft)"
-            value={form.area}
-            onChange={handleChange}
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          />
-
-          <select
-            name="period"
-            value={form.period}
-            onChange={handleChange}
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200"
-          >
+          <select name="period" value={form.period} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200">
             <option value="per month">Per Month</option>
             <option value="per year">Per Year</option>
           </select>
@@ -350,77 +283,44 @@ export default function DashBoard() {
           {!editing && (
             <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
               <Upload size={18} className="text-blue-400" />
-              <span className="text-gray-300">
-                {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Upload house images"}
-              </span>
+              <span className="text-gray-300">{images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Upload house images"}</span>
               <input type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
             </label>
           )}
         </div>
 
+        {/* Negotiable Switch */}
         <div className="flex items-center gap-3">
-          <Switch
-            checked={form.negotiable}
-            onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))}
-            className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
-          >
+          <Switch checked={form.negotiable} onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))} className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
             <span className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
           </Switch>
           <span className="text-sm text-gray-300">Price Negotiable</span>
         </div>
 
+        {/* Preview Images */}
         {previewUrls.length > 0 && (
           <div className="flex flex-wrap gap-3 mt-5">
             {previewUrls.map((url, i) => (
-              <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-700">
+              <div key={i} className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 cursor-pointer transition ${primaryImageIndex === i ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"}`} onClick={() => setPrimaryImageIndex(i)} title="Click to set as primary image">
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
+                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
                   <XCircle size={14} />
                 </button>
+                {primaryImageIndex === i && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">Primary</span>}
               </div>
             ))}
           </div>
         )}
 
-        <textarea
-          name="description"
-          placeholder="Brief description about the house"
-          value={form.description}
-          onChange={handleChange}
-          rows="3"
-          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-          required
-        />
+        <textarea name="description" placeholder="Brief description about the house" value={form.description} onChange={handleChange} rows="3" className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" required />
 
+        {/* Buttons */}
         <div className="flex gap-3 flex-wrap">
-          <button
-            type="submit"
-            disabled={uploading}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30"
-          >
+          <button type="submit" disabled={uploading} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30">
             {uploading ? "Uploading..." : editing ? "Update House" : "Add House"}
           </button>
           {editing && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(null);
-                setForm({
-                  title: "",
-                  location: "",
-                  price: "",
-                  description: "",
-                  negotiable: false,
-                  rooms: 0,
-                  baths: 0,
-                  toilets: 0,
-                  parking: 0,
-                  area: "",
-                  period: "per year",
-                });
-              }}
-              className="flex items-center gap-2 text-gray-400 hover:text-blue-400"
-            >
+            <button type="button" onClick={() => { setEditing(null); setForm({ title: "", location: "", price: "", description: "", negotiable: false, rooms: 0, baths: 0, toilets: 0, parking: 0, area: "", period: "per year" }); }} className="flex items-center gap-2 text-gray-400 hover:text-blue-400">
               <XCircle size={18} /> Cancel
             </button>
           )}
@@ -436,94 +336,41 @@ export default function DashBoard() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-             {landlordHouses.map((h) => (
-              <Link 
-                key={h._id}
-                to={`/listings/${h._id}`}
-                className="transition-transform duration-300 hover:scale-[1.02]">
-              <div
-                key={h._id}
-                className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
-              >
-                <img
-                  src={h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
-                  alt={h.title}
-                  onClick={() => { setZoomedHouse(h); setActiveIndex(0); }}
-                  className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition"
-                />
-                <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-semibold text-white">{h.title}</h3>
-                  <p className="text-gray-400 text-sm flex items-center gap-1">
-                    <MapPin size={14} /> {h.location}
-                  </p>
-                  <p className="text-blue-400 font-semibold mt-2">
-                    ₦{Number(h.price).toLocaleString()}
-                    {h.period && <span className="text-gray-400 font-normal"> / {h.period}</span>}
-                  </p>
-                  <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
+              {landlordHouses.map((h) => (
+                <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all">
+                  <img src={ h.primaryImage || h.images?.[0] || "https://placehold.co/400x300?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition" />
+                  <div className="p-5 space-y-2">
+                    <h3 className="text-lg font-semibold text-white">{h.title}</h3>
+                    <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
+                    <p className="text-blue-400 font-semibold mt-2">₦{Number(h.price).toLocaleString()}{h.period && <span className="text-gray-400 font-normal"> / {h.period}</span>}</p>
+                    <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
 
-                  {/* 🏠 Property Details Footer Icons */}
-                  <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
-                    <div className="flex items-center gap-1">
-                      <BedDouble size={14} /> {h.rooms || 0}
+                    <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
+                      <div className="flex items-center gap-1"><BedDouble size={14} /> {h.rooms || 0}</div>
+                      <div className="flex items-center gap-1"><Bath size={14} /> {h.baths || 0}</div>
+                      <div className="flex items-center gap-1"><Toilet size={14} /> {h.toilets || 0}</div>
+                      <div className="flex items-center gap-1"><Car size={14} /> {h.parking || 0}</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Bath size={14} /> {h.baths || 0}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Toilet size={14} /> {h.toilets || 0}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Car size={14} /> {h.parking || 0}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between mt-4">
-                    <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>
-                      {h.available ? "Available" : "Occupied"}
-                    </span>
-                    <Switch
-                      checked={h.available}
-                      onChange={() => toggleAvailability(h._id, h.available)}
-                      className={`${h.available ? "bg-green-500" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
-                    >
-                      <span
-                        className={`${h.available ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </Switch>
-                  </div>
+                    <div className="flex items-center justify-between mt-4">
+                      <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>{h.available ? "Available" : "Occupied"}</span>
+                      <Switch checked={h.available} onChange={() => toggleAvailability(h._id, h.available)} className={`${h.available ? "bg-green-500" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
+                        <span className={`${h.available ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                      </Switch>
+                    </div>
 
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => startEditing(h)}
-                      className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
-                    >
-                      <Edit3 size={14} /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(h._id)}
-                      className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
-                    >
-                      <Trash2 size={14} /> Delete
-                    </button>
+                    <div className="flex gap-2 mt-4">
+                      <button onClick={() => startEditing(h)} className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"><Edit3 size={14} /> Edit</button>
+                      <button onClick={() => handleDelete(h._id)} className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"><Trash2 size={14} /> Delete</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              </Link>
-            )
-            )}
-
+              ))}
             </div>
 
-            {/* Load More */}
             {page < totalPages && (
               <div className="flex justify-center mt-8">
-                <button
-                  onClick={loadMoreHouses}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition"
-                >
-                  Load More
-                </button>
+                <button onClick={loadMoreHouses} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition">Load More</button>
               </div>
             )}
           </>
