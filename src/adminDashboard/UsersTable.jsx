@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Home, Building2 } from "lucide-react";
-import Landlords from "./landlords";
+import Landlords from "./Landlords";
 import Agents from "./Agents";
 import Tenants from "./Tenants";
 
