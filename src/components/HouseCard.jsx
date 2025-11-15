@@ -1,58 +1,30 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import {
-  MapPin,
-  Home,
-  Info,
-  Wallet,
-  BedDouble,
-  Bath,
-  Toilet,
-  Car,
-  Star,
-  Heart,
-  Phone,
-  X,
-} from "lucide-react";
+import { MapPin, Home, Info, Wallet, BedDouble, Bath, Toilet, Car, Star, Heart, Phone, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// NaijaHome logo as SVG watermark
-const NaijahomeLogoSVG = ({ width = 180, height = 55 }) => (
-  <svg
-    width={width}
-    height={height}
-    viewBox="0 0 300 90"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ opacity: 0.15 }} // almost transparent watermark
-  >
-    <path d="M20 40 L40 20 L60 40 V70 H20 V40 Z" fill="url(#grad1)" />
-    <path d="M40 70 V50 H50 V70 H40 Z" fill="#fff" />
-    <text
-      x="70"
-      y="55"
-      fontFamily="Poppins, sans-serif"
-      fontWeight="700"
-      fontSize="30"
-      fill="url(#grad1)"
-    >
-      Naijahome
-    </text>
-    <defs>
-      <linearGradient id="grad1" x1="0" y1="0" x2="100%" y2="0">
-        <stop offset="0%" stopColor="#3B82F6" />
-        <stop offset="100%" stopColor="#2563EB" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+// In-memory cache for watermarked canvases
+const canvasCache = new Map();
 
 // Reusable canvas component for watermark + right-click protection
-function ProtectedWatermarkedImage({ src, alt, className, onClick }) {
+const ProtectedWatermarkedImage = React.memo(({ src, alt, className, onClick }) => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    if (!src) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    if (canvasCache.has(src)) {
+      const cachedImg = canvasCache.get(src);
+      const ctx = canvas.getContext("2d");
+      canvas.width = cachedImg.width;
+      canvas.height = cachedImg.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(cachedImg, 0, 0);
+      return;
+    }
+
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -61,9 +33,10 @@ function ProtectedWatermarkedImage({ src, alt, className, onClick }) {
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
 
-      // Render SVG watermark onto canvas
+      // SVG watermark
       const svgData = `
         <svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
           <g opacity="0.15">
@@ -87,6 +60,7 @@ function ProtectedWatermarkedImage({ src, alt, className, onClick }) {
       svgImg.src = url;
       svgImg.onload = () => {
         ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
+        canvasCache.set(src, canvas.cloneNode(true));
         URL.revokeObjectURL(url);
       };
     };
@@ -106,17 +80,24 @@ function ProtectedWatermarkedImage({ src, alt, className, onClick }) {
       onContextMenu={handleRightClick}
     />
   );
-}
+});
 
+// Main HouseCard
 export default function HouseCard({ house }) {
   const [zoomed, setZoomed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saved, setSaved] = useState(false);
   const images = Array.isArray(house.images) ? house.images : [];
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(price || 0);
+  const formattedPrice = useMemo(() => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(house.price || 0);
+  }, [house.price]);
 
+  // Load saved favorites
   useEffect(() => {
     const savedList = JSON.parse(localStorage.getItem("savedProperties")) || [];
     if (house.id && savedList.includes(house.id)) setSaved(true);
@@ -125,14 +106,10 @@ export default function HouseCard({ house }) {
   const toggleSave = (e) => {
     e.stopPropagation();
     const savedList = JSON.parse(localStorage.getItem("savedProperties")) || [];
-    let updated;
-    if (saved) {
-      updated = savedList.filter((id) => id !== house.id);
-      setSaved(false);
-    } else {
-      updated = [...savedList, house.id];
-      setSaved(true);
-    }
+    const updated = saved
+      ? savedList.filter((id) => id !== house.id)
+      : [...savedList, house.id];
+    setSaved(!saved);
     localStorage.setItem("savedProperties", JSON.stringify(updated));
   };
 
@@ -142,9 +119,10 @@ export default function HouseCard({ house }) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  const getOptimizedSrc = (src, w = 800) => `${src}?w=${w}&f_auto&q_auto`;
+
   return (
     <div className="relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-transform duration-300 border border-gray-800 cursor-pointer">
-      {/* Premium Ribbon */}
       {house.premium && (
         <div className="absolute top-3 left-[-40px] bg-gradient-to-r from-blue-600 to-blue-500 text-white text-[11px] font-semibold py-1 px-12 rotate-[-45deg] shadow-md">
           Premium
@@ -154,46 +132,17 @@ export default function HouseCard({ house }) {
       {/* Main Image */}
       <div className="relative group">
         <ProtectedWatermarkedImage
-          src={house.primaryImage || images[0] || "https://via.placeholder.com/400x250?text=No+Image"}
+          src={getOptimizedSrc(house.primaryImage || images[0] || "https://via.placeholder.com/400x250?text=No+Image")}
           alt={house.title || "House image"}
           className="w-full h-48 sm:h-60 object-cover transition-transform duration-500 group-hover:scale-105"
           onClick={() => setZoomed(true)}
         />
-
-
-        {/* Rent Badge */}
         <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
           <Home size={13} /> {house.type || "Rent"}
         </div>
-
-        {/* Availability */}
-        <div
-          className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md ${
-            house.available ? "bg-green-600 text-white" : "bg-red-600 text-white"
-          }`}
-        >
+        <div className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md ${house.available ? "bg-green-600" : "bg-red-600"} text-white`}>
           {house.available ? "Available" : "Occupied"}
         </div>
-
-        {/* Negotiable / Fixed Price */}
-        {house.negotiable !== undefined && (
-          <div
-            className={`absolute bottom-3 left-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md border ${
-              house.negotiable
-                ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                : "bg-gray-700 text-gray-200 border-gray-600"
-            }`}
-          >
-            {house.negotiable ? "Negotiable" : "Fixed Price"}
-          </div>
-        )}
-
-        {/* Image Count */}
-        {images.length > 0 && (
-          <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-            <i className="fal fa-camera"></i> {images.length} Photos
-          </div>
-        )}
       </div>
 
       {/* Details */}
@@ -201,14 +150,12 @@ export default function HouseCard({ house }) {
         <h3 className="text-base sm:text-lg font-semibold mb-1 flex items-center gap-2">
           <Info size={16} className="text-blue-400" /> {house.title || "Untitled House"}
         </h3>
-
         <div className="flex items-center gap-1 text-gray-300 text-sm mb-2">
           <MapPin size={14} className="text-blue-400" />
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
-
         <p className="text-blue-400 font-bold flex items-center gap-1 text-base sm:text-lg">
-          <Wallet size={16} /> {formatPrice(house.price)}
+          <Wallet size={16} /> {formattedPrice}
           {house.period && (
             <span className="text-gray-300 text-xs sm:text-sm font-medium">/{house.period}</span>
           )}
@@ -230,14 +177,12 @@ export default function HouseCard({ house }) {
           ))}
           <li
             className="flex items-center gap-1 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); toggleSave(e); }}
+            onClick={toggleSave}
             title={saved ? "Remove from favorites" : "Save property"}
           >
             <Heart
               size={14}
-              className={`transition ${
-                saved ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"
-              }`}
+              className={`transition ${saved ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`}
             />
           </li>
         </ul>
@@ -255,68 +200,64 @@ export default function HouseCard({ house }) {
         )}
       </div>
 
-      {/* Zoom Modal with Slider */}
-      {zoomed && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4 overflow-auto"
-          onClick={() => setZoomed(false)}
-        >
-          <button
+      {/* Zoom Modal */}
+      <AnimatePresence>
+        {zoomed && (
+          <motion.div
+            key="zoom"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4 overflow-auto"
             onClick={() => setZoomed(false)}
-            className="absolute top-5 right-5 bg-gray-700 text-white rounded-full p-2 shadow-md hover:bg-gray-600 transition"
           >
-            <X size={20} />
-          </button>
+            <button
+              onClick={() => setZoomed(false)}
+              className="absolute top-5 right-5 bg-gray-700 text-white rounded-full p-2 shadow-md hover:bg-gray-600 transition"
+            >
+              <X size={20} />
+            </button>
 
-          <div className="relative max-w-[90%] max-h-[70vh]">
-            {/* Main Zoomed Image */}
-          <ProtectedWatermarkedImage
-            src={house.primaryImage || images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
-            alt={`House ${activeIndex + 1}`}
-            className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-gray-700 transition-transform duration-300"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-
-            {/* Prev Arrow */}
-            {images.length > 1 && activeIndex > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
-                className="absolute top-1/2 left-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
-              >
-                ◀
-              </button>
-            )}
-
-            {/* Next Arrow */}
-            {images.length > 1 && activeIndex < images.length - 1 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
-                className="absolute top-1/2 right-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
-              >
-                ▶
-              </button>
-            )}
-          </div>
-
-          {/* Thumbnail Selector */}
-          {images.length > 1 && (
-            <div className="flex gap-2 flex-wrap justify-center mt-4" onClick={e => e.stopPropagation()}>
-              {images.map((img, index) => (
-                <ProtectedWatermarkedImage
-                  key={index}
-                  src={img}
-                  alt={`House ${index + 1}`}
-                  className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
-                    activeIndex === index ? "border-blue-400 scale-105" : "border-transparent hover:opacity-80"
-                  }`}
-                  onClick={() => setActiveIndex(index)}
-                />
-              ))}
+            <div className="relative max-w-[90%] max-h-[70vh]">
+              <ProtectedWatermarkedImage
+                src={getOptimizedSrc(house.primaryImage || images[activeIndex] || "https://via.placeholder.com/800x500?text=No+Image")}
+                alt={`House ${activeIndex + 1}`}
+                className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-gray-700 transition-transform duration-300"
+                onClick={(e) => e.stopPropagation()}
+              />
+              {images.length > 1 && activeIndex > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
+                  className="absolute top-1/2 left-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
+                >◀</button>
+              )}
+              {images.length > 1 && activeIndex < images.length - 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
+                >▶</button>
+              )}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div className="flex gap-2 flex-wrap justify-center mt-4" onClick={e => e.stopPropagation()}>
+                {images.map((img, index) => (
+                  <ProtectedWatermarkedImage
+                    key={index}
+                    src={getOptimizedSrc(img, 400)}
+                    alt={`House ${index + 1}`}
+                    className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
+                      activeIndex === index ? "border-blue-400 scale-105" : "border-transparent hover:opacity-80"
+                    }`}
+                    onClick={() => setActiveIndex(index)}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

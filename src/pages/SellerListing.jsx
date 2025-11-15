@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import SaleCard from "./SaleCard";
+import SaleCard from "../components/cards/SaleCard";
 import { useHouses } from "../context/HouseContext";
 import { Search, MapPin, DollarSign, ArrowUpDown, XCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";

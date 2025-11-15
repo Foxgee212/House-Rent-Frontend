@@ -17,10 +17,10 @@ import VerifyOtp from "./pages/OTPPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerificationDetails from "./pages/VerificationDetails";
-import BuyPage from "./Buy/Buy";
-import BuyDetail from "./Buy/BuyDetails";
-import SellerDashboard from "./Buy/SellerDashboard";
-import AgentListings from "./Buy/SellerListing";
+import BuyPage from "./pages/Buy";
+import BuyDetail from "./pages/BuyDetails";
+import SellerDashboard from "./pages/SellerDashboard";
+import AgentListings from "./pages/SellerListing";
 import NotFound from "./pages/NotFound";
 // Components
 import PrivateRoute from "./components/PrivateRoute";

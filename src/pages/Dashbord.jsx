@@ -76,7 +76,17 @@ export default function DashBoard() {
 
   useEffect(() => {
     fetchMyHouses();
+    // Cleanup preview URLs on unmount
+    return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }, []);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -108,6 +118,7 @@ export default function DashBoard() {
   };
 
   const removeNewImage = (index) => {
+    URL.revokeObjectURL(previewUrls[index]);
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
@@ -127,15 +138,11 @@ export default function DashBoard() {
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, val]) =>
-        formData.append(
-          key,
-          typeof val === "boolean" ? (val ? "true" : "false") : val
-        )
+        formData.append(key, typeof val === "boolean" ? (val ? "true" : "false") : val)
       );
 
-      if (existingImages.length > 0) {
+      if (existingImages.length > 0)
         formData.append("existingImages", JSON.stringify(existingImages));
-      }
 
       images.forEach((img) => formData.append("images", img));
       if (primaryImageIndex !== null)
@@ -180,6 +187,7 @@ export default function DashBoard() {
       period: "per year",
     });
     setImages([]);
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
     setPreviewUrls([]);
     setExistingImages([]);
     setPrimaryImageIndex(null);
@@ -213,17 +221,26 @@ export default function DashBoard() {
       setLandlordHouses((prev) =>
         prev.map((h) => (h._id === id ? { ...h, available: !currentStatus } : h))
       );
-      toast.success(
-        !currentStatus
-          ? "🏠 House marked as available"
-          : "🚫 House marked as occupied"
-      );
+      toast.success(!currentStatus ? "🏠 House marked as available" : "🚫 House marked as occupied");
     } catch {
       toast.error("Failed to update availability");
     }
   };
 
-  const numberOptions = Array.from({ length: 7 }, (_, i) => i);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this house?")) return;
+    try {
+      await API.delete(`/rentals/${id}`);
+      setLandlordHouses((prev) => prev.filter((h) => h._id !== id));
+      toast.success("🗑️ House deleted successfully");
+    } catch {
+      toast.error("Failed to delete house");
+    }
+  };
+
+  const loadMoreHouses = () => {
+    if (page < totalPages) fetchMyHouses(page + 1, true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 px-4 sm:px-8 py-10">
@@ -251,28 +268,15 @@ export default function DashBoard() {
               ? `${images.length} new image${images.length > 1 ? "s" : ""} selected`
               : "Upload or add more images"}
           </span>
-          <input
-            type="file"
-            multiple
-            onChange={handleImageChange}
-            className="hidden"
-            accept="image/*"
-          />
+          <input type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
         </label>
 
         {/* Image Preview */}
         {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
             {existingImages.map((url, i) => (
-              <div
-                key={`old-${i}`}
-                className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700"
-              >
-                <img
-                  src={url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+              <div key={`old-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700">
+                <img src={url} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -284,17 +288,9 @@ export default function DashBoard() {
                 </button>
               </div>
             ))}
-
             {previewUrls.map((url, i) => (
-              <div
-                key={`new-${i}`}
-                className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700"
-              >
-                <img
-                  src={url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+              <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700">
+                <img src={url} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -309,15 +305,31 @@ export default function DashBoard() {
           </div>
         )}
 
-        <textarea name="description" placeholder="Brief description about the house" value={form.description} onChange={handleChange} rows="3" className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" required />
+        <textarea
+          name="description"
+          placeholder="Brief description about the house"
+          value={form.description}
+          onChange={handleChange}
+          rows="3"
+          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          required
+        />
 
         {/* Buttons */}
         <div className="flex gap-3 flex-wrap">
-          <button type="submit" disabled={uploading} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30">
+          <button
+            type="submit"
+            disabled={uploading}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30"
+          >
             {uploading ? "Uploading..." : editing ? "Update House" : "Add House"}
           </button>
           {editing && (
-            <button type="button" onClick={() => { setEditing(null); setForm({ title: "", location: "", price: "", description: "", negotiable: false, rooms: 0, baths: 0, toilets: 0, parking: 0, area: "", period: "per year" }); }} className="flex items-center gap-2 text-gray-400 hover:text-blue-400">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="flex items-center gap-2 text-gray-400 hover:text-blue-400"
+            >
               <XCircle size={18} /> Cancel
             </button>
           )}
@@ -334,31 +346,73 @@ export default function DashBoard() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {landlordHouses.map((h) => (
-                <div key={h._id} className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all">
-                  <img src={ h.primaryImage || h.images?.[0] || "https://placehold.co/400x300?text=No+Image"} alt={h.title} className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition" />
+                <div
+                  key={h._id}
+                  className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
+                >
+                  <img
+                    src={h.primaryImage || h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
+                    alt={h.title}
+                    className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition"
+                  />
                   <div className="p-5 space-y-2">
                     <h3 className="text-lg font-semibold text-white">{h.title}</h3>
-                    <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
-                    <p className="text-blue-400 font-semibold mt-2">₦{Number(h.price).toLocaleString()}{h.period && <span className="text-gray-400 font-normal"> / {h.period}</span>}</p>
+                    <p className="text-gray-400 text-sm flex items-center gap-1">
+                      <MapPin size={14} /> {h.location}
+                    </p>
+                    <p className="text-blue-400 font-semibold mt-2">
+                      ₦{Number(h.price).toLocaleString()}
+                      {h.period && <span className="text-gray-400 font-normal"> / {h.period}</span>}
+                    </p>
                     <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
 
                     <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
-                      <div className="flex items-center gap-1"><BedDouble size={14} /> {h.rooms || 0}</div>
-                      <div className="flex items-center gap-1"><Bath size={14} /> {h.baths || 0}</div>
-                      <div className="flex items-center gap-1"><Toilet size={14} /> {h.toilets || 0}</div>
-                      <div className="flex items-center gap-1"><Car size={14} /> {h.parking || 0}</div>
+                      <div className="flex items-center gap-1">
+                        <BedDouble size={14} /> {h.rooms || 0}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Bath size={14} /> {h.baths || 0}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Toilet size={14} /> {h.toilets || 0}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Car size={14} /> {h.parking || 0}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between mt-4">
-                      <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>{h.available ? "Available" : "Occupied"}</span>
-                      <Switch checked={h.available} onChange={() => toggleAvailability(h._id, h.available)} className={`${h.available ? "bg-green-500" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
-                        <span className={`${h.available ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                      <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>
+                        {h.available ? "Available" : "Occupied"}
+                      </span>
+                      <Switch
+                        checked={h.available}
+                        onChange={() => toggleAvailability(h._id, h.available)}
+                        className={`${
+                          h.available ? "bg-green-500" : "bg-gray-600"
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                      >
+                        <span
+                          className={`${
+                            h.available ? "translate-x-6" : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
                       </Switch>
                     </div>
 
                     <div className="flex gap-2 mt-4">
-                      <button onClick={() => startEditing(h)} className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"><Edit3 size={14} /> Edit</button>
-                      <button onClick={() => handleDelete(h._id)} className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"><Trash2 size={14} /> Delete</button>
+                      <button
+                        onClick={() => startEditing(h)}
+                        className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
+                      >
+                        <Edit3 size={14} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(h._id)}
+                        className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -367,7 +421,12 @@ export default function DashBoard() {
 
             {page < totalPages && (
               <div className="flex justify-center mt-8">
-                <button onClick={loadMoreHouses} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition">Load More</button>
+                <button
+                  onClick={loadMoreHouses}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition"
+                >
+                  Load More
+                </button>
               </div>
             )}
           </>

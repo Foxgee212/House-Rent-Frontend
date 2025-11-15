@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect, useRef, memo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
 import {
@@ -20,23 +20,34 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 
-// Reusable watermarked + right-click protected image
-const ProtectedWatermarkedImage = ({ src, alt, className, onClick }) => {
+// Helper to optimize Cloudinary URLs
+const getOptimizedCloudinaryURL = (url, width = 800) => {
+  if (!url) return url;
+  if (url.includes("cloudinary.com")) {
+    return `${url}?w=${width}&f_auto&q_auto`;
+  }
+  return url;
+};
+
+// Reusable watermarked + right-click protected canvas image
+const ProtectedWatermarkedImage = memo(({ src, alt, className, onClick, lazy = true }) => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    if (!src) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = src;
+    img.src = getOptimizedCloudinaryURL(src, 1200);
 
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
 
+      // Watermark
       const svgData = `
         <svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
           <g opacity="0.15">
@@ -67,9 +78,23 @@ const ProtectedWatermarkedImage = ({ src, alt, className, onClick }) => {
       alt={alt}
       onClick={onClick}
       onContextMenu={handleRightClick}
+      loading={lazy ? "lazy" : "eager"}
     />
   );
-};
+});
+
+// Thumbnail component
+const Thumbnail = memo(({ img, selected, onClick }) => (
+  <ProtectedWatermarkedImage
+    src={img}
+    alt="Thumbnail"
+    lazy={true}
+    className={`w-20 h-20 object-cover rounded-xl cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${
+      selected ? "border-blue-500" : "border-transparent"
+    }`}
+    onClick={onClick}
+  />
+));
 
 export default function BuyDetail() {
   const { id } = useParams();
@@ -82,7 +107,8 @@ export default function BuyDetail() {
 
   const firstImage = useMemo(() => house?.images?.[0] || "/default-house.jpg", [house]);
   const message = useMemo(
-    () => `Hello, I'm interested in purchasing your property located in ${house?.location}. Is it still available?`,
+    () =>
+      `Hello, I'm interested in purchasing your property located in ${house?.location}. Is it still available?`,
     [house?.location]
   );
 
@@ -127,13 +153,8 @@ export default function BuyDetail() {
     setZoomOpen(true);
   };
 
-  const nextImage = () => {
-    setZoomIndex((prev) => (prev + 1) % (images?.length || 1));
-  };
-
-  const prevImage = () => {
-    setZoomIndex((prev) => (prev - 1 + (images?.length || 1)) % (images?.length || 1));
-  };
+  const nextImage = () => setZoomIndex((prev) => (prev + 1) % (images?.length || 1));
+  const prevImage = () => setZoomIndex((prev) => (prev - 1 + (images?.length || 1)) % (images?.length || 1));
 
   return (
     <div className="min-h-screen bg-gray-900 pb-16">
@@ -170,34 +191,28 @@ export default function BuyDetail() {
           {images?.length > 1 && (
             <div className="flex overflow-x-auto gap-2 px-3 py-3 bg-gray-800">
               {images.map((img, i) => (
-                <ProtectedWatermarkedImage
+                <Thumbnail
                   key={i}
-                  src={img}
-                  alt={`Thumbnail ${i}`}
-                  className={`w-20 h-20 object-cover rounded-xl cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${
-                    selectedImage === img ? "border-blue-500" : "border-transparent"
-                  }`}
+                  img={img}
+                  selected={selectedImage === img}
                   onClick={() => handleImageClick(img, i)}
                 />
               ))}
             </div>
           )}
 
-          {/* Details Section */}
+          {/* Details */}
           <div className="px-6 py-5 space-y-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
-                <Home size={22} className="text-blue-400" /> {title}
-              </h1>
-              <p className="flex items-center gap-2 mt-2 text-gray-300">
-                <MapPin size={16} className="text-blue-400" /> {location}
-              </p>
-              <p className="text-green-400 font-bold text-xl mt-3 flex items-center gap-2">
-                <Wallet size={18} /> ₦{price?.toLocaleString()}
-                <span className="text-gray-300 text-base font-medium">/sale</span>
-              </p>
-            </div>
-
+            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+              <Home size={22} className="text-blue-400" /> {title}
+            </h1>
+            <p className="flex items-center gap-2 mt-2 text-gray-300">
+              <MapPin size={16} className="text-blue-400" /> {location}
+            </p>
+            <p className="text-green-400 font-bold text-xl mt-3 flex items-center gap-2">
+              <Wallet size={18} /> ₦{price?.toLocaleString()}
+              <span className="text-gray-300 text-base font-medium">/sale</span>
+            </p>
             {description && <p className="text-gray-300 leading-relaxed text-[15px]">{description}</p>}
 
             <div className="flex flex-wrap gap-4 text-gray-300 text-sm sm:text-base">
@@ -218,12 +233,11 @@ export default function BuyDetail() {
               </span>
             </div>
 
-            {/* Seller Card */}
+            {/* Seller Info */}
             <div className="bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-md border border-gray-700">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
                 <Home size={20} className="text-blue-400" /> Seller Info
               </h2>
-
               <div className="flex flex-col sm:flex-row sm:items-center sm:gap-5">
                 <div className="relative mx-auto sm:mx-0 flex-shrink-0">
                   <img
@@ -237,11 +251,8 @@ export default function BuyDetail() {
                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-blue-400 shadow-md"
                   />
                 </div>
-
                 <div className="mt-3 sm:mt-0 text-center sm:text-left flex-1">
-                  <p className="text-base sm:text-lg font-semibold text-white">
-                    {house.landlord?.name || "Unknown Seller"}
-                  </p>
+                  <p className="text-base sm:text-lg font-semibold text-white">{house.landlord?.name || "Unknown Seller"}</p>
                   <div className="mt-1 space-y-1 text-gray-300 text-sm sm:text-base">
                     <p className="flex items-center justify-center sm:justify-start gap-2 truncate">
                       <Mail size={14} className="text-blue-400" /> {house.landlord?.email || "No Email"}
@@ -276,7 +287,7 @@ export default function BuyDetail() {
             </div>
           </div>
 
-          {/* Recommended Section */}
+          {/* Recommended */}
           {recommendedHouses.length > 0 && (
             <div className="px-6 py-5">
               <h2 className="text-lg sm:text-xl font-bold mb-3 text-white">You may also like</h2>
@@ -288,7 +299,7 @@ export default function BuyDetail() {
                     className="min-w-[200px] bg-gray-800 shadow-md rounded-xl p-3 flex-shrink-0 relative hover:shadow-lg transition-all border border-gray-700"
                   >
                     <ProtectedWatermarkedImage
-                      src={ rec.primaryImage || rec.images?.[0] || "https://via.placeholder.com/400x250?text=🏠+No+Image"} 
+                      src={rec.primaryImage || rec.images?.[0] || "https://via.placeholder.com/400x250?text=No+Image"}
                       alt={rec.title}
                       className="w-full h-32 object-cover rounded-lg"
                     />
@@ -323,10 +334,7 @@ export default function BuyDetail() {
           </button>
 
           <div className="flex items-center justify-center w-full h-full px-6">
-            <button
-              className="text-white p-3 rounded-full hover:bg-gray-800"
-              onClick={prevImage}
-            >
+            <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={prevImage}>
               <ChevronLeft size={32} />
             </button>
 
@@ -336,10 +344,7 @@ export default function BuyDetail() {
               className="max-h-[90vh] max-w-full object-contain rounded-xl"
             />
 
-            <button
-              className="text-white p-3 rounded-full hover:bg-gray-800"
-              onClick={nextImage}
-            >
+            <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={nextImage}>
               <ChevronRight size={32} />
             </button>
           </div>

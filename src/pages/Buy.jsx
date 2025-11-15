@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
-import SaleCard from "./SaleCard";
+import SaleCard from "../components/cards/SaleCard";
 import LoadingBar from "react-top-loading-bar";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,8 +19,6 @@ export default function BuyPage() {
     loadingBarRef.current?.continuousStart();
     try {
       const data = await fetchApprovedSales(pageNumber, 12);
- 
-      // Safely ensure data structure
       const housesData = data?.houses ?? [];
       const pages = data?.totalPages ?? 1;
 
@@ -78,7 +76,12 @@ export default function BuyPage() {
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             className="relative z-20 text-blue-400 drop-shadow-[0_0_25px_rgba(59,130,246,0.9)]"
           >
-            <Building2 size={62} strokeWidth={2.5} color="#3b82f6" />
+            <Building2
+              size={62}
+              strokeWidth={2.5}
+              color="#3b82f6"
+              fetchpriority="high" // LCP optimization
+            />
           </motion.div>
         </div>
         <motion.p
@@ -109,6 +112,7 @@ export default function BuyPage() {
               <Building2
                 size={48}
                 className="text-white drop-shadow-2xl sm:text-[56px]"
+                fetchpriority="high" // LCP optimization
               />
             </motion.div>
 
@@ -170,7 +174,13 @@ export default function BuyPage() {
                 to={`/buy/${house._id}`}
                 className="transition-transform duration-300 hover:scale-[1.02]"
               >
-                <SaleCard house={house} className="scale-[0.95] sm:scale-100" />
+                <SaleCard
+                  house={{
+                    ...house,
+                    imageUrl: house.imageUrl + "?w=400&f_auto&q_auto", // optimized for LCP
+                  }}
+                  className="scale-[0.95] sm:scale-100"
+                />
               </Link>
             ))}
           </div>
@@ -206,28 +216,9 @@ export default function BuyPage() {
           © {new Date().getFullYear()} NaijaHome — Own your dream home today.
         </p>
         <p className="text-xs sm:text-sm opacity-80">
-          <Link
-            to="/about"
-            className="underline hover:text-white/80 mx-1"
-          >
-            About
-          </Link>
-          |
-          <Link
-            to="/contact"
-            className="underline hover:text-white/80 mx-1"
-          >
-            Contact
-          </Link>
-          |
-          <a
-            href="https://github.com/your-repo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-white/80 mx-1"
-          >
-            GitHub
-          </a>
+          <Link to="/about" className="underline hover:text-white/80 mx-1">About</Link>|
+          <Link to="/contact" className="underline hover:text-white/80 mx-1">Contact</Link>|
+          <a href="https://github.com/your-repo" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/80 mx-1">GitHub</a>
         </p>
       </footer>
     </div>
