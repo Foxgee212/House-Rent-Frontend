@@ -1,36 +1,36 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 
-
-// Pages
-import Navbar from "./components/Navbar";
-import HomePage from "./pages/Home";
-import Listings from "./pages/Listings";
-import HouseDetail from "./pages/HouseDetails";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Profile from "./pages/Profile";
-import DashBoard from "./pages/Dashbord";
-import AdminDashboard from "./adminDashboard/AdminDashboard";
-import VerifyLandlord from "./pages/VerifyLandlord";
-import VerifyOtp from "./pages/OTPPage";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import VerificationDetails from "./pages/VerificationDetails";
-import BuyPage from "./pages/Buy";
-import BuyDetail from "./pages/BuyDetails";
-import SellerDashboard from "./pages/SellerDashboard";
-import AgentListings from "./pages/SellerListing";
-import NotFound from "./pages/NotFound";
 // Components
+import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
 
-function App() {
+// Lazy-loaded Pages
+const HomePage = lazy(() => import("./pages/Home"));
+const Listings = lazy(() => import("./pages/Listings"));
+const HouseDetail = lazy(() => import("./pages/HouseDetails"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Profile = lazy(() => import("./pages/Profile"));
+const DashBoard = lazy(() => import("./pages/Dashbord"));
+const AdminDashboard = lazy(() => import("./adminDashboard/AdminDashboard"));
+const VerifyLandlord = lazy(() => import("./pages/VerifyLandlord"));
+const VerifyOtp = lazy(() => import("./pages/OTPPage"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerificationDetails = lazy(() => import("./pages/VerificationDetails"));
+const BuyPage = lazy(() => import("./pages/Buy"));
+const BuyDetail = lazy(() => import("./pages/BuyDetails"));
+const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
+const AgentListings = lazy(() => import("./pages/SellerListing"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+export default function App() {
   return (
     <>
       <Navbar />
-      <Routes>
-      
+      <Suspense fallback={<div className="text-center mt-10">Loading...</div>}>
+        <Routes>
           {/* 🌍 Public Routes */}
           <Route path="/rent" element={<HomePage />} />
           <Route path="/listings" element={<Listings />} />
@@ -41,24 +41,21 @@ function App() {
           <Route path="/buy/:id" element={<BuyDetail />} />
           <Route path="/" element={<BuyPage />} />
           <Route path="*" element={<NotFound />} />
-      
+
+          {/* 🔐 Protected Routes */}
           <Route
             path="/profile"
             element={
-                  <PrivateRoute roles={["tenant", "landlord", "agent", "admin"]}>
-                    <Profile />
-                  </PrivateRoute>
-                  }
+              <PrivateRoute roles={["tenant", "landlord", "agent", "admin"]}>
+                <Profile />
+              </PrivateRoute>
+            }
           />
 
-
-
-          {/* 🔐 OTP & Password Recovery */}
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* 🧭 Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -75,7 +72,6 @@ function App() {
               </PrivateRoute>
             }
           />
-          
           <Route
             path="/verify"
             element={
@@ -102,9 +98,8 @@ function App() {
               </PrivateRoute>
             }
           />
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }
-
-export default App;

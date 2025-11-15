@@ -32,6 +32,7 @@ const getOptimizedCloudinaryURL = (url, width = 800) => {
 // Reusable watermarked + right-click protected canvas image
 const ProtectedWatermarkedImage = memo(({ src, alt, className, onClick, lazy = true }) => {
   const canvasRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!src) return;
@@ -62,6 +63,7 @@ const ProtectedWatermarkedImage = memo(({ src, alt, className, onClick, lazy = t
       svgImg.onload = () => {
         ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
+        setLoaded(true); // Mark image as loaded
       };
     };
   }, [src]);
@@ -74,7 +76,7 @@ const ProtectedWatermarkedImage = memo(({ src, alt, className, onClick, lazy = t
   return (
     <canvas
       ref={canvasRef}
-      className={className}
+      className={`${className} transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
       alt={alt}
       onClick={onClick}
       onContextMenu={handleRightClick}
@@ -155,6 +157,29 @@ export default function BuyDetail() {
 
   const nextImage = () => setZoomIndex((prev) => (prev + 1) % (images?.length || 1));
   const prevImage = () => setZoomIndex((prev) => (prev - 1 + (images?.length || 1)) % (images?.length || 1));
+
+  // Keyboard navigation for zoom modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!zoomOpen) return;
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+      if (e.key === "Escape") setZoomOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zoomOpen]);
+
+  // Swipe support for mobile
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e) => { touchStartX.current = e.changedTouches[0].screenX; };
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    if (touchEndX.current - touchStartX.current > 50) prevImage();
+    if (touchStartX.current - touchEndX.current > 50) nextImage();
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 pb-16">
@@ -325,7 +350,11 @@ export default function BuyDetail() {
 
       {/* Zoom Modal */}
       {zoomOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <button
             className="absolute top-6 right-6 text-white bg-gray-800 hover:bg-gray-700 p-2 rounded-full"
             onClick={() => setZoomOpen(false)}
@@ -333,7 +362,7 @@ export default function BuyDetail() {
             <X size={24} />
           </button>
 
-          <div className="flex items-center justify-center w-full h-full px-6">
+          <div className="flex items-center justify-center w-full h-full px-6 relative">
             <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={prevImage}>
               <ChevronLeft size={32} />
             </button>
@@ -341,12 +370,17 @@ export default function BuyDetail() {
             <ProtectedWatermarkedImage
               src={images?.[zoomIndex]}
               alt={`Zoomed ${zoomIndex + 1}`}
-              className="max-h-[90vh] max-w-full object-contain rounded-xl"
+              className="max-h-[90vh] max-w-full object-contain rounded-xl mx-4"
             />
 
             <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={nextImage}>
               <ChevronRight size={32} />
             </button>
+
+            {/* Image index */}
+            <p className="absolute bottom-6 text-white text-sm">
+              {zoomIndex + 1} / {images.length}
+            </p>
           </div>
         </div>
       )}

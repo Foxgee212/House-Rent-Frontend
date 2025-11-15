@@ -5,38 +5,47 @@ import LoadingBar from "react-top-loading-bar";
 import { Search, MapPin, Home } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Memoized HouseCard
+// Memoized HouseCard with lazy load and blur effect
 const HouseCard = React.memo(({ house }) => {
   const [loaded, setLoaded] = useState(false);
+
   const imgUrl = `${house.primaryImage || house.images?.[0] || "https://placehold.co/400x300?text=No+Image"}?w=800&f_auto&q_auto`;
 
   return (
-    <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-md transition-transform hover:scale-[1.02]">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:scale-[1.02] transition-transform"
+    >
       <div className="relative w-full h-48">
         <img
           src={imgUrl}
-          alt={house.title}
+          alt={house.title || "House image"}
           loading="lazy"
           className={`w-full h-full object-cover transition-all duration-500 ${loaded ? "blur-0" : "blur-sm"}`}
           onLoad={() => setLoaded(true)}
         />
       </div>
       <div className="p-4 space-y-1">
-        <h3 className="text-lg font-semibold text-white">{house.title}</h3>
-        <p className="text-gray-400 text-sm flex items-center gap-1">
-          <MapPin size={14} /> {house.location}
+        <h3 className="text-lg font-semibold text-white truncate">{house.title}</h3>
+        <p className="text-gray-400 text-sm flex items-center gap-1 truncate">
+          <MapPin size={14} /> {house.location || "Unknown location"}
         </p>
         <p className="text-blue-400 font-semibold">
           ₦{Number(house.price).toLocaleString()}{" "}
           {house.period && <span className="text-gray-400 font-normal">/ {house.period}</span>}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 });
 
 export default function HomePage() {
   const { houses, fetchApprovedHouses, loading } = useHouses();
+  const [searchTerm, setSearchTerm] = useState("");
   const [search, setSearch] = useState("");
   const loadingBarRef = useRef(null);
 
@@ -50,7 +59,13 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  // Memoized filtered houses
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => setSearch(searchTerm), 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Filtered houses
   const filtered = useMemo(() => {
     if (!Array.isArray(houses)) return [];
     if (!search.trim()) return houses;
@@ -65,7 +80,6 @@ export default function HomePage() {
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center overflow-hidden">
         <LoadingBar color="#3b82f6" height={3} ref={loadingBarRef} />
         <div className="relative flex items-center justify-center">
-          {/* Animated gradient ring */}
           <motion.div
             className="absolute w-28 h-28 rounded-full border-4 border-transparent"
             style={{
@@ -81,24 +95,15 @@ export default function HomePage() {
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
-          {/* Glowing blur */}
           <motion.div
             className="absolute w-20 h-20 rounded-full bg-blue-500 blur-2xl opacity-50"
             animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0.25, 0.5] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
-          {/* Central icon */}
           <motion.div
             initial={{ scale: 0.8 }}
-            animate={{
-              scale: [0.9, 1.1, 0.9],
-              opacity: [0.8, 1, 0.8],
-            }}
-            transition={{
-              duration: 1.8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             className="relative z-20 text-blue-500 drop-shadow-[0_0_25px_rgba(59,130,246,0.9)]"
           >
             <Home size={62} strokeWidth={2.5} color="#60a5fa" />
@@ -151,8 +156,8 @@ export default function HomePage() {
               <Search className="absolute left-4 top-3 text-white/70" size={20} />
               <input
                 type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by location..."
                 className="w-full py-2.5 sm:py-3 pl-10 pr-4 rounded-2xl bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/40 text-sm sm:text-base"
               />
@@ -182,13 +187,13 @@ export default function HomePage() {
             No houses found for “{search || "all locations"}”
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <motion.div layout className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((house) => (
               <Link key={house._id} to={`/listings/${house._id}`}>
                 <HouseCard house={house} />
               </Link>
             ))}
-          </div>
+          </motion.div>
         )}
       </section>
 

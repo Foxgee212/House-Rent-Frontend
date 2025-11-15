@@ -1,12 +1,21 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { MapPin, Home, Info, Wallet, BedDouble, Bath, Toilet, Car, Star, Heart, Phone, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// In-memory cache for watermarked canvases
+// In-memory canvas cache for watermarked images
 const canvasCache = new Map();
 
-// Reusable canvas component for watermark + right-click protection
+// Debounce utility
+const debounce = (fn, delay) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+};
+
+// ------------------- ProtectedWatermarkedImage -------------------
 const ProtectedWatermarkedImage = React.memo(({ src, alt, className, onClick }) => {
   const canvasRef = useRef(null);
 
@@ -36,21 +45,13 @@ const ProtectedWatermarkedImage = React.memo(({ src, alt, className, onClick }) 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
 
-      // SVG watermark
+      // Watermark SVG
       const svgData = `
         <svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
           <g opacity="0.15">
-            <path d="M20 40 L40 20 L60 40 V70 H20 V40 Z" fill="url(#grad1)" />
-            <path d="M40 70 V50 H50 V70 H40 Z" fill="#fff" />
-            <text x="70" y="55" font-family="Poppins, sans-serif" font-weight="700" font-size="30" fill="url(#grad1)">
+            <text x="70" y="55" font-family="Poppins, sans-serif" font-weight="700" font-size="30" fill="#3B82F6">
               Naijahome
             </text>
-            <defs>
-              <linearGradient id="grad1" x1="0" y1="0" x2="100%" y2="0">
-                <stop offset="0%" stop-color="#3B82F6"/>
-                <stop offset="100%" stop-color="#2563EB"/>
-              </linearGradient>
-            </defs>
           </g>
         </svg>
       `;
@@ -71,30 +72,34 @@ const ProtectedWatermarkedImage = React.memo(({ src, alt, className, onClick }) 
     toast.error("❌ Sorry, you can't download this image!");
   };
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      alt={alt}
-      onClick={onClick}
-      onContextMenu={handleRightClick}
-    />
-  );
+  return <canvas ref={canvasRef} className={className} alt={alt} onClick={onClick} onContextMenu={handleRightClick} />;
 });
 
-// Main HouseCard
-export default function HouseCard({ house }) {
+// ------------------- LazyHouseCard Wrapper -------------------
+const LazyHouseCard = ({ house }) => {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), {
+      rootMargin: "200px",
+    });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return <div ref={ref}>{visible && <HouseCardContent house={house} />}</div>;
+};
+
+// ------------------- HouseCardContent -------------------
+const HouseCardContent = React.memo(({ house }) => {
   const [zoomed, setZoomed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saved, setSaved] = useState(false);
   const images = Array.isArray(house.images) ? house.images : [];
 
   const formattedPrice = useMemo(() => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(house.price || 0);
+    return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(house.price || 0);
   }, [house.price]);
 
   // Load saved favorites
@@ -103,21 +108,29 @@ export default function HouseCard({ house }) {
     if (house.id && savedList.includes(house.id)) setSaved(true);
   }, [house.id]);
 
-  const toggleSave = (e) => {
-    e.stopPropagation();
-    const savedList = JSON.parse(localStorage.getItem("savedProperties")) || [];
-    const updated = saved
-      ? savedList.filter((id) => id !== house.id)
-      : [...savedList, house.id];
-    setSaved(!saved);
-    localStorage.setItem("savedProperties", JSON.stringify(updated));
-  };
+  // Debounced save to localStorage
+  const toggleSave = useCallback(
+    debounce(() => {
+      const savedList = JSON.parse(localStorage.getItem("savedProperties")) || [];
+      const updated = saved ? savedList.filter(id => id !== house.id) : [...savedList, house.id];
+      localStorage.setItem("savedProperties", JSON.stringify(updated));
+      setSaved(!saved);
+    }, 200),
+    [house.id, saved]
+  );
 
+  // Close zoom on ESC
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && setZoomed(false);
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
+
+  // Preload next/prev zoom images
+  useEffect(() => {
+    if (images[activeIndex + 1]) new Image().src = images[activeIndex + 1];
+    if (images[activeIndex - 1]) new Image().src = images[activeIndex - 1];
+  }, [activeIndex]);
 
   const getOptimizedSrc = (src, w = 800) => `${src}?w=${w}&f_auto&q_auto`;
 
@@ -156,9 +169,7 @@ export default function HouseCard({ house }) {
         </div>
         <p className="text-blue-400 font-bold flex items-center gap-1 text-base sm:text-lg">
           <Wallet size={16} /> {formattedPrice}
-          {house.period && (
-            <span className="text-gray-300 text-xs sm:text-sm font-medium">/{house.period}</span>
-          )}
+          {house.period && <span className="text-gray-300 text-xs sm:text-sm font-medium">/{house.period}</span>}
         </p>
       </div>
 
@@ -175,15 +186,8 @@ export default function HouseCard({ house }) {
               {item.icon} {item.value || 0}
             </li>
           ))}
-          <li
-            className="flex items-center gap-1 cursor-pointer"
-            onClick={toggleSave}
-            title={saved ? "Remove from favorites" : "Save property"}
-          >
-            <Heart
-              size={14}
-              className={`transition ${saved ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`}
-            />
+          <li className="flex items-center gap-1 cursor-pointer" onClick={toggleSave} title={saved ? "Remove from favorites" : "Save property"}>
+            <Heart size={14} className={`transition ${saved ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`} />
           </li>
         </ul>
       </div>
@@ -193,11 +197,7 @@ export default function HouseCard({ house }) {
         <div className="flex items-center gap-1 font-medium">
           <Star size={13} className="text-yellow-500" /> {house.agent || "NaijaHome Agent"}
         </div>
-        {house.phone && (
-          <div className="flex items-center gap-1 font-semibold text-blue-400">
-            <Phone size={14} /> {house.phone}
-          </div>
-        )}
+        {house.phone && <div className="flex items-center gap-1 font-semibold text-blue-400"><Phone size={14} /> {house.phone}</div>}
       </div>
 
       {/* Zoom Modal */}
@@ -226,16 +226,10 @@ export default function HouseCard({ house }) {
                 onClick={(e) => e.stopPropagation()}
               />
               {images.length > 1 && activeIndex > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
-                  className="absolute top-1/2 left-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
-                >◀</button>
+                <button onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }} className="absolute top-1/2 left-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition">◀</button>
               )}
               {images.length > 1 && activeIndex < images.length - 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition"
-                >▶</button>
+                <button onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }} className="absolute top-1/2 right-3 -translate-y-1/2 bg-gray-700/70 text-white p-2 rounded-full hover:bg-gray-600 transition">▶</button>
               )}
             </div>
 
@@ -247,9 +241,7 @@ export default function HouseCard({ house }) {
                     key={index}
                     src={getOptimizedSrc(img, 400)}
                     alt={`House ${index + 1}`}
-                    className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${
-                      activeIndex === index ? "border-blue-400 scale-105" : "border-transparent hover:opacity-80"
-                    }`}
+                    className={`w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-md cursor-pointer border-2 transition-all duration-200 ${activeIndex === index ? "border-blue-400 scale-105" : "border-transparent hover:opacity-80"}`}
                     onClick={() => setActiveIndex(index)}
                   />
                 ))}
@@ -260,4 +252,6 @@ export default function HouseCard({ house }) {
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default LazyHouseCard;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useHouses } from "../context/HouseContext";
 import SaleCard from "../components/cards/SaleCard";
@@ -6,24 +6,49 @@ import LoadingBar from "react-top-loading-bar";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+// Lazy-loaded SaleCard
+const LazySaleCard = ({ house }) => {
+  const ref = useRef();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return <div ref={ref}>{visible && <SaleCard house={house} />}</div>;
+};
+
 export default function BuyPage() {
   const { fetchApprovedSales, loading } = useHouses();
   const [houses, setHouses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const loadingBarRef = useRef(null);
 
-  // Fetch houses for sale with pagination
+  // Fetch houses with pagination
   const loadSales = async (pageNumber = 1) => {
     loadingBarRef.current?.continuousStart();
     try {
       const data = await fetchApprovedSales(pageNumber, 12);
-      const housesData = data?.houses ?? [];
-      const pages = data?.totalPages ?? 1;
+      setHouses(data?.houses ?? []);
+      setTotalPages(data?.totalPages ?? 1);
 
-      setHouses(housesData);
-      setTotalPages(pages);
+      // Preload next page
+      if (pageNumber < data?.totalPages) {
+        fetchApprovedSales(pageNumber + 1, 12);
+      }
     } catch (err) {
       console.error("Error fetching sales:", err);
       setHouses([]);
@@ -37,14 +62,18 @@ export default function BuyPage() {
     loadSales(page);
   }, [page]);
 
-  // Filter by search
+  // Debounced search
+  useEffect(() => {
+    const handler = setTimeout(() => setSearch(searchTerm), 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   const filtered = houses.filter(
     (house) =>
-      !search.trim() ||
-      house.location?.toLowerCase().includes(search.toLowerCase())
+      !search.trim() || house.location?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 💙 Loading State
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center overflow-hidden">
@@ -80,7 +109,7 @@ export default function BuyPage() {
               size={62}
               strokeWidth={2.5}
               color="#3b82f6"
-              fetchpriority="high" // LCP optimization
+              fetchpriority="high"
             />
           </motion.div>
         </div>
@@ -112,7 +141,7 @@ export default function BuyPage() {
               <Building2
                 size={48}
                 className="text-white drop-shadow-2xl sm:text-[56px]"
-                fetchpriority="high" // LCP optimization
+                fetchpriority="high"
               />
             </motion.div>
 
@@ -127,8 +156,7 @@ export default function BuyPage() {
           </div>
 
           <p className="text-blue-100 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Explore verified homes available for sale across Abuja and nearby
-            cities
+            Explore verified homes available for sale across Abuja and nearby cities
           </p>
 
           <div className="mt-6 flex justify-center w-full">
@@ -136,8 +164,8 @@ export default function BuyPage() {
               <Search className="absolute left-4 top-3 text-white/70" size={20} />
               <input
                 type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by location..."
                 className="w-full py-2.5 sm:py-3 pl-10 pr-4 rounded-2xl bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/40 text-sm sm:text-base"
               />
@@ -153,7 +181,7 @@ export default function BuyPage() {
         </div>
       </section>
 
-      {/* Houses for Sale Section */}
+      {/* Houses Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="flex items-center justify-center mb-8 sm:mb-10">
           <MapPin size={24} className="text-blue-600 mr-2" />
@@ -174,19 +202,18 @@ export default function BuyPage() {
                 to={`/buy/${house._id}`}
                 className="transition-transform duration-300 hover:scale-[1.02]"
               >
-                <SaleCard
+                <LazySaleCard
                   house={{
                     ...house,
-                    imageUrl: house.imageUrl + "?w=400&f_auto&q_auto", // optimized for LCP
+                    primaryImage: house.primaryImage || house.images?.[0],
                   }}
-                  className="scale-[0.95] sm:scale-100"
                 />
               </Link>
             ))}
           </div>
         )}
 
-        {/* Pagination Controls */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center mt-8 space-x-3">
             <button
