@@ -253,12 +253,34 @@ export default function DashBoard() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5"
+       className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
+          user?.verification?.status !== "verified" ? "opacity-60 pointer-events-none" : ""
+        }`}
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
           {editing ? <Edit3 size={20} /> : <PlusCircle size={20} />}
           {editing ? "Edit House" : "Post a New House"}
         </h2>
+
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <input type="text" name="title" placeholder="Property title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="text" name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="price" placeholder="Asking Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+
+          {/* Dropdowns */}
+          <select name="rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Room{i !== 1 ? "s" : ""}</option>)}
+          </select>
+          <select name="baths" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Bath{i !== 1 ? "s" : ""}</option>)}
+          </select>
+          <select name="toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Toilet{i !== 1 ? "s" : ""}</option>)}
+          </select>
+          <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Parking{i !== 1 ? "s" : ""}</option>)}
+          </select>
 
         {/* Upload Label */}
         <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
@@ -270,7 +292,14 @@ export default function DashBoard() {
           </span>
           <input type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
         </label>
-
+      </div>
+      <div className="flex items-center gap-3">
+                <Switch checked={form.negotiable} onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))} className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
+                  <span className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                </Switch>
+                <span className="text-sm text-gray-300">Price negotiable</span>
+              </div>
+      
         {/* Image Preview */}
         {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
