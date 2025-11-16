@@ -161,7 +161,7 @@ export default function BuyDetail() {
   // Keyboard navigation for zoom modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!zoomOpen) return;
+      if (!zoomOpen) return;  
       if (e.key === "ArrowRight") nextImage();
       if (e.key === "ArrowLeft") prevImage();
       if (e.key === "Escape") setZoomOpen(false);
@@ -191,7 +191,8 @@ export default function BuyDetail() {
               src={selectedImage || firstImage}
               alt={title || "Property Image"}
               className="w-full h-full object-cover cursor-pointer"
-              onClick={() => openZoom(zoomIndex)}
+              onClick={() => openZoom(images.indexOf(selectedImage))}
+
             />
             <div className="absolute top-5 left-5 z-20">
               <Link
@@ -350,30 +351,36 @@ export default function BuyDetail() {
 
       {/* Zoom Modal */}
       {zoomOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          <button
-            className="absolute top-6 right-6 text-white bg-gray-800 hover:bg-gray-700 p-2 rounded-full"
-            onClick={() => setZoomOpen(false)}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
-            <X size={24} />
-          </button>
+            <button
+              className="absolute top-6 right-6 text-white bg-gray-800 hover:bg-gray-700 p-2 rounded-full"
+              onClick={() => setZoomOpen(false)}
+            >
+              <X size={24} />
+            </button>
 
-          <div className="flex items-center justify-center w-full h-full px-6 relative">
-            <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={prevImage}>
+            <button
+              className="text-white p-3 rounded-full hover:bg-gray-800"
+              onClick={prevImage}
+            >
               <ChevronLeft size={32} />
             </button>
 
             <ProtectedWatermarkedImage
-              src={images?.[zoomIndex]}
-              alt={`Zoomed ${zoomIndex + 1}`}
-              className="max-h-[90vh] max-w-full object-contain rounded-xl mx-4"
+              src={images[zoomIndex]}
+              alt="Zoomed Image"
+              className="max-h-[90vh] max-w-full object-contain rounded-xl"
+              lazy={false}
             />
 
-            <button className="text-white p-3 rounded-full hover:bg-gray-800" onClick={nextImage}>
+            <button
+              className="text-white p-3 rounded-full hover:bg-gray-800"
+              onClick={nextImage}
+            >
               <ChevronRight size={32} />
             </button>
 
@@ -382,7 +389,6 @@ export default function BuyDetail() {
               {zoomIndex + 1} / {images.length}
             </p>
           </div>
-        </div>
       )}
     </div>
   );

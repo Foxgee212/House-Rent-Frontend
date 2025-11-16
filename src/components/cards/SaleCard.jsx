@@ -206,6 +206,25 @@ export default function SaleCard({ house }) {
         <div className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md ${house.available ? "bg-green-600" : "bg-red-600"} text-white`}>
           {house.available ? "Available" : "Sold"}
         </div>
+        {/* Negotiable / Fixed Price */}
+        {house.negotiable !== undefined && (
+          <div
+            className={`absolute bottom-3 left-3 text-xs font-semibold px-3 py-1 rounded-full shadow-md border ${
+              house.negotiable
+                ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                : "bg-gray-700 text-gray-200 border-gray-600"
+            }`}
+          >
+            {house.negotiable ? "Negotiable" : "Fixed Price"}
+          </div>
+        )}
+
+        {/* Image Count */}
+        {images.length > 0 && (
+          <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+            <i className="fal fa-camera"></i> {images.length} Photos
+          </div>
+        )}
       </div>
        
         

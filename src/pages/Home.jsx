@@ -4,44 +4,29 @@ import { useHouses } from "../context/HouseContext";
 import LoadingBar from "react-top-loading-bar";
 import { Search, MapPin, Home } from "lucide-react";
 import { motion } from "framer-motion";
+import HouseCard from "../components/HouseCard";
 
 // Memoized HouseCard with lazy load and blur effect
-const HouseCard = React.memo(({ house }) => {
-  const [loaded, setLoaded] = useState(false);
+const LazyHouseCard = ({ house }) => {
+  const ref = useRef();
+  const [visible, setVisible] = useState(false);
 
-  const imgUrl = `${house.primaryImage || house.images?.[0] || "https://placehold.co/400x300?text=No+Image"}?w=800&f_auto&q_auto`;
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
 
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:scale-[1.02] transition-transform"
-    >
-      <div className="relative w-full h-48">
-        <img
-          src={imgUrl}
-          alt={house.title || "House image"}
-          loading="lazy"
-          className={`w-full h-full object-cover transition-all duration-500 ${loaded ? "blur-0" : "blur-sm"}`}
-          onLoad={() => setLoaded(true)}
-        />
-      </div>
-      <div className="p-4 space-y-1">
-        <h3 className="text-lg font-semibold text-white truncate">{house.title}</h3>
-        <p className="text-gray-400 text-sm flex items-center gap-1 truncate">
-          <MapPin size={14} /> {house.location || "Unknown location"}
-        </p>
-        <p className="text-blue-400 font-semibold">
-          ₦{Number(house.price).toLocaleString()}{" "}
-          {house.period && <span className="text-gray-400 font-normal">/ {house.period}</span>}
-        </p>
-      </div>
-    </motion.div>
-  );
-});
+  return <div ref={ref}>{visible && <HouseCard house={house} />}</div>;
+};
 
 export default function HomePage() {
   const { houses, fetchApprovedHouses, loading } = useHouses();
@@ -190,7 +175,12 @@ export default function HomePage() {
           <motion.div layout className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((house) => (
               <Link key={house._id} to={`/listings/${house._id}`}>
-                <HouseCard house={house} />
+                <LazyHouseCard
+                  house={{
+                    ...house,
+                    primaryImage: house.primaryImage || house.images?.[0],
+                  }}
+                />
               </Link>
             ))}
           </motion.div>
