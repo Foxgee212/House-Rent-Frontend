@@ -128,11 +128,12 @@ export default function DashBoard() {
     if (!editing && images.length === 0)
       return toast.error("Please select at least one image");
 
-    if (user.verification.status !== "verified") {
-      toast.error("You must verify your identity before posting houses");
-      navigate("/verify");
-      return;
-    }
+    if (user?.verification?.status !== "verified") {
+          toast.error("You must verify your identity before posting properties");
+          navigate("/verify");
+          return;
+        }
+    
 
     setUploading(true);
     try {
@@ -250,6 +251,17 @@ export default function DashBoard() {
           Landlord Dashboard
         </h1>
       </div>
+      {user?.verification?.status !== "verified" && (
+        <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+          <p>⚠️ Your account is not verified. Verify your identity to post properties.</p>
+          <button
+            onClick={() => navigate("/verify")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+          >
+            Verify Identity
+          </button>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
