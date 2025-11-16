@@ -76,7 +76,6 @@ export default function DashBoard() {
 
   useEffect(() => {
     fetchMyHouses();
-    // Cleanup preview URLs on unmount
     return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
@@ -110,6 +109,12 @@ export default function DashBoard() {
 
     setImages((prev) => [...prev, ...compressedFiles]);
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
+
+    // ⭐ NEW FEATURE: Auto-select first uploaded image as primary
+    if (primaryImageIndex === null) {
+      setPrimaryImageIndex(existingImages.length); 
+    }
+
     e.target.value = null;
   };
 
@@ -129,17 +134,19 @@ export default function DashBoard() {
       return toast.error("Please select at least one image");
 
     if (user?.verification?.status !== "verified") {
-          toast.error("You must verify your identity before posting properties");
-          navigate("/verify");
-          return;
-        }
-    
+      toast.error("You must verify your identity before posting properties");
+      navigate("/verify");
+      return;
+    }
 
     setUploading(true);
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, val]) =>
-        formData.append(key, typeof val === "boolean" ? (val ? "true" : "false") : val)
+        formData.append(
+          key,
+          typeof val === "boolean" ? (val ? "true" : "false") : val
+        )
       );
 
       if (existingImages.length > 0)
@@ -220,9 +227,15 @@ export default function DashBoard() {
         available: !currentStatus,
       });
       setLandlordHouses((prev) =>
-        prev.map((h) => (h._id === id ? { ...h, available: !currentStatus } : h))
+        prev.map((h) =>
+          h._id === id ? { ...h, available: !currentStatus } : h
+        )
       );
-      toast.success(!currentStatus ? "🏠 House marked as available" : "🚫 House marked as occupied");
+      toast.success(
+        !currentStatus
+          ? "🏠 House marked as available"
+          : "🚫 House marked as occupied"
+      );
     } catch {
       toast.error("Failed to update availability");
     }
@@ -251,9 +264,13 @@ export default function DashBoard() {
           Landlord Dashboard
         </h1>
       </div>
+
       {user?.verification?.status !== "verified" && (
         <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <p>⚠️ Your account is not verified. Verify your identity to post properties.</p>
+          <p>
+            ⚠️ Your account is not verified. Verify your identity to post
+            properties.
+          </p>
           <button
             onClick={() => navigate("/verify")}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
@@ -265,8 +282,10 @@ export default function DashBoard() {
 
       <form
         onSubmit={handleSubmit}
-       className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
-          user?.verification?.status !== "verified" ? "opacity-60 pointer-events-none" : ""
+        className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
+          user?.verification?.status !== "verified"
+            ? "opacity-60 pointer-events-none"
+            : ""
         }`}
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
@@ -274,50 +293,140 @@ export default function DashBoard() {
           {editing ? "Edit House" : "Post a New House"}
         </h2>
 
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <input type="text" name="title" placeholder="Property title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="text" name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="price" placeholder="Asking Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <input
+            type="text"
+            name="title"
+            placeholder="Property title"
+            value={form.title}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          <input
+            type="text"
+            name="location"
+            placeholder="Location"
+            value={form.location}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          <input
+            type="number"
+            name="price"
+            placeholder="Asking Price (₦)"
+            value={form.price}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          <input
+            type="number"
+            name="area"
+            placeholder="Area (sqft)"
+            value={form.area}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
 
-          {/* Dropdowns */}
-          <select name="rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Room{i !== 1 ? "s" : ""}</option>)}
-          </select>
-          <select name="baths" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Bath{i !== 1 ? "s" : ""}</option>)}
-          </select>
-          <select name="toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Toilet{i !== 1 ? "s" : ""}</option>)}
-          </select>
-          <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Parking{i !== 1 ? "s" : ""}</option>)}
+          <select
+            name="rooms"
+            value={form.rooms}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {i} Room{i !== 1 ? "s" : ""}
+              </option>
+            ))}
           </select>
 
-        {/* Upload Label */}
-        <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
-          <Upload size={18} className="text-blue-400" />
-          <span className="text-gray-300">
-            {images.length > 0
-              ? `${images.length} new image${images.length > 1 ? "s" : ""} selected`
-              : "Upload or add more images"}
-          </span>
-          <input type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
-        </label>
-      </div>
-      <div className="flex items-center gap-3">
-                <Switch checked={form.negotiable} onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))} className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
-                  <span className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
-                </Switch>
-                <span className="text-sm text-gray-300">Price negotiable</span>
-              </div>
-      
-        {/* Image Preview */}
+          <select
+            name="baths"
+            value={form.baths}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {i} Bath{i !== 1 ? "s" : ""}
+              </option>
+            ))}
+          </select>
+
+          <select
+            name="toilets"
+            value={form.toilets}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {i} Toilet{i !== 1 ? "s" : ""}
+              </option>
+            ))}
+          </select>
+
+          <select
+            name="parking"
+            value={form.parking}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {i} Parking{i !== 1 ? "s" : ""}
+              </option>
+            ))}
+          </select>
+
+          <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
+            <Upload size={18} className="text-blue-400" />
+            <span className="text-gray-300">
+              {images.length > 0
+                ? `${images.length} new image${
+                    images.length > 1 ? "s" : ""
+                  } selected`
+                : "Upload or add more images"}
+            </span>
+            <input
+              type="file"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
+              accept="image/*"
+            />
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={form.negotiable}
+            onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))}
+            className={`${
+              form.negotiable ? "bg-blue-600" : "bg-gray-600"
+            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+          >
+            <span
+              className={`${
+                form.negotiable ? "translate-x-6" : "translate-x-1"
+              } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+            />
+          </Switch>
+          <span className="text-sm text-gray-300">Price negotiable</span>
+        </div>
+
         {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
             {existingImages.map((url, i) => (
-              <div key={`old-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700">
+              <div
+                key={`old-${i}`}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700"
+              >
                 <img src={url} alt="" className="w-full h-full object-cover" />
+
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -329,9 +438,14 @@ export default function DashBoard() {
                 </button>
               </div>
             ))}
+
             {previewUrls.map((url, i) => (
-              <div key={`new-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700">
+              <div
+                key={`new-${i}`}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700"
+              >
                 <img src={url} alt="" className="w-full h-full object-cover" />
+
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -356,15 +470,19 @@ export default function DashBoard() {
           required
         />
 
-        {/* Buttons */}
         <div className="flex gap-3 flex-wrap">
           <button
             type="submit"
             disabled={uploading}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30"
           >
-            {uploading ? "Uploading..." : editing ? "Update House" : "Add House"}
+            {uploading
+              ? "Uploading..."
+              : editing
+              ? "Update House"
+              : "Add House"}
           </button>
+
           {editing && (
             <button
               type="button"
@@ -377,7 +495,6 @@ export default function DashBoard() {
         </div>
       </form>
 
-      {/* Listings */}
       <div className="mt-10">
         {loadingHouses ? (
           <p className="text-center text-gray-400">Loading houses...</p>
@@ -392,20 +509,37 @@ export default function DashBoard() {
                   className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:scale-[1.01] transition-all"
                 >
                   <img
-                    src={h.primaryImage || h.images?.[0] || "https://placehold.co/400x300?text=No+Image"}
+                    src={
+                      h.primaryImage ||
+                      h.images?.[0] ||
+                      "https://placehold.co/400x300?text=No+Image"
+                    }
                     alt={h.title}
                     className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition"
                   />
+
                   <div className="p-5 space-y-2">
-                    <h3 className="text-lg font-semibold text-white">{h.title}</h3>
+                    <h3 className="text-lg font-semibold text-white">
+                      {h.title}
+                    </h3>
+
                     <p className="text-gray-400 text-sm flex items-center gap-1">
                       <MapPin size={14} /> {h.location}
                     </p>
+
                     <p className="text-blue-400 font-semibold mt-2">
                       ₦{Number(h.price).toLocaleString()}
-                      {h.period && <span className="text-gray-400 font-normal"> / {h.period}</span>}
+                      {h.period && (
+                        <span className="text-gray-400 font-normal">
+                          {" "}
+                          / {h.period}
+                        </span>
+                      )}
                     </p>
-                    <p className="text-sm text-gray-400 line-clamp-2">{h.description}</p>
+
+                    <p className="text-sm text-gray-400 line-clamp-2">
+                      {h.description}
+                    </p>
 
                     <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
                       <div className="flex items-center gap-1">
@@ -423,12 +557,19 @@ export default function DashBoard() {
                     </div>
 
                     <div className="flex items-center justify-between mt-4">
-                      <span className={`text-sm ${h.available ? "text-green-400" : "text-red-400"}`}>
+                      <span
+                        className={`text-sm ${
+                          h.available ? "text-green-400" : "text-red-400"
+                        }`}
+                      >
                         {h.available ? "Available" : "Occupied"}
                       </span>
+
                       <Switch
                         checked={h.available}
-                        onChange={() => toggleAvailability(h._id, h.available)}
+                        onChange={() =>
+                          toggleAvailability(h._id, h.available)
+                        }
                         className={`${
                           h.available ? "bg-green-500" : "bg-gray-600"
                         } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
@@ -448,6 +589,7 @@ export default function DashBoard() {
                       >
                         <Edit3 size={14} /> Edit
                       </button>
+
                       <button
                         onClick={() => handleDelete(h._id)}
                         className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
