@@ -199,6 +199,7 @@ export default function SaleCard({ house }) {
           className="w-full h-48 sm:h-60 object-cover transition-transform duration-500 hover:scale-105"
           onClick={() => setZoomed(true)}
         />
+        {/* Sale Badge */}
         <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
           <BadgeDollarSign size={12} /> For Sale
         </div>
@@ -206,7 +207,8 @@ export default function SaleCard({ house }) {
           {house.available ? "Available" : "Sold"}
         </div>
       </div>
-
+       
+        
       <HouseInfo house={house} formattedPrice={formattedPrice} />
       <HouseFooter house={house} saved={saved} toggleSave={toggleSave} />
 
