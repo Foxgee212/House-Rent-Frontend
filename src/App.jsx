@@ -1,11 +1,10 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 
-// Components
 import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
 
-// Lazy-loaded Pages
+// Lazy Pages
 const HomePage = lazy(() => import("./pages/Home"));
 const Listings = lazy(() => import("./pages/Listings"));
 const HouseDetail = lazy(() => import("./pages/HouseDetails"));
@@ -29,20 +28,25 @@ export default function App() {
   return (
     <>
       <Navbar />
+
       <Suspense fallback={<div className="text-center mt-10">Loading...</div>}>
         <Routes>
           {/* 🌍 Public Routes */}
+          <Route path="/" element={<BuyPage />} />
           <Route path="/rent" element={<HomePage />} />
           <Route path="/listings" element={<Listings />} />
           <Route path="/agent/listings" element={<AgentListings />} />
           <Route path="/listings/:id" element={<HouseDetail />} />
+          <Route path="/buy/:id" element={<BuyDetail />} />
+
+          {/* Auth */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/buy/:id" element={<BuyDetail />} />
-          <Route path="/" element={<BuyPage />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* 🔐 Protected Routes */}
+          {/* 🔐 Protected: All Users */}
           <Route
             path="/profile"
             element={
@@ -52,10 +56,7 @@ export default function App() {
             }
           />
 
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-
+          {/* 🔐 Landlord Dashboard */}
           <Route
             path="/dashboard"
             element={
@@ -64,6 +65,8 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {/* 🔐 Agent Dashboard */}
           <Route
             path="/agent"
             element={
@@ -72,6 +75,8 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {/* 🔐 Verification (Landlords & Agents) */}
           <Route
             path="/verify"
             element={
@@ -90,6 +95,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
           <Route
             path="/admin/verification/:id"
             element={
@@ -98,6 +104,9 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </>
