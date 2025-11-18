@@ -101,16 +101,21 @@ const Thumbnail = memo(({ img, selected, onClick }) => (
 export default function BuyDetail() {
   const { id } = useParams();
   const { housesForSale } = useHouses();
-  const house = housesForSale.find((h) => h._id === id);
 
+  // ======= Always run hooks at the top =======
   const [selectedImage, setSelectedImage] = useState(null);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomIndex, setZoomIndex] = useState(0);
 
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  // Find house (may be undefined)
+  const house = housesForSale.find((h) => h._id === id);
+
   const firstImage = useMemo(() => house?.images?.[0] || "/default-house.jpg", [house]);
   const message = useMemo(
-    () =>
-      `Hello, I'm interested in purchasing your property located in ${house?.location}. Is it still available?`,
+    () => `Hello, I'm interested in purchasing your property located in ${house?.location}. Is it still available?`,
     [house?.location]
   );
 
@@ -118,6 +123,42 @@ export default function BuyDetail() {
     if (house) setSelectedImage(house.images?.[0]);
   }, [house]);
 
+  // Keyboard navigation for zoom modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!zoomOpen) return;
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+      if (e.key === "Escape") setZoomOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zoomOpen]);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    if (touchEndX.current - touchStartX.current > 50) prevImage();
+    if (touchStartX.current - touchEndX.current > 50) nextImage();
+  };
+
+  const handleImageClick = (img, index) => {
+    setSelectedImage(img);
+    setZoomIndex(index);
+  };
+
+  const openZoom = (index) => {
+    setZoomIndex(index);
+    setZoomOpen(true);
+  };
+
+  const nextImage = () => setZoomIndex((prev) => (prev + 1) % (house?.images?.length || 1));
+  const prevImage = () => setZoomIndex((prev) => (prev - 1 + (house?.images?.length || 1)) % (house?.images?.length || 1));
+
+  // ======= Early return is now safe =======
   if (!house) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
@@ -145,41 +186,6 @@ export default function BuyDetail() {
 
   const recommendedHouses = housesForSale.filter((h) => h._id !== id).slice(0, 4);
 
-  const handleImageClick = (img, index) => {
-    setSelectedImage(img);
-    setZoomIndex(index);
-  };
-
-  const openZoom = (index) => {
-    setZoomIndex(index);
-    setZoomOpen(true);
-  };
-
-  const nextImage = () => setZoomIndex((prev) => (prev + 1) % (images?.length || 1));
-  const prevImage = () => setZoomIndex((prev) => (prev - 1 + (images?.length || 1)) % (images?.length || 1));
-
-  // Keyboard navigation for zoom modal
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!zoomOpen) return;  
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "ArrowLeft") prevImage();
-      if (e.key === "Escape") setZoomOpen(false);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [zoomOpen]);
-
-  // Swipe support for mobile
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
-
-  const handleTouchStart = (e) => { touchStartX.current = e.changedTouches[0].screenX; };
-  const handleTouchEnd = (e) => {
-    touchEndX.current = e.changedTouches[0].screenX;
-    if (touchEndX.current - touchStartX.current > 50) prevImage();
-    if (touchStartX.current - touchEndX.current > 50) nextImage();
-  };
 
   return (
     <div className="min-h-screen bg-gray-900 pb-16">
