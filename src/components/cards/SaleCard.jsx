@@ -6,6 +6,30 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import debounce from "lodash.debounce";
 
+/* =========================================================
+   Smart Price Parser + Formatter (GLOBAL)
+========================================================= */
+export function formatPrice(amount) {
+  if (!amount) return "₦0";
+  if (amount >= 1_000_000_000) return `₦${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (amount >= 1_000_000)     return `₦${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000)         return `₦${(amount / 1_000).toFixed(0)}k`;
+  return `₦${amount}`;
+}
+
+export function parseUserInput(input, unit = "M") {
+  const amount = parseFloat(input);
+  if (isNaN(amount)) return 0;
+
+  switch (unit.toUpperCase()) {
+    case "B": return amount * 1_000_000_000;
+    case "M": return amount * 1_000_000;
+    case "K": return amount * 1_000;
+    default: return amount;
+  }
+}
+
+
 // Optimize Cloudinary images
 const getOptimizedURL = (url, width = 800) =>
   url?.includes("cloudinary.com") ? `${url}?w=${width}&f_auto&q_auto` : url;
@@ -72,21 +96,25 @@ const ImageSkeleton = () => (
   <div className="absolute inset-0 bg-gray-700 animate-pulse rounded-2xl"></div>
 );
 
-// House info memoized
-const HouseInfo = memo(({ house, formattedPrice }) => (
-  <div className="p-4 sm:p-5 text-gray-100">
-    <h3 className="text-base sm:text-lg font-semibold mb-1 flex items-center gap-2">
-      <Info size={16} className="text-blue-400" /> {house.title || "Untitled Property"}
-    </h3>
-    <div className="flex items-center gap-1 text-gray-300 text-sm mb-2">
-      <MapPin size={14} className="text-blue-400" /> <span className="truncate">{house.location || "Unknown location"}</span>
+const HouseInfo = memo(({ house }) => {
+  const formattedPrice = useMemo(() => formatPrice(house.price || 0), [house.price]);
+
+  return (
+    <div className="p-4 sm:p-5 text-gray-100">
+      <h3 className="text-base sm:text-lg font-semibold mb-1 flex items-center gap-2">
+        <Info size={16} className="text-blue-400" /> {house.title || "Untitled Property"}
+      </h3>
+      <div className="flex items-center gap-1 text-gray-300 text-sm mb-2">
+        <MapPin size={14} className="text-blue-400" /> 
+        <span className="truncate">{house.location || "Unknown location"}</span>
+      </div>
+      <p className="text-green-400 font-bold flex items-center gap-1 text-base sm:text-lg">
+        <Wallet size={16} /> {formattedPrice}
+        {house.period && <span className="text-gray-300 text-xs sm:text-sm font-medium">/{house.period}</span>}
+      </p>
     </div>
-    <p className="text-blue-400 font-bold flex items-center gap-1 text-base sm:text-lg">
-      <Wallet size={16} /> {formattedPrice}
-      {house.period && <span className="text-gray-300 text-xs sm:text-sm font-medium">/{house.period}</span>}
-    </p>
-  </div>
-));
+  );
+});
 
 // House footer memoized
 const HouseFooter = memo(({ house, saved, toggleSave }) => (

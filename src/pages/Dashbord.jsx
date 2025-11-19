@@ -48,6 +48,7 @@ export default function DashBoard() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [editing, setEditing] = useState(null);
+  const [priceUnit, setPriceUnit] = useState("M");
 
   const limit = 6;
 
@@ -151,8 +152,18 @@ if (!isVerified && !canPostFirst) {
 
     setUploading(true);
     try {
+      // Convert short price (2.5 + M) → full number (2500000)
+      let numericPrice = Number(form.price);
+
+      if (priceUnit === "K") numericPrice *= 1_000;
+      if (priceUnit === "M") numericPrice *= 1_000_000;
+      if (priceUnit === "B") numericPrice *= 1_000_000_000;
+      // FULL means price stays as entered
+
+      const updatedForm = { ...form, price: numericPrice };
+
       const formData = new FormData();
-      Object.entries(form).forEach(([key, val]) =>
+      Object.entries(updatedForm).forEach(([key, val]) =>
         formData.append(
           key,
           typeof val === "boolean" ? (val ? "true" : "false") : val
@@ -227,6 +238,11 @@ if (!isVerified && !canPostFirst) {
       area: house.area || "",
       period: house.period || "per year",
     });
+    // Auto-detect unit when editing
+    if (sale.price >= 1_000_000_000) setPriceUnit("B");
+    else if (sale.price >= 1_000_000) setPriceUnit("M");
+    else if (sale.price >= 1_000) setPriceUnit("K");
+    else setPriceUnit("FULL");
     setExistingImages(house.images || []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -321,15 +337,29 @@ if (!isVerified && !canPostFirst) {
             required
             className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
           />
-          <input
-            type="number"
-            name="price"
-            placeholder="Asking Price (₦)"
-            value={form.price}
-            onChange={handleChange}
-            required
-            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          {/* Price + Unit Selector */}
+          <div className="flex gap-2">
+            <input
+              type="number"
+              name="price"
+              placeholder="Asking Price"
+              value={form.price}
+              onChange={handleChange}
+              required
+              className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+
+            <select
+              value={priceUnit}
+              onChange={(e) => setPriceUnit(e.target.value)}
+              className="w-20 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="K">K</option>
+              <option value="M">M</option>
+              <option value="B">B</option>
+              <option value="FULL">₦</option>
+            </select>
+          </div>
           <input
             type="number"
             name="area"
@@ -536,15 +566,12 @@ if (!isVerified && !canPostFirst) {
                       <MapPin size={14} /> {h.location}
                     </p>
 
-                    <p className="text-blue-400 font-semibold mt-2">
-                      ₦{Number(h.price).toLocaleString()}
-                      {h.period && (
-                        <span className="text-gray-400 font-normal">
-                          {" "}
-                          / {h.period}
-                        </span>
-                      )}
-                    </p>
+                    <p className="text-green-400 font-semibold text-sm">
+                        ₦{Number(h.price).toLocaleString()}
+                        {h.priceUnit && (
+                          <span className="text-gray-400 ml-1 uppercase">{h.priceUnit}</span>
+                        )}
+                      </p>
 
                     <p className="text-sm text-gray-400 line-clamp-2">
                       {h.description}

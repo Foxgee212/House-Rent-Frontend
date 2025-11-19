@@ -20,6 +20,30 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 
+/* =========================================================
+   Smart Price Parser + Formatter (GLOBAL)
+========================================================= */
+export function formatPrice(amount) {
+  if (!amount) return "₦0";
+  if (amount >= 1_000_000_000) return `₦${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (amount >= 1_000_000)     return `₦${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000)         return `₦${(amount / 1_000).toFixed(0)}k`;
+  return `₦${amount}`;
+}
+
+export function parseUserInput(input, unit = "M") {
+  const amount = parseFloat(input);
+  if (isNaN(amount)) return 0;
+
+  switch (unit.toUpperCase()) {
+    case "B": return amount * 1_000_000_000;
+    case "M": return amount * 1_000_000;
+    case "K": return amount * 1_000;
+    default: return amount;
+  }
+}
+
+
 // Helper to optimize Cloudinary URLs
 const getOptimizedCloudinaryURL = (url, width = 800) => {
   if (!url) return url;
@@ -242,9 +266,10 @@ export default function BuyDetail() {
               <MapPin size={16} className="text-blue-400" /> {location}
             </p>
             <p className="text-green-400 font-bold text-xl mt-3 flex items-center gap-2">
-              <Wallet size={18} /> ₦{price?.toLocaleString()}
-              <span className="text-gray-300 text-base font-medium">/sale</span>
+              <Wallet size={18} /> {formatPrice(price)}
+                <span className="text-gray-300 text-base font-medium">/sale</span>
             </p>
+
             {description && <p className="text-gray-300 leading-relaxed text-[15px]">{description}</p>}
 
             <div className="flex flex-wrap gap-4 text-gray-300 text-sm sm:text-base">
@@ -346,7 +371,7 @@ export default function BuyDetail() {
                     </span>
                     <h3 className="mt-2 font-semibold text-white">{rec.title}</h3>
                     <p className="text-gray-300 text-sm">{rec.location}</p>
-                    <p className="mt-1 font-semibold text-green-400">₦{rec.price?.toLocaleString()}</p>
+                    <p className="mt-1 font-semibold text-green-400">{formatPrice(rec.price)}</p>
                   </Link>
                 ))}
               </div>

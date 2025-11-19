@@ -3,6 +3,30 @@ import { toast } from "react-hot-toast";
 import { MapPin, Home, Info, Wallet, BedDouble, Bath, Toilet, Car, Star, Heart, Phone, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/* =========================================================
+   Smart Price Parser + Formatter (GLOBAL)
+========================================================= */
+export function formatPrice(amount) {
+  if (!amount) return "₦0";
+  if (amount >= 1_000_000_000) return `₦${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (amount >= 1_000_000)     return `₦${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000)         return `₦${(amount / 1_000).toFixed(0)}k`;
+  return `₦${amount}`;
+}
+
+export function parseUserInput(input, unit = "M") {
+  const amount = parseFloat(input);
+  if (isNaN(amount)) return 0;
+
+  switch (unit.toUpperCase()) {
+    case "B": return amount * 1_000_000_000;
+    case "M": return amount * 1_000_000;
+    case "K": return amount * 1_000;
+    default: return amount;
+  }
+}
+
+
 // In-memory canvas cache for watermarked images
 const canvasCache = new Map();
 
@@ -98,9 +122,7 @@ const HouseCardContent = React.memo(({ house }) => {
   const [saved, setSaved] = useState(false);
   const images = Array.isArray(house.images) ? house.images : [];
 
-  const formattedPrice = useMemo(() => {
-    return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(house.price || 0);
-  }, [house.price]);
+   const formattedPrice = useMemo(() => formatPrice(house.price || 0), [house.price]);
 
   // Load saved favorites
   useEffect(() => {
@@ -186,7 +208,7 @@ const HouseCardContent = React.memo(({ house }) => {
           <MapPin size={14} className="text-blue-400" />
           <span className="truncate">{house.location || "Unknown location"}</span>
         </div>
-        <p className="text-blue-400 font-bold flex items-center gap-1 text-base sm:text-lg">
+        <p className="text-green-400 font-bold flex items-center gap-1 text-base sm:text-lg">
           <Wallet size={16} /> {formattedPrice}
           {house.period && <span className="text-gray-300 text-xs sm:text-sm font-medium">/{house.period}</span>}
         </p>

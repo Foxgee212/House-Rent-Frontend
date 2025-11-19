@@ -19,6 +19,30 @@ import { FaWhatsapp } from "react-icons/fa";
 import { useHouses } from "../context/HouseContext";
 import { useAuth } from "../context/AuthContext";
 
+/* =========================================================
+   Smart Price Parser + Formatter (GLOBAL)
+========================================================= */
+export function formatPrice(amount) {
+  if (!amount) return "₦0";
+  if (amount >= 1_000_000_000) return `₦${(amount / 1_000_000_000).toFixed(1)}B`;
+  if (amount >= 1_000_000)     return `₦${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000)         return `₦${(amount / 1_000).toFixed(0)}k`;
+  return `₦${amount}`;
+}
+
+export function parseUserInput(input, unit = "M") {
+  const amount = parseFloat(input);
+  if (isNaN(amount)) return 0;
+
+  switch (unit.toUpperCase()) {
+    case "B": return amount * 1_000_000_000;
+    case "M": return amount * 1_000_000;
+    case "K": return amount * 1_000;
+    default: return amount;
+  }
+}
+
+
 export default function HouseDetail() {
   const { id } = useParams();
   const { houses } = useHouses();
@@ -154,9 +178,9 @@ export default function HouseDetail() {
                 <MapPin size={16} className="text-blue-400" /> {house.location}
               </p>
               <p className="text-green-400 font-bold text-xl mt-3 flex items-center gap-2">
-                <Wallet size={18} /> ₦{house.price?.toLocaleString()}
-                {house.period && (
-                          <span className="text-gray-400 text-sm font-medium">/{house.period}</span>
+                <Wallet size={18} /> {formatPrice(house.price)}
+                {house.priceUnit && (
+                          <span className="text-gray-400 text-sm font-medium">/{house.priceUnit}</span>
                         )}
               </p>
             </div>
@@ -269,7 +293,7 @@ export default function HouseDetail() {
                       <h3 className="mt-2 font-semibold text-white">{h.title}</h3>
                       <p className="text-gray-300 text-sm">{h.location}</p>
                       <p className="mt-1 font-semibold text-green-400">
-                        ₦{h.price?.toLocaleString()}
+                        ₦{formatPrice(h.price)}
                         {h.period && (
                           <span className="text-gray-400 text-sm font-medium">/{h.period}</span>
                         )}

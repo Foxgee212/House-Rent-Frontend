@@ -47,6 +47,8 @@ export default function SellerDashboard() {
   const [editing, setEditing] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [priceUnit, setPriceUnit] = useState("M");
+
   const limit = 6;
   const fileInputRef = useRef(null);
 
@@ -147,8 +149,19 @@ if (!isVerified && !canPostFirst) {
 
     setUploading(true);
     try {
+      // Convert short price (2.5 + M) → full number (2500000)
+      let numericPrice = Number(form.price);
+
+      if (priceUnit === "K") numericPrice *= 1_000;
+      if (priceUnit === "M") numericPrice *= 1_000_000;
+      if (priceUnit === "B") numericPrice *= 1_000_000_000;
+      // FULL means price stays as entered
+
+const updatedForm = { ...form, price: numericPrice };
+
+
       const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) =>
+      Object.entries(updatedForm).forEach(([k, v]) =>
         formData.append(k, typeof v === "boolean" ? String(v) : v)
       );
 
@@ -211,6 +224,12 @@ if (!isVerified && !canPostFirst) {
       parking: sale.parking || "0",
       area: sale.area || "",
     });
+    // Auto-detect unit when editing
+    if (sale.price >= 1_000_000_000) setPriceUnit("B");
+    else if (sale.price >= 1_000_000) setPriceUnit("M");
+    else if (sale.price >= 1_000) setPriceUnit("K");
+    else setPriceUnit("FULL");
+
     setExistingImages(sale.images || []);
     setImages([]);
     setPreviewUrls([]);
@@ -279,7 +298,30 @@ if (!isVerified && !canPostFirst) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <input type="text" name="title" placeholder="Property title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
           <input type="text" name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="number" name="price" placeholder="Asking Price (₦)" value={form.price} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+          {/* Price + Unit Selector */}
+          <div className="flex gap-2">
+            <input
+              type="number"
+              name="price"
+              placeholder="Asking Price"
+              value={form.price}
+              onChange={handleChange}
+              required
+              className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+
+            <select
+              value={priceUnit}
+              onChange={(e) => setPriceUnit(e.target.value)}
+              className="w-20 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="K">K</option>
+              <option value="M">M</option>
+              <option value="B">B</option>
+              <option value="FULL">₦</option>
+            </select>
+          </div>
+
           <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
 
           {/* Dropdowns */}
@@ -365,7 +407,13 @@ if (!isVerified && !canPostFirst) {
                     <div className="p-4 space-y-2">
                       <h3 className="font-semibold text-lg text-white">{h.title}</h3>
                       <p className="text-gray-400 text-sm flex items-center gap-1"><MapPin size={14} /> {h.location}</p>
-                      <p className="text-blue-400 font-semibold text-sm">₦{h.price?.toLocaleString()}</p>
+                      <p className="text-green-400 font-semibold text-sm">
+                        ₦{Number(h.price).toLocaleString()}
+                        {h.priceUnit && (
+                          <span className="text-gray-400 ml-1 uppercase">{h.priceUnit}</span>
+                        )}
+                      </p>
+
 
                       <div className="grid grid-cols-4 gap-3 text-gray-400 text-sm mt-4">
                         <div className="flex items-center gap-1"><BedDouble size={14} /> {h.rooms || 0}</div>

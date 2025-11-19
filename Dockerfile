@@ -1,12 +1,15 @@
 # Step 1 — Build the frontend
-FROM node:18 AS builder
+FROM node:22 AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
+RUN rm -rf node_modules package-lock.json
 RUN npm install
 
+
 COPY . .
+
 
 # Build the production version of your frontend
 RUN npm run build
