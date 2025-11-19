@@ -352,7 +352,7 @@ if (!isVerified && !canPostFirst) {
             <select
               value={priceUnit}
               onChange={(e) => setPriceUnit(e.target.value)}
-              className="w-20 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-full"
             >
               <option value="K">K</option>
               <option value="M">M</option>
@@ -360,6 +360,7 @@ if (!isVerified && !canPostFirst) {
               <option value="FULL">₦</option>
             </select>
           </div>
+
           <input
             type="number"
             name="area"

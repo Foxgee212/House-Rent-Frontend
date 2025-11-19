@@ -295,101 +295,176 @@ const updatedForm = { ...form, price: numericPrice };
           )}
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <input type="text" name="title" placeholder="Property title" value={form.title} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
-          <input type="text" name="location" placeholder="Location" value={form.location} onChange={handleChange} required className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Property Title */}
+          <input
+            type="text"
+            name="title"
+            placeholder="Property title"
+            value={form.title}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+
+          {/* Location */}
+          <input
+            type="text"
+            name="location"
+            placeholder="Location"
+            value={form.location}
+            onChange={handleChange}
+            required
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+
           {/* Price + Unit Selector */}
-          <div className="flex gap-2">
-            <input
-              type="number"
-              name="price"
-              placeholder="Asking Price"
-              value={form.price}
-              onChange={handleChange}
-              required
-              className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                name="price"
+                placeholder="Asking Price"
+                value={form.price}
+                onChange={handleChange}
+                required
+                className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
 
-            <select
-              value={priceUnit}
-              onChange={(e) => setPriceUnit(e.target.value)}
-              className="w-20 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-            >
-              <option value="K">K</option>
-              <option value="M">M</option>
-              <option value="B">B</option>
-              <option value="FULL">₦</option>
-            </select>
-          </div>
+              <select
+                value={priceUnit}
+                onChange={(e) => setPriceUnit(e.target.value)}
+                className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
+                style={{ height: 'auto' }} // Ensures full height matches input
+              >
+                <option value="K">K</option>
+                <option value="M">M</option>
+                <option value="B">B</option>
+                <option value="FULL">₦</option>
+              </select>
+            </div>
 
-          <input type="number" name="area" placeholder="Area (sqft)" value={form.area} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+
+          {/* Area */}
+          <input
+            type="number"
+            name="area"
+            placeholder="Area (sqft)"
+            value={form.area}
+            onChange={handleChange}
+            className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
 
           {/* Dropdowns */}
-          <select name="rooms" value={form.rooms} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Room{i !== 1 ? "s" : ""}</option>)}
-          </select>
-          <select name="baths" value={form.baths} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Bath{i !== 1 ? "s" : ""}</option>)}
-          </select>
-          <select name="toilets" value={form.toilets} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Toilet{i !== 1 ? "s" : ""}</option>)}
-          </select>
-          <select name="parking" value={form.parking} onChange={handleChange} className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-            {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i} Parking{i !== 1 ? "s" : ""}</option>)}
-          </select>
+          {["rooms", "baths", "toilets", "parking"].map((field) => (
+            <select
+              key={field}
+              name={field}
+              value={form[field]}
+              onChange={handleChange}
+              className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i} value={i}>
+                  {i} {field.charAt(0).toUpperCase() + field.slice(1)}
+                  {i !== 1 ? "s" : ""}
+                </option>
+              ))}
+            </select>
+          ))}
 
-        
-            <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
-              <Upload size={18} className="text-blue-400" />
-              <span className="text-gray-300">
-                {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Upload property images"}
-              </span>
-              <input ref={fileInputRef} type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
-            </label>
+          {/* Upload Images */}
+          <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-xl cursor-pointer hover:bg-gray-800 transition">
+            <Upload size={18} className="text-blue-400" />
+            <span className="text-gray-300">
+              {images.length > 0 ? `${images.length} image${images.length > 1 ? "s" : ""} selected` : "Upload property images"}
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
+              accept="image/*"
+            />
+          </label>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Switch checked={form.negotiable} onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))} className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}>
-            <span className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+        {/* Price Negotiable */}
+        <div className="flex items-center gap-3 mt-3">
+          <Switch
+            checked={form.negotiable}
+            onChange={(val) => setForm((p) => ({ ...p, negotiable: val }))}
+            className={`${form.negotiable ? "bg-blue-600" : "bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+          >
+            <span
+              className={`${form.negotiable ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+            />
           </Switch>
           <span className="text-sm text-gray-300">Price negotiable</span>
         </div>
 
+        {/* Image Previews */}
         {(existingImages.length > 0 || previewUrls.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-5">
-            {existingImages.map((url, i) => (
-              <div key={`existing-${i}`} className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 ${primaryImageIndex === i ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"}`} onClick={() => setPrimaryImageIndex(i)}>
+            {[...existingImages, ...previewUrls].map((url, i) => (
+              <div
+                key={i}
+                className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 ${
+                  primaryImageIndex === i ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"
+                }`}
+                onClick={() => setPrimaryImageIndex(i)}
+              >
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button onClick={(e) => { e.stopPropagation(); removeExistingImage(url); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    i < existingImages.length ? removeExistingImage(url) : removeNewImage(i - existingImages.length);
+                  }}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition"
+                >
                   <XCircle size={14} />
                 </button>
-                {primaryImageIndex === i && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">Primary</span>}
-              </div>
-            ))}
-            {previewUrls.map((url, i) => (
-              <div key={`new-${i}`} className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 ${primaryImageIndex === i + existingImages.length ? "border-blue-500 shadow-md shadow-blue-500/30" : "border-gray-700"}`} onClick={() => setPrimaryImageIndex(i + existingImages.length)}>
-                <img src={url} alt="" className="w-full h-full object-cover" />
-                <button onClick={(e) => { e.stopPropagation(); removeNewImage(i); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition">
-                  <XCircle size={14} />
-                </button>
-                {primaryImageIndex === i + existingImages.length && <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">Primary</span>}
+                {primaryImageIndex === i && (
+                  <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-md">
+                    Primary
+                  </span>
+                )}
               </div>
             ))}
           </div>
         )}
 
-        <textarea name="description" placeholder="Short description" value={form.description} onChange={handleChange} rows="3" required className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none" />
+        {/* Description */}
+        <textarea
+          name="description"
+          placeholder="Short description"
+          value={form.description}
+          onChange={handleChange}
+          rows="3"
+          required
+          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none mt-5"
+        />
 
-        <div className="flex gap-3 flex-wrap">
-          <button type="submit" disabled={uploading} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30">
+        {/* Buttons */}
+        <div className="flex gap-3 flex-wrap mt-3">
+          <button
+            type="submit"
+            disabled={uploading}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-blue-700/30"
+          >
             {uploading ? "Processing..." : editing ? "Update Listing" : "Add Listing"}
           </button>
           {editing && (
-            <button type="button" onClick={() => window.location.reload()} className="flex items-center gap-2 text-gray-400 hover:text-blue-400">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-2 text-gray-400 hover:text-blue-400"
+            >
               <XCircle size={18} /> Cancel
             </button>
           )}
         </div>
+
       </form>
 
       {/* Listings */}
