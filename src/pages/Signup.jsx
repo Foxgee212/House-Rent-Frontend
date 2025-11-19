@@ -7,13 +7,15 @@ import {
   User,
   Mail,
   Lock,
+  Eye,
+  EyeOff,
   Building2,
   Users,
   Loader2,
 } from "lucide-react";
 
 // ✅ Safe sanitization
-const sanitizeInput = (value) => value.replace(/[<>/'"`;(){}$]/g, "");
+const sanitizeInput = (value) => value.replace(/[<>/'"`;]/g, "");
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function Signup() {
     role: "tenant",
   });
   const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // state for password visibility
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -109,7 +112,7 @@ export default function Signup() {
           <div className="relative">
             <Lock className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
               value={form.password}
@@ -119,6 +122,14 @@ export default function Signup() {
               autoComplete="new-password"
               className="w-full pl-9 py-2.5 bg-gray-900/50 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
+            {/* Eye Icon */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-blue-400 transition-colors duration-300"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+            </button>
           </div>
 
           {/* Role Selection - Animated Radio Buttons */}

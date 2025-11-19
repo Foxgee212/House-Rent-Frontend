@@ -133,11 +133,21 @@ export default function DashBoard() {
     if (!editing && images.length === 0)
       return toast.error("Please select at least one image");
 
-    if (user?.verification?.status !== "verified") {
-      toast.error("You must verify your identity before posting properties");
-      navigate("/verify");
-      return;
-    }
+    // Allow posting ONLY if:
+// 1. User is email verified
+// 2. And EITHER:
+//    - They haven't posted any property yet
+//    - OR they are identity verified
+
+const isVerified = user?.verification?.status === "verified";
+const canPostFirst = user?.emailVerified && !user?.firstPropertyPosted;
+
+if (!isVerified && !canPostFirst) {
+  toast.error("Identity verification required to post more properties");
+  navigate("/verify");
+  return;
+}
+
 
     setUploading(true);
     try {
@@ -265,12 +275,9 @@ export default function DashBoard() {
         </h1>
       </div>
 
-      {user?.verification?.status !== "verified" && (
+      {user?.firstPropertyPosted && user?.verification?.status !== "verified" && (
         <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-400 text-yellow-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <p>
-            ⚠️ Your account is not verified. Verify your identity to post
-            properties.
-          </p>
+          <p>⚠️ You’ve posted your first property. Please verify your identity to continue posting.</p>
           <button
             onClick={() => navigate("/verify")}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
@@ -280,13 +287,15 @@ export default function DashBoard() {
         </div>
       )}
 
+
       <form
         onSubmit={handleSubmit}
-        className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
-          user?.verification?.status !== "verified"
+       className={`bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-5 transition-all ${
+          user?.firstPropertyPosted && user?.verification?.status !== "verified"
             ? "opacity-60 pointer-events-none"
             : ""
         }`}
+
       >
         <h2 className="text-xl font-semibold text-blue-400 flex items-center gap-2">
           {editing ? <Edit3 size={20} /> : <PlusCircle size={20} />}
