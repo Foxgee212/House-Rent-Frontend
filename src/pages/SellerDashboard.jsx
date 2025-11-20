@@ -319,7 +319,8 @@ const updatedForm = { ...form, price: numericPrice };
           />
 
           {/* Price + Unit Selector */}
-            <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+
               <input
                 type="number"
                 name="price"
@@ -333,9 +334,9 @@ const updatedForm = { ...form, price: numericPrice };
               <select
                 value={priceUnit}
                 onChange={(e) => setPriceUnit(e.target.value)}
-                className="p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
-                style={{ height: 'auto' }} // Ensures full height matches input
+                className="w-20 p-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               >
+
                 <option value="K">K</option>
                 <option value="M">M</option>
                 <option value="B">B</option>
